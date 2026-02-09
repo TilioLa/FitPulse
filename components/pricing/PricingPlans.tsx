@@ -1,0 +1,140 @@
+'use client'
+
+import { useState } from 'react'
+import Link from 'next/link'
+import { Check, X, Zap, Crown } from 'lucide-react'
+
+const plans = [
+  {
+    id: 'free',
+    name: 'Gratuit',
+    icon: <Zap className="h-8 w-8" />,
+    price: '0',
+    period: 'Toujours gratuit',
+    description: 'Parfait pour commencer votre parcours fitness',
+    features: [
+      { text: '1 programme complet', included: true },
+      { text: 'Accès au dashboard de base', included: true },
+      { text: 'Suivi des séances', included: true },
+      { text: 'Historique limité (10 séances)', included: true },
+      { text: 'Programmes premium', included: false },
+      { text: 'Statistiques avancées', included: false },
+      { text: 'Support prioritaire', included: false },
+      { text: 'Accès illimité à tous les programmes', included: false },
+    ],
+    cta: 'Commencer gratuitement',
+    popular: false,
+    color: 'from-gray-400 to-gray-500',
+  },
+  {
+    id: 'pro',
+    name: 'Pro',
+    icon: <Crown className="h-8 w-8" />,
+    price: '9.99',
+    period: 'par mois',
+    description: 'Pour ceux qui veulent aller plus loin',
+    features: [
+      { text: 'Tous les programmes disponibles', included: true },
+      { text: 'Dashboard complet et avancé', included: true },
+      { text: 'Historique illimité', included: true },
+      { text: 'Statistiques détaillées', included: true },
+      { text: 'Programmes personnalisés', included: true },
+      { text: 'Support par email', included: true },
+      { text: 'Export des données', included: true },
+      { text: 'Support prioritaire 24/7', included: false },
+    ],
+    cta: 'Commencer Pro',
+    popular: true,
+    color: 'from-primary-500 to-primary-600',
+  },
+  {
+    id: 'proplus',
+    name: 'Pro+',
+    icon: <Crown className="h-8 w-8" />,
+    price: '19.99',
+    period: 'par mois',
+    description: 'Pour les plus motivés',
+    features: [
+      { text: 'Tout ce qui est inclus dans Pro', included: true },
+      { text: 'Coaching personnalisé 1 à 1', included: true },
+      { text: 'Support prioritaire 24/7', included: true },
+      { text: 'Programmes exclusifs', included: true },
+      { text: 'Analyses nutritionnelles', included: true },
+      { text: 'Vidéos HD en exclusivité', included: true },
+      { text: 'Communauté privée', included: true },
+      { text: 'Sessions live avec coachs', included: true },
+    ],
+    cta: 'Commencer Pro+',
+    popular: false,
+    color: 'from-accent-500 to-accent-600',
+  },
+]
+
+export default function PricingPlans() {
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
+
+  const handleSelectPlan = (planId: string) => {
+    setSelectedPlan(planId)
+    // Simuler la sélection du plan (pas de paiement réel)
+    alert(`Plan ${planId} sélectionné ! (Paiement simulé - pas de transaction réelle)`)
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+      {plans.map((plan) => (
+        <div
+          key={plan.id}
+          className={`card relative ${plan.popular ? 'ring-4 ring-primary-500 scale-105' : ''} ${
+            selectedPlan === plan.id ? 'ring-4 ring-primary-500' : ''
+          }`}
+        >
+          {plan.popular && (
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <span className="bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+                Le plus populaire
+              </span>
+            </div>
+          )}
+
+          <div className={`h-2 bg-gradient-to-r ${plan.color} rounded-t-xl -m-6 mb-6`}></div>
+
+          <div className="text-center mb-6">
+            <div className="inline-block mb-4 text-primary-600">{plan.icon}</div>
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+            <p className="text-gray-600 mb-4">{plan.description}</p>
+            <div className="mb-2">
+              <span className="text-5xl font-bold text-gray-900">{plan.price}€</span>
+              {plan.period && <span className="text-gray-600 ml-2">{plan.period}</span>}
+            </div>
+          </div>
+
+          <ul className="space-y-3 mb-8">
+            {plan.features.map((feature, index) => (
+              <li key={index} className="flex items-start">
+                {feature.included ? (
+                  <Check className="h-5 w-5 text-green-500 mr-3 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <X className="h-5 w-5 text-gray-300 mr-3 flex-shrink-0 mt-0.5" />
+                )}
+                <span className={feature.included ? 'text-gray-700' : 'text-gray-400 line-through'}>
+                  {feature.text}
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          <button
+            onClick={() => handleSelectPlan(plan.id)}
+            className={`w-full py-3 rounded-lg font-semibold transition-colors ${
+              plan.popular
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
+                : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+            }`}
+          >
+            {plan.cta}
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
