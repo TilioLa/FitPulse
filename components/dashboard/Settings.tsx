@@ -12,6 +12,17 @@ interface UserSettings {
   level: string
   goals: string[]
   equipment: string[]
+  restTime: number
+  restBetweenExercises: number
+  soundEnabled: boolean
+  voiceEnabled: boolean
+  weightUnit: 'kg' | 'lbs'
+  weight?: number
+  height?: number
+  goal?: string
+  sessionsPerWeek?: number
+  focusZones?: string[]
+  avoidZones?: string[]
 }
 
 export default function Settings() {
@@ -24,49 +35,84 @@ export default function Settings() {
     level: 'debutant',
     goals: [],
     equipment: [],
+    restTime: 60,
+    restBetweenExercises: 180,
+    soundEnabled: true,
+    voiceEnabled: false,
+    weightUnit: 'kg',
+    goal: 'Cardio',
+    sessionsPerWeek: 3,
+    focusZones: [],
+    avoidZones: [],
   })
   const [saved, setSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
 
   useEffect(() => {
     // Charger les paramètres utilisateur
-    const userSettings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{"level": "debutant", "goals": [], "equipment": []}')
+    const userSettings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{"level": "debutant", "goals": [], "equipment": [], "restTime": 60, "restBetweenExercises": 180, "soundEnabled": true, "voiceEnabled": false, "weightUnit": "kg", "goal": "Cardio", "sessionsPerWeek": 3, "focusZones": [], "avoidZones": []}')
     
     setSettings({
-      name: session?.user?.name || '',
-      email: session?.user?.email || '',
-      phone: session?.user?.phone || '',
+      name: userSettings.name || session?.user?.name || '',
+      email: userSettings.email || session?.user?.email || '',
+      phone: userSettings.phone || session?.user?.phone || '',
       level: userSettings.level || 'debutant',
       goals: userSettings.goals || [],
       equipment: userSettings.equipment || [],
+      restTime: Number.isFinite(userSettings.restTime) ? userSettings.restTime : 60,
+      restBetweenExercises: Number.isFinite(userSettings.restBetweenExercises) ? userSettings.restBetweenExercises : 180,
+      soundEnabled: typeof userSettings.soundEnabled === 'boolean' ? userSettings.soundEnabled : true,
+      voiceEnabled: typeof userSettings.voiceEnabled === 'boolean' ? userSettings.voiceEnabled : false,
+      weightUnit: userSettings.weightUnit === 'lbs' ? 'lbs' : 'kg',
+      weight: Number.isFinite(userSettings.weight) ? userSettings.weight : undefined,
+      height: Number.isFinite(userSettings.height) ? userSettings.height : undefined,
+      goal: userSettings.goal || 'Cardio',
+      sessionsPerWeek: Number.isFinite(userSettings.sessionsPerWeek) ? userSettings.sessionsPerWeek : 3,
+      focusZones: userSettings.focusZones || [],
+      avoidZones: userSettings.avoidZones || [],
     })
   }, [session?.user?.email, session?.user?.name, session?.user?.phone])
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch('/api/user', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: settings.name,
-          email: settings.email,
-          phone: settings.phone,
-        }),
-      })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data?.error || 'Erreur serveur')
+      try {
+        const response = await fetch('/api/user', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: settings.name,
+            email: settings.email,
+            phone: settings.phone,
+          }),
+        })
+        if (response.ok) {
+          await update({ name: settings.name, email: settings.email, phone: settings.phone })
+        }
+      } catch {
+        // ignore API failure, keep local settings
       }
 
-      await update({ name: settings.name, email: settings.email, phone: settings.phone })
-
       localStorage.setItem('fitpulse_settings', JSON.stringify({
+        name: settings.name,
+        email: settings.email,
+        phone: settings.phone,
         level: settings.level,
         goals: settings.goals,
         equipment: settings.equipment,
+        restTime: settings.restTime,
+        restBetweenExercises: settings.restBetweenExercises,
+        soundEnabled: settings.soundEnabled,
+        voiceEnabled: settings.voiceEnabled,
+        weightUnit: settings.weightUnit,
+        weight: settings.weight,
+        height: settings.height,
+        goal: settings.goal,
+        sessionsPerWeek: settings.sessionsPerWeek,
+        focusZones: settings.focusZones,
+        avoidZones: settings.avoidZones,
       }))
+      window.dispatchEvent(new Event('fitpulse-settings'))
 
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -96,18 +142,20 @@ export default function Settings() {
   }
 
   const goalsOptions = ['Perte de poids', 'Prise de masse', 'Endurance', 'Force', 'Souplesse']
+  const focusOptions = ['Pectoraux', 'Dos', 'Bras', 'Jambes', 'Épaules', 'Abdos', 'Fessiers']
+  const avoidOptions = ['Dos', 'Genoux', 'Épaules', 'Hanches']
   const equipmentOptions = ['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines de salle']
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Paramètres</h1>
+    <div className="page-wrap">
+      <h1 className="section-title mb-8">Paramètres</h1>
 
       <div className="space-y-6">
         {/* Informations personnelles */}
-        <div className="card">
+        <div className="card-soft">
           <div className="flex items-center space-x-2 mb-6">
             <User className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-semibold text-gray-900">Informations personnelles</h2>
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Informations personnelles</h2>
           </div>
 
           <div className="space-y-4">
@@ -153,10 +201,10 @@ export default function Settings() {
         </div>
 
         {/* Niveau */}
-        <div className="card">
+        <div className="card-soft">
           <div className="flex items-center space-x-2 mb-6">
             <Target className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-semibold text-gray-900">Niveau et objectifs</h2>
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Niveau et objectifs</h2>
           </div>
 
           <div className="space-y-4">
@@ -198,11 +246,125 @@ export default function Settings() {
           </div>
         </div>
 
+        {/* Profil fitness */}
+        <div className="card-soft">
+          <div className="flex items-center space-x-2 mb-6">
+            <Target className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Profil fitness</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Poids ({settings.weightUnit})</label>
+              <input
+                type="number"
+                min={30}
+                max={250}
+                value={settings.weight ?? ''}
+                onChange={(e) => setSettings({ ...settings, weight: e.target.value ? Number(e.target.value) : undefined })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Taille (cm)</label>
+              <input
+                type="number"
+                min={120}
+                max={230}
+                value={settings.height ?? ''}
+                onChange={(e) => setSettings({ ...settings, height: e.target.value ? Number(e.target.value) : undefined })}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Objectif principal</label>
+            <select
+              value={settings.goal}
+              onChange={(e) => setSettings({ ...settings, goal: e.target.value })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              <option>Cardio</option>
+              <option>Perte de poids</option>
+              <option>Prise de masse</option>
+              <option>Force</option>
+              <option>Sèche</option>
+              <option>Souplesse</option>
+            </select>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
+            <input
+              type="range"
+              min={1}
+              max={7}
+              value={settings.sessionsPerWeek ?? 3}
+              onChange={(e) => setSettings({ ...settings, sessionsPerWeek: Number(e.target.value) })}
+              className="w-full accent-primary-600"
+            />
+            <div className="text-sm text-gray-600 mt-2">{settings.sessionsPerWeek ?? 3} séance(s) / semaine</div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Zones à muscler</label>
+            <div className="flex flex-wrap gap-2">
+              {focusOptions.map((zone) => (
+                <button
+                  key={zone}
+                  onClick={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      focusZones: prev.focusZones?.includes(zone)
+                        ? prev.focusZones.filter((item) => item !== zone)
+                        : [...(prev.focusZones || []), zone],
+                    }))
+                  }
+                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                    settings.focusZones?.includes(zone)
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                  }`}
+                >
+                  {zone}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Zones à éviter</label>
+            <div className="flex flex-wrap gap-2">
+              {avoidOptions.map((zone) => (
+                <button
+                  key={zone}
+                  onClick={() =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      avoidZones: prev.avoidZones?.includes(zone)
+                        ? prev.avoidZones.filter((item) => item !== zone)
+                        : [...(prev.avoidZones || []), zone],
+                    }))
+                  }
+                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                    settings.avoidZones?.includes(zone)
+                      ? 'bg-red-500 text-white border-red-500'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
+                  }`}
+                >
+                  {zone}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Matériel */}
-        <div className="card">
+        <div className="card-soft">
           <div className="flex items-center space-x-2 mb-6">
             <Dumbbell className="h-6 w-6 text-primary-600" />
-            <h2 className="text-2xl font-semibold text-gray-900">Matériel disponible</h2>
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Matériel disponible</h2>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -219,6 +381,120 @@ export default function Settings() {
                 {equipment}
               </button>
             ))}
+          </div>
+        </div>
+
+        {/* Temps de repos */}
+        <div className="card-soft">
+          <div className="flex items-center space-x-2 mb-6">
+            <Dumbbell className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Temps de repos</h2>
+          </div>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600">
+              Choisissez votre temps de repos par défaut. Il sera appliqué aux séances et programmes.
+            </div>
+            <div className="text-2xl font-bold text-gray-900">{settings.restTime} secondes</div>
+            <input
+              type="range"
+              min={30}
+              max={180}
+              step={5}
+              value={settings.restTime}
+              onChange={(e) => setSettings({ ...settings, restTime: Number(e.target.value) })}
+              className="w-full accent-primary-600"
+            />
+            <div className="pt-4 border-t border-gray-100">
+              <div className="text-sm text-gray-600 mb-2">
+                Temps de repos entre exercices.
+              </div>
+              <div className="text-2xl font-bold text-gray-900">{settings.restBetweenExercises} secondes</div>
+              <input
+                type="range"
+                min={30}
+                max={300}
+                step={15}
+                value={settings.restBetweenExercises}
+                onChange={(e) =>
+                  setSettings({ ...settings, restBetweenExercises: Number(e.target.value) })
+                }
+                className="w-full accent-primary-600"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Son */}
+        <div className="card-soft">
+          <div className="flex items-center space-x-2 mb-6">
+            <Dumbbell className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Son</h2>
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Bip de fin de repos</div>
+              <div className="text-xs text-gray-500">Active ou désactive l’alerte sonore</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, soundEnabled: !settings.soundEnabled })}
+              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                settings.soundEnabled
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+              }`}
+            >
+              {settings.soundEnabled ? 'Activé' : 'Désactivé'}
+            </button>
+          </div>
+          <div className="flex items-center justify-between mt-4">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Rappel vocal</div>
+              <div className="text-xs text-gray-500">Annonce la fin du repos / exercice suivant</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, voiceEnabled: !settings.voiceEnabled })}
+              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                settings.voiceEnabled
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+              }`}
+            >
+              {settings.voiceEnabled ? 'Activé' : 'Désactivé'}
+            </button>
+          </div>
+        </div>
+
+        {/* Unité de poids */}
+        <div className="card-soft">
+          <div className="flex items-center space-x-2 mb-6">
+            <Dumbbell className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Unité de poids</h2>
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, weightUnit: 'kg' })}
+              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                settings.weightUnit === 'kg'
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+              }`}
+            >
+              Kilogrammes (kg)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, weightUnit: 'lbs' })}
+              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                settings.weightUnit === 'lbs'
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+              }`}
+            >
+              Livres (lbs)
+            </button>
           </div>
         </div>
 

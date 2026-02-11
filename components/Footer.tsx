@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Activity, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react'
+import { Activity } from 'lucide-react'
 
 export default function Footer() {
   return (
@@ -37,9 +37,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/pricing" className="hover:text-primary-400 transition-colors">
-                  Pricing
-                </Link>
+                <span className="text-gray-500">Pricing</span>
               </li>
             </ul>
           </div>
@@ -69,30 +67,16 @@ export default function Footer() {
           {/* Contact & Social */}
           <div>
             <h3 className="text-white font-semibold mb-4">Contact</h3>
-            <ul className="space-y-2 mb-4">
+            <ul className="space-y-2">
               <li>
                 <Link href="/contact" className="hover:text-primary-400 transition-colors">
                   Nous contacter
                 </Link>
               </li>
               <li className="text-sm text-gray-400">
-                contact@fitpulse.fr
+                fitpulset@gmail.com
               </li>
             </ul>
-            <div className="flex space-x-4 mt-4">
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Facebook">
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Twitter">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="Instagram">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-gray-400 hover:text-primary-400 transition-colors" aria-label="LinkedIn">
-                <Linkedin className="h-5 w-5" />
-              </a>
-            </div>
           </div>
         </div>
 

@@ -1,0 +1,163 @@
+const videoMap: Record<string, string> = {
+  pompes: 'https://www.youtube.com/embed/IODxDxX7oi4',
+  squat: 'https://www.youtube.com/embed/aclHkVaku9U',
+  fente: 'https://www.youtube.com/embed/QOVaHwm-Q6U',
+  planche: 'https://www.youtube.com/embed/pSHjTRCQxIw',
+  gainage: 'https://www.youtube.com/embed/ASdvN_XEl_c',
+  burpees: 'https://www.youtube.com/embed/TU8QYVW0gDU',
+  burpee: 'https://www.youtube.com/embed/TU8QYVW0gDU',
+  'mountain climbers': 'https://www.youtube.com/embed/cnyTQDSE884',
+  'jumping jacks': 'https://www.youtube.com/embed/c4DAnQ6DtF8',
+  'jump squats': 'https://www.youtube.com/embed/U4s4mEQ5VqU',
+  'sprint sur place': 'https://www.youtube.com/embed/7kN1xZb-7yA',
+  crunchs: 'https://www.youtube.com/embed/Xyd_fa5zoEU',
+  'dead bug': 'https://www.youtube.com/embed/4XLEnwUr1d8',
+  'bird dog': 'https://www.youtube.com/embed/wX4T29M6Xj0',
+  'rotation russe': 'https://www.youtube.com/embed/wkD8rjkodUI',
+  'pallof press': 'https://www.youtube.com/embed/nnM3c4s2wkc',
+  'hip thrust': 'https://www.youtube.com/embed/SEdqd1n0cvg',
+  'pont fessier': 'https://www.youtube.com/embed/m2Zx-57cSok',
+  'rowing elastique': 'https://www.youtube.com/embed/3mGdnG0b5Y4',
+  'tirage vertical elastique': 'https://www.youtube.com/embed/Yw2xB6S1n1Q',
+  'face pull elastique': 'https://www.youtube.com/embed/rep-qVOkqgk',
+  'curl biceps elastique': 'https://www.youtube.com/embed/8Jr3fQ8sZsY',
+  'curl marteau elastique': 'https://www.youtube.com/embed/8Jr3fQ8sZsY',
+  'extensions triceps elastique': 'https://www.youtube.com/embed/8g0n4xN5x3g',
+  'kickback elastique': 'https://www.youtube.com/embed/8g0n4xN5x3g',
+  'presse poitrine elastique': 'https://www.youtube.com/embed/3q1QZ1ZJcGg',
+  'ecarte elastique': 'https://www.youtube.com/embed/3q1QZ1ZJcGg',
+  'developpe epaules elastique': 'https://www.youtube.com/embed/0JfYxMRsUCQ',
+  'presse a cuisses': 'https://www.youtube.com/embed/IZxyjW7MPJQ',
+  'leg extension': 'https://www.youtube.com/embed/YyvSfVjQeL0',
+  'leg curl': 'https://www.youtube.com/embed/1Tq3QdYUuHs',
+  'hack squat': 'https://www.youtube.com/embed/0tn5K9NlCfo',
+  'developpe couche machine': 'https://www.youtube.com/embed/8iPEnn-ltC8',
+  'tirage vertical machine': 'https://www.youtube.com/embed/CAwf7n6Luuc',
+  'tirage horizontal machine': 'https://www.youtube.com/embed/roCP6wCXPqo',
+  'shoulder press machine': 'https://www.youtube.com/embed/WvLMauqrnK8',
+  'pec deck': 'https://www.youtube.com/embed/Z57CtFmRMxA',
+  'rowing machine': 'https://www.youtube.com/embed/6TSP1TRMUzs',
+  'curl biceps machine': 'https://www.youtube.com/embed/ykJmrZ5v0Oo',
+  'extension triceps machine': 'https://www.youtube.com/embed/2-LAMcpzODU',
+  'developpe couche halteres': 'https://www.youtube.com/embed/VmB1G1K7v94',
+  'developpe incline halteres': 'https://www.youtube.com/embed/8iPEnn-ltC8',
+  'rowing halteres': 'https://www.youtube.com/embed/roCP6wCXPqo',
+  'souleve de terre halteres': 'https://www.youtube.com/embed/1uDiW5--rAE',
+  'squat goblet': 'https://www.youtube.com/embed/MeIiIdhvXT4',
+  'thrusters halteres': 'https://www.youtube.com/embed/j1gF3z7ZVbE',
+  'fentes avec halteres': 'https://www.youtube.com/embed/QOVaHwm-Q6U',
+  'developpe epaules halteres': 'https://www.youtube.com/embed/B-aVuyhvLHU',
+  'curl biceps halteres': 'https://www.youtube.com/embed/ykJmrZ5v0Oo',
+  'extension triceps au-dessus': 'https://www.youtube.com/embed/YbX7Wd8jQ-Q',
+  'ecarte halteres': 'https://www.youtube.com/embed/eozdVDA78K0',
+  'squat sumo': 'https://www.youtube.com/embed/aclHkVaku9U',
+  'step-ups': 'https://www.youtube.com/embed/dQqApCGd5Ss',
+  'skaters': 'https://www.youtube.com/embed/0G3O4iB8kS0',
+  'wall sit': 'https://www.youtube.com/embed/-cdph8hv0O0',
+  'pike push-up': 'https://www.youtube.com/embed/5-8sK5Y0Lw0',
+  'pompes declinees': 'https://www.youtube.com/embed/SKpab2YC8BE',
+  'pompes diamants': 'https://www.youtube.com/embed/J0DnG1_S92I',
+  'pompes prises serrees': 'https://www.youtube.com/embed/7L2A2r5YJ9g',
+  'dips entre deux chaises': 'https://www.youtube.com/embed/2z8JmcrW-As',
+  'dips assistes': 'https://www.youtube.com/embed/0t7Anv3pooA',
+  'superman': 'https://www.youtube.com/embed/z6PJMT2y8GQ',
+  'rowing inverse': 'https://www.youtube.com/embed/7a1f8k9D2s0',
+  'hollow hold': 'https://www.youtube.com/embed/1lQm9fU8rFY',
+  'abduction elastique': 'https://www.youtube.com/embed/9qK2T9Jg7F4',
+  'squat avec elastique': 'https://www.youtube.com/embed/aclHkVaku9U',
+  'souleve de terre elastique': 'https://www.youtube.com/embed/1uDiW5--rAE',
+  'fentes elastique': 'https://www.youtube.com/embed/QOVaHwm-Q6U',
+  'mollets elastique': 'https://www.youtube.com/embed/-M4-G8p8fmc',
+  'planche avec elastique': 'https://www.youtube.com/embed/pSHjTRCQxIw',
+  'rotation russe elastique': 'https://www.youtube.com/embed/wkD8rjkodUI',
+  'extensions lombaires': 'https://www.youtube.com/embed/ph3pddpKzzw',
+  'ab crunch machine': 'https://www.youtube.com/embed/0t7R2i1f1yE',
+  'extensions lombaires machine': 'https://www.youtube.com/embed/ph3pddpKzzw',
+  'pull over haltere': 'https://www.youtube.com/embed/FqCwD-bxXqU',
+  'curl incline halteres': 'https://www.youtube.com/embed/soxrZlIl35w',
+  'curl marteau halteres': 'https://www.youtube.com/embed/zC3nLlEvin4',
+  'sprint sur place': 'https://www.youtube.com/embed/7kN1xZb-7yA',
+  'squats tempo': 'https://www.youtube.com/embed/aclHkVaku9U',
+  'fentes arriere': 'https://www.youtube.com/embed/QOVaHwm-Q6U',
+  'fentes laterales': 'https://www.youtube.com/embed/rvqLVx5K-K0',
+  'pont fessier une jambe': 'https://www.youtube.com/embed/2lN5C3oR2P0',
+  'hip thrust au sol': 'https://www.youtube.com/embed/SEdqd1n0cvg',
+  'marche rapide': 'https://www.youtube.com/embed/enYITYwvPAQ',
+  'ouverture des epaules': 'https://www.youtube.com/embed/9U-1a1k4H4g',
+  'ouverture epaules': 'https://www.youtube.com/embed/9U-1a1k4H4g',
+  'ouverture poitrine': 'https://www.youtube.com/embed/d_FPPw7YtKQ',
+  'rotation thoracique': 'https://www.youtube.com/embed/1gFiwmy-2iQ',
+  'etirements hanches': 'https://www.youtube.com/embed/qjR0p8mGkB0',
+  'etirements ischios': 'https://www.youtube.com/embed/5g0eE7kZWxA',
+  'mobilite chevilles': 'https://www.youtube.com/embed/1QW4oyJwV1E',
+  'chat-vache': 'https://www.youtube.com/embed/wB7C5zKf2f8',
+  'respiration diaphragme': 'https://www.youtube.com/embed/LXb3EKWsInQ',
+}
+
+const videoRules: { pattern: RegExp; url: string }[] = [
+  { pattern: /\bsquat(s)?\b/, url: videoMap['squat'] },
+  { pattern: /squat sumo|sumo squat/, url: videoMap['squat sumo'] },
+  { pattern: /squat goblet|goblet/, url: videoMap['squat goblet'] },
+  { pattern: /squats? sautes|jump squats?/, url: videoMap['jump squats'] },
+  { pattern: /fentes? (marchees|marchees|marches)/, url: videoMap['fentes'] },
+  { pattern: /fentes? (arriere|laterales|elastique|avec)/, url: videoMap['fentes'] },
+  { pattern: /fentes? bulgares?/, url: videoMap['fentes avec halteres'] },
+  { pattern: /pompes? (declinees|diamants|prises|sur)/, url: videoMap['pompes'] },
+  { pattern: /\bpompes?\b/, url: videoMap['pompes'] },
+  { pattern: /planche(s)? (dynamique|avec)/, url: videoMap['planche'] },
+  { pattern: /gainage/, url: videoMap['gainage'] },
+  { pattern: /burpee(s)?/, url: videoMap['burpees'] },
+  { pattern: /mountain climbers?/, url: videoMap['mountain climbers'] },
+  { pattern: /jumping jacks?/, url: videoMap['jumping jacks'] },
+  { pattern: /skaters?/, url: videoMap['skaters'] },
+  { pattern: /wall sit/, url: videoMap['wall sit'] },
+  { pattern: /hip thrust|pont fessier/, url: videoMap['hip thrust'] },
+  { pattern: /mollets?/, url: videoMap['mollets elastique'] },
+  { pattern: /rowing|tirage horizontal|tirage vertical/, url: videoMap['tirage horizontal machine'] },
+  { pattern: /face pull/, url: videoMap['face pull elastique'] },
+  { pattern: /curl biceps|curl marteau|curl incline/, url: videoMap['curl biceps halteres'] },
+  { pattern: /extensions? triceps|kickback/, url: videoMap['extension triceps au-dessus'] },
+  { pattern: /developpe couche|developpe incline|presse poitrine|pec deck|ecarte/, url: videoMap['developpe couche halteres'] },
+  { pattern: /developpe epaules|shoulder press/, url: videoMap['developpe epaules halteres'] },
+  { pattern: /leg extension/, url: videoMap['leg extension'] },
+  { pattern: /leg curl/, url: videoMap['leg curl'] },
+  { pattern: /hack squat/, url: videoMap['hack squat'] },
+  { pattern: /ab crunch|crunchs?/, url: videoMap['crunchs'] },
+  { pattern: /extensions lombaires/, url: videoMap['extensions lombaires'] },
+  { pattern: /souleve de terre/, url: videoMap['souleve de terre halteres'] },
+  { pattern: /pallof press/, url: videoMap['pallof press'] },
+  { pattern: /rotation russe/, url: videoMap['rotation russe'] },
+  { pattern: /dead bug/, url: videoMap['dead bug'] },
+  { pattern: /bird dog/, url: videoMap['bird dog'] },
+  { pattern: /superman/, url: videoMap['superman'] },
+  { pattern: /etirement|mobilite|ouverture|respiration|chat-vache/, url: videoMap['rotation thoracique'] },
+  { pattern: /marche rapide|sprint/, url: videoMap['sprint sur place'] },
+  { pattern: /dips/, url: videoMap['dips entre deux chaises'] },
+  { pattern: /row/ , url: videoMap['rowing halteres'] },
+]
+
+function normalizeName(value: string) {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+export function inferVideoUrl(name: string) {
+  const normalized = normalizeName(name)
+  for (const key of Object.keys(videoMap)) {
+    const normalizedKey = normalizeName(key)
+    if (normalized.includes(normalizedKey)) {
+      return videoMap[key]
+    }
+  }
+  for (const rule of videoRules) {
+    if (rule.pattern.test(normalized)) {
+      return rule.url
+    }
+  }
+  return undefined
+}

@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { UserPlus, Mail, Lock, User } from 'lucide-react'
 import { registerUser } from '@/lib/authApi'
@@ -17,6 +16,14 @@ export default function InscriptionPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
+  const [weight, setWeight] = useState('')
+  const [height, setHeight] = useState('')
+  const [goal, setGoal] = useState('Cardio')
+  const [focusZones, setFocusZones] = useState<string[]>([])
+  const [avoidZones, setAvoidZones] = useState<string[]>([])
+  const [level, setLevel] = useState('debutant')
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
+  const [equipment, setEquipment] = useState<string[]>([])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -32,19 +39,25 @@ export default function InscriptionPage() {
       return
     }
 
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail.endsWith('@gmail.com') && !normalizedEmail.endsWith('@googlemail.com')) {
+      setError("Merci d'utiliser une adresse Gmail pour l'inscription")
+      return
+    }
+
     // Créer le compte
     let newUser = {
       id: Date.now().toString(),
-      name: name || email.split('@')[0],
-      email,
+      name: name || normalizedEmail.split('@')[0],
+      email: normalizedEmail,
       password, // En production, ne jamais stocker le mot de passe en clair !
       phone: phone || undefined,
       createdAt: new Date().toISOString(),
     }
 
     try {
-      const apiUser = await registerUser(newUser.name, email, password, phone || undefined)
-      newUser = { ...newUser, ...apiUser }
+      const apiUser = await registerUser(newUser.name, normalizedEmail, password, phone || undefined)
+      newUser = { ...newUser, ...apiUser, phone: apiUser.phone ?? undefined }
       const signInResult = await signIn('credentials', {
         redirect: false,
         email,
@@ -60,9 +73,16 @@ export default function InscriptionPage() {
 
     // Initialiser les paramètres par défaut
     localStorage.setItem('fitpulse_settings', JSON.stringify({
-      level: 'debutant',
-      goals: [],
-      equipment: [],
+      level,
+      goals: [goal],
+      equipment,
+      restTime: 60,
+      weightUnit: 'kg',
+      sessionsPerWeek,
+      focusZones,
+      avoidZones,
+      weight: weight ? Number(weight) : undefined,
+      height: height ? Number(height) : undefined,
     }))
 
     router.push('/dashboard')
@@ -70,13 +90,12 @@ export default function InscriptionPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
       <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="card-soft">
             <div className="text-center mb-8">
               <UserPlus className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">
                 Créer un compte
               </h1>
               <p className="text-gray-600">
@@ -175,6 +194,151 @@ export default function InscriptionPage() {
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Répétez le mot de passe"
                   />
+                </div>
+              </div>
+
+              <div className="border-t pt-6 space-y-4">
+                <h2 className="text-lg font-semibold text-gray-900">Profil fitness</h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Poids (kg)</label>
+                    <input
+                      type="number"
+                      min={30}
+                      max={250}
+                      value={weight}
+                      onChange={(e) => setWeight(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Taille (cm)</label>
+                    <input
+                      type="number"
+                      min={120}
+                      max={230}
+                      value={height}
+                      onChange={(e) => setHeight(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      placeholder="175"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Objectif principal</label>
+                  <select
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option>Cardio</option>
+                    <option>Perte de poids</option>
+                    <option>Prise de masse</option>
+                    <option>Force</option>
+                    <option>Sèche</option>
+                    <option>Souplesse</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Zone à muscler</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Pectoraux', 'Dos', 'Bras', 'Jambes', 'Épaules', 'Abdos', 'Fessiers'].map((zone) => (
+                      <button
+                        type="button"
+                        key={zone}
+                        onClick={() =>
+                          setFocusZones((prev) =>
+                            prev.includes(zone) ? prev.filter((item) => item !== zone) : [...prev, zone]
+                          )
+                        }
+                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                          focusZones.includes(zone)
+                            ? 'bg-primary-600 text-white border-primary-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                        }`}
+                      >
+                        {zone}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Zone à éviter</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Dos', 'Genoux', 'Épaules', 'Hanches'].map((zone) => (
+                      <button
+                        type="button"
+                        key={zone}
+                        onClick={() =>
+                          setAvoidZones((prev) =>
+                            prev.includes(zone) ? prev.filter((item) => item !== zone) : [...prev, zone]
+                          )
+                        }
+                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                          avoidZones.includes(zone)
+                            ? 'bg-red-500 text-white border-red-500'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
+                        }`}
+                      >
+                        {zone}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
+                  <select
+                    value={level}
+                    onChange={(e) => setLevel(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="debutant">Débutant</option>
+                    <option value="intermediaire">Intermédiaire</option>
+                    <option value="avance">Avancé</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
+                  <input
+                    type="range"
+                    min={1}
+                    max={7}
+                    value={sessionsPerWeek}
+                    onChange={(e) => setSessionsPerWeek(Number(e.target.value))}
+                    className="w-full accent-primary-600"
+                  />
+                  <div className="text-sm text-gray-600 mt-2">{sessionsPerWeek} séance(s) / semaine</div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Équipement disponible</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines de salle'].map((item) => (
+                      <button
+                        type="button"
+                        key={item}
+                        onClick={() =>
+                          setEquipment((prev) =>
+                            prev.includes(item) ? prev.filter((value) => value !== item) : [...prev, item]
+                          )
+                        }
+                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                          equipment.includes(item)
+                            ? 'bg-primary-600 text-white border-primary-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                        }`}
+                      >
+                        {item}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 

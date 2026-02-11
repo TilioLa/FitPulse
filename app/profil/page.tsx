@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { User, Calendar, Trophy, TrendingUp, Clock } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
+import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ProfilPage() {
   const router = useRouter()
@@ -19,12 +20,11 @@ export default function ProfilPage() {
     }
 
     // Charger les statistiques locales
-    const storedStats = JSON.parse(localStorage.getItem('fitpulse_stats') || '{"streak": 0, "completedWorkouts": 0}')
     const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-    const totalMinutes = history.reduce((sum: number, w: any) => sum + w.duration, 0)
+    const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
     setStats({
-      streak: storedStats.streak || 0,
-      completedWorkouts: storedStats.completedWorkouts || 0,
+      streak,
+      completedWorkouts: totalWorkouts,
       totalMinutes,
     })
   }, [router, status])
@@ -47,17 +47,17 @@ export default function ProfilPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-grow py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <WithSidebar active="settings">
+        <main className="flex-grow py-12">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <div className="card-soft mb-8">
             <div className="flex items-center space-x-6">
               <div className="bg-primary-100 rounded-full p-6">
                 <User className="h-16 w-16 text-primary-600" />
               </div>
               <div className="flex-1">
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="section-title mb-2">
                   {session?.user?.name || 'Utilisateur FitPulse'}
                 </h1>
                 <p className="text-gray-600 mb-1">{session?.user?.email}</p>
@@ -84,7 +84,7 @@ export default function ProfilPage() {
 
           {/* Statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="card bg-gradient-to-br from-primary-50 to-primary-100">
+            <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Streak actuel</div>
@@ -95,7 +95,7 @@ export default function ProfilPage() {
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-orange-50 to-orange-100">
+            <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Séances complétées</div>
@@ -106,7 +106,7 @@ export default function ProfilPage() {
               </div>
             </div>
 
-            <div className="card bg-gradient-to-br from-green-50 to-green-100">
+            <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Temps total</div>
@@ -118,6 +118,26 @@ export default function ProfilPage() {
             </div>
           </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="card">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Objectif de la semaine</h3>
+              <p className="text-gray-600 mb-4">3 séances pour garder le rythme.</p>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary-600"
+                  style={{ width: `${Math.min((stats.completedWorkouts / 3) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                {Math.min(stats.completedWorkouts, 3)} / 3 séances
+              </p>
+            </div>
+            <div className="card bg-gradient-to-br from-accent-50 to-primary-50">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Prochaine étape</h3>
+              <p className="text-gray-600">Planifie ta prochaine séance pour garder ta streak.</p>
+            </div>
+          </div>
+
           {/* Historique récent */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -126,8 +146,10 @@ export default function ProfilPage() {
             </h2>
             <HistoryList />
           </div>
-        </div>
-      </main>
+
+          </div>
+        </main>
+      </WithSidebar>
       <Footer />
     </div>
   )
@@ -138,7 +160,8 @@ function HistoryList() {
 
   useEffect(() => {
     const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-    setHistory(storedHistory.sort((a: any, b: any) => 
+    const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
+    setHistory(deduped.sort((a: any, b: any) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     ).slice(0, 5))
   }, [])

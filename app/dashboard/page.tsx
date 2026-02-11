@@ -1,21 +1,24 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/dashboard/Sidebar'
-import MySessions from '@/components/dashboard/MySessions'
-import History from '@/components/dashboard/History'
-import RecommendedPrograms from '@/components/dashboard/RecommendedPrograms'
-import Settings from '@/components/dashboard/Settings'
-import Navbar from '@/components/Navbar'
+import ProgramsList from '@/components/programmes/ProgramsList'
+// Social feed removed for now
 import Footer from '@/components/Footer'
 import { useSession } from 'next-auth/react'
+import CustomRoutines from '@/components/dashboard/CustomRoutines'
+import Feed from '@/components/dashboard/Feed'
+import History from '@/components/dashboard/History'
+import MySessions from '@/components/dashboard/MySessions'
+import Settings from '@/components/dashboard/Settings'
 
-type DashboardSection = 'sessions' | 'history' | 'programs' | 'settings'
+type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines' | 'settings' | 'exercises'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeSection, setActiveSection] = useState<DashboardSection>('sessions')
+  const searchParams = useSearchParams()
+  const [activeSection, setActiveSection] = useState<DashboardSection>('feed')
   const { status } = useSession()
 
   useEffect(() => {
@@ -23,6 +26,25 @@ export default function DashboardPage() {
       router.push('/connexion')
     }
   }, [router, status])
+
+  useEffect(() => {
+    if (status !== 'authenticated') return
+    const view = searchParams?.get('view')
+    if (view === 'session') {
+      setActiveSection('session')
+      return
+    }
+    try {
+      const stored = localStorage.getItem('fitpulse_current_workout')
+      if (!stored) return
+      const parsed = JSON.parse(stored)
+      if (parsed?.status === 'in_progress') {
+        setActiveSection('session')
+      }
+    } catch {
+      // ignore
+    }
+  }, [searchParams, status])
 
   if (status === 'loading') {
     return (
@@ -42,22 +64,27 @@ export default function DashboardPage() {
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'sessions':
-        return <MySessions />
+      case 'feed':
+        return <Feed />
       case 'history':
         return <History />
+      case 'session':
+        return <MySessions />
       case 'programs':
-        return <RecommendedPrograms />
+        return <ProgramsList />
+      case 'routines':
+        return <CustomRoutines />
       case 'settings':
         return <Settings />
+      case 'exercises':
+        return <div />
       default:
-        return <MySessions />
+        return <Feed />
     }
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
       <div className="flex flex-grow">
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className="flex-grow p-6 lg:p-8">

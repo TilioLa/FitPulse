@@ -1,0 +1,98 @@
+export type Locale = 'fr' | 'en'
+
+export const messages = {
+  fr: {
+    common: {
+      feed: 'Feed',
+      session: 'Séance',
+      history: 'Historique',
+      programs: 'Programmes',
+      routines: 'Mes routines',
+      exercises: 'Exercices',
+      pricing: 'Pricing',
+      settings: 'Paramètres',
+      logout: 'Déconnexion',
+      startSession: 'Démarrer la séance',
+      sessionInProgress: 'Séance en cours',
+      viewProgram: 'Voir le programme',
+      backToProgram: 'Retour au programme',
+      minutes: 'minutes',
+      duration: 'Durée',
+      reps: 'réps',
+      sets: 'séries',
+      rest: 'repos',
+      requiredEquipment: 'Matériel requis',
+      tips: 'Conseil',
+      video: 'Video explicative',
+      muscles: 'Muscles sollicités',
+      noData: 'Aucun élément',
+      search: 'Rechercher',
+      all: 'Tous',
+      totalWeight: 'Poids total',
+      calories: 'Calories',
+      completed: 'Terminée',
+      recentSessions: 'Séances récentes',
+      totalSessions: 'Total séances',
+      currentStreak: 'Streak actuel',
+      totalMinutes: 'Minutes totales',
+      selectExercise: 'Sélectionne un exercice',
+      statsHint: 'Clique sur un exercice pour voir ses statistiques.',
+      sessionHistory: 'Historique des séances',
+      recentSessionsTitle: 'Séances récentes',
+      noSessions: 'Aucune séance enregistrée',
+      startFirstSession: 'Commencez votre première séance pour voir votre historique ici !',
+    },
+  },
+  en: {
+    common: {
+      feed: 'Feed',
+      session: 'Session',
+      history: 'History',
+      programs: 'Programs',
+      routines: 'My routines',
+      exercises: 'Exercises',
+      pricing: 'Pricing',
+      settings: 'Settings',
+      logout: 'Logout',
+      startSession: 'Start session',
+      sessionInProgress: 'Session in progress',
+      viewProgram: 'View program',
+      backToProgram: 'Back to program',
+      minutes: 'minutes',
+      duration: 'Duration',
+      reps: 'reps',
+      sets: 'sets',
+      rest: 'rest',
+      requiredEquipment: 'Required equipment',
+      tips: 'Tip',
+      video: 'Instructional video',
+      muscles: 'Muscles worked',
+      noData: 'No items',
+      search: 'Search',
+      all: 'All',
+      totalWeight: 'Total weight',
+      calories: 'Calories',
+      completed: 'Completed',
+      recentSessions: 'Recent sessions',
+      totalSessions: 'Total sessions',
+      currentStreak: 'Current streak',
+      totalMinutes: 'Total minutes',
+      selectExercise: 'Select an exercise',
+      statsHint: 'Click an exercise to see stats.',
+      sessionHistory: 'Session history',
+      recentSessionsTitle: 'Recent sessions',
+      noSessions: 'No sessions recorded',
+      startFirstSession: 'Start your first session to see your history here!',
+    },
+  },
+} as const
+
+export function resolveLocale(input?: string | null): Locale {
+  const value = (input || '').toLowerCase()
+  if (value.startsWith('en')) return 'en'
+  return 'fr'
+}
+
+export function t(locale: Locale, key: keyof typeof messages.fr.common) {
+  return messages[locale].common[key] || messages.fr.common[key]
+}

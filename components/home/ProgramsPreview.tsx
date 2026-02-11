@@ -1,32 +1,7 @@
 import Link from 'next/link'
 import { Dumbbell, Timer, Target, ArrowRight } from 'lucide-react'
-
-const programs = [
-  {
-    name: "Débutant - Poids du corps",
-    duration: "6 semaines",
-    level: "Débutant",
-    equipment: "Aucun matériel",
-    description: "Programme complet pour commencer la musculation sans équipement",
-    color: "from-blue-500 to-blue-600"
-  },
-  {
-    name: "Intermédiaire - Élastiques",
-    duration: "8 semaines",
-    level: "Intermédiaire",
-    equipment: "Élastiques de résistance",
-    description: "Gagnez en force et en masse musculaire avec des élastiques",
-    color: "from-purple-500 to-purple-600"
-  },
-  {
-    name: "Avancé - Machines",
-    duration: "12 semaines",
-    level: "Avancé",
-    equipment: "Salle de sport",
-    description: "Programme intensif pour maximiser vos gains en salle",
-    color: "from-orange-500 to-orange-600"
-  }
-]
+import { programs } from '@/data/programs'
+import { labelize } from '@/lib/labels'
 
 export default function ProgramsPreview() {
   return (
@@ -42,13 +17,17 @@ export default function ProgramsPreview() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          {programs.map((program, index) => (
-            <div key={index} className="card group hover:scale-105 transition-transform duration-300">
+          {programs.slice(0, 3).map((program, index) => (
+            <div
+              key={index}
+              className="card group hover:scale-105 transition-transform duration-300 reveal"
+              style={{ animationDelay: `${index * 80}ms` }}
+            >
               <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-6 mb-4`}></div>
               <div className="flex items-center justify-between mb-4">
                 <Dumbbell className="h-8 w-8 text-primary-600" />
                 <span className="px-3 py-1 bg-primary-100 text-primary-700 text-sm font-semibold rounded-full">
-                  {program.level}
+                  {labelize(program.level)}
                 </span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-2">
@@ -64,7 +43,10 @@ export default function ProgramsPreview() {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Target className="h-4 w-4 mr-2" />
-                  <span>{program.equipment}</span>
+                  <span>{labelize(program.equipment)}</span>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {program.sessionsPerWeek} séances / semaine
                 </div>
               </div>
               <Link

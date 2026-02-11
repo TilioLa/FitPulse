@@ -5,6 +5,9 @@ import Providers from '@/components/Providers'
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
   description: 'Programmes personnalisés pour la musculation au poids du corps, avec élastiques et machines. Transformez votre corps avec des séances adaptées à votre niveau.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
@@ -13,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
       </body>

@@ -6,7 +6,7 @@ type AuthResponse = {
   createdAt: string
 }
 
-async function postAuth(endpoint: string, payload: Record<string, string>): Promise<AuthResponse> {
+async function postAuth(endpoint: string, payload: Record<string, string | undefined>): Promise<AuthResponse> {
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

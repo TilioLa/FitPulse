@@ -14,6 +14,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 })
     }
 
+    if (!email.endsWith('@gmail.com') && !email.endsWith('@googlemail.com')) {
+      return NextResponse.json({ error: "Merci d'utiliser une adresse Gmail" }, { status: 400 })
+    }
+
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
       return NextResponse.json({ error: 'Un compte existe déjà avec cet email' }, { status: 409 })
@@ -36,6 +40,11 @@ export async function POST(request: Request) {
       createdAt: user.createdAt.toISOString(),
     }, { status: 201 })
   } catch (error) {
-    return NextResponse.json({ error: 'Requête invalide' }, { status: 400 })
+    const message = error instanceof Error ? error.message : 'Erreur serveur'
+    console.error('Register error:', message)
+    return NextResponse.json(
+      { error: process.env.NODE_ENV === 'production' ? 'Erreur serveur' : message },
+      { status: 500 }
+    )
   }
 }

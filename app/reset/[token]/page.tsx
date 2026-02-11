@@ -2,9 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Lock } from 'lucide-react'
+import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ResetConfirmPage({ params }: { params: { token: string } }) {
   const router = useRouter()
@@ -47,13 +47,13 @@ export default function ResetConfirmPage({ params }: { params: { token: string }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <WithSidebar active="feed">
+        <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="card-soft">
             <div className="text-center mb-8">
               <Lock className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Nouveau mot de passe</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">Nouveau mot de passe</h1>
               <p className="text-gray-600">
                 Choisissez un nouveau mot de passe pour votre compte.
               </p>
@@ -107,8 +107,9 @@ export default function ResetConfirmPage({ params }: { params: { token: string }
               </p>
             )}
           </div>
-        </div>
-      </main>
+          </div>
+        </main>
+      </WithSidebar>
       <Footer />
     </div>
   )

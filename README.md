@@ -63,6 +63,20 @@ npx prisma migrate dev --name init
 npm run dev
 ```
 
+## 💳 Paiements Stripe (mode test)
+
+Ajoutez les variables Stripe dans `.env` :
+
+```env
+STRIPE_SECRET_KEY="sk_test_..."
+STRIPE_PRICE_ID_PRO="price_..."
+STRIPE_PRICE_ID_PROPLUS="price_..."
+STRIPE_SUCCESS_URL="http://localhost:3000/dashboard?checkout=success"
+STRIPE_CANCEL_URL="http://localhost:3000/pricing?checkout=cancel"
+```
+
+Les boutons Pro/Pro+ redirigent vers Stripe Checkout.
+
 ## 🔁 Mot de passe oublié (SMTP Gmail)
 
 Ajoutez les variables SMTP dans `.env` :
@@ -128,6 +142,7 @@ FitPulse/
 - Le sitemap et le robots.txt utilisent `https://fitpulse.fr` comme URL de base (à adapter pour la prod)
 - Les endpoints d'authentification (`/api/auth/*`) sont des stubs pour préparer l'intégration backend
 - Les endpoints `/api/auth/*` utilisent Prisma + Supabase
+- L'inscription est limitée aux adresses Gmail
 - Un champ `phone` est disponible pour le profil utilisateur
 
 ## 🚧 Prochaines étapes

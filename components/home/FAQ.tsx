@@ -26,7 +26,7 @@ const faqs = [
   },
   {
     question: "Comment suivre mes progrès ?",
-    answer: "Le dashboard vous permet de suivre vos séances complétées, vos streaks, vos statistiques de force et de condition physique. Vous pouvez voir votre évolution jour après jour avec des graphiques clairs et motivants."
+    answer: "Le dashboard affiche vos séances, votre streak et vos minutes totales. Vous voyez vite si vous progressez."
   }
 ]
 

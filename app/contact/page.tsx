@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Mail, Phone, MapPin } from 'lucide-react'
+import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ContactPage() {
   const [isSubmitted, setIsSubmitted] = useState(false)
@@ -15,19 +15,19 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-grow py-12">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">Nous contacter</h1>
-            <p className="text-lg text-gray-600">
-              Une question sur FitPulse ? Écrivez-nous et notre équipe vous répond rapidement.
-            </p>
-          </div>
+      <WithSidebar active="feed">
+        <main className="flex-grow py-12">
+          <div className="page-wrap">
+            <div className="mb-8">
+              <h1 className="section-title mb-3">Nous contacter</h1>
+              <p className="section-subtitle">
+                Une question sur FitPulse ? Écrivez-nous et notre équipe vous répond rapidement.
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <div className="card">
+              <div className="card-soft">
                 <h2 className="text-2xl font-semibold text-gray-900 mb-6">Envoyer un message</h2>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                   <div>
@@ -79,25 +79,17 @@ export default function ContactPage() {
             </div>
 
             <div className="space-y-6">
-              <div className="card">
+              <div className="card-soft">
                 <h3 className="text-xl font-semibold text-gray-900 mb-4">Coordonnées</h3>
                 <div className="space-y-3 text-gray-600">
                   <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-primary-600" />
-                    <span>contact@fitpulse.fr</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <Phone className="h-5 w-5 text-primary-600" />
-                    <span>+33 1 84 88 12 34</span>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <MapPin className="h-5 w-5 text-primary-600" />
-                    <span>10 rue de la Santé, 75014 Paris</span>
+                    <span>fitpulset@gmail.com</span>
                   </div>
                 </div>
               </div>
 
-              <div className="card bg-gradient-to-br from-primary-50 to-accent-50">
+              <div className="card-soft bg-gradient-to-br from-primary-50 to-accent-50">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Support prioritaire</h3>
                 <p className="text-gray-600">
                   Les abonnés Pro et Pro+ bénéficient d'une réponse sous 12 heures ouvrées.
@@ -105,8 +97,9 @@ export default function ContactPage() {
               </div>
             </div>
           </div>
-        </div>
-      </main>
+          </div>
+        </main>
+      </WithSidebar>
       <Footer />
     </div>
   )

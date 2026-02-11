@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { Mail } from 'lucide-react'
+import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ResetRequestPage() {
   const [email, setEmail] = useState('')
@@ -37,13 +37,13 @@ export default function ResetRequestPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+      <WithSidebar active="feed">
+        <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-md w-full">
+          <div className="card-soft">
             <div className="text-center mb-8">
               <Mail className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Réinitialiser le mot de passe</h1>
+              <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">Réinitialiser le mot de passe</h1>
               <p className="text-gray-600">
                 Entrez votre email pour recevoir un lien de réinitialisation.
               </p>
@@ -80,8 +80,9 @@ export default function ResetRequestPage() {
               </p>
             )}
           </div>
-        </div>
-      </main>
+          </div>
+        </main>
+      </WithSidebar>
       <Footer />
     </div>
   )

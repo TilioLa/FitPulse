@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
 import { signIn } from 'next-auth/react'
@@ -18,14 +17,20 @@ export default function ConnexionPage() {
     e.preventDefault()
     setError('')
 
-    if (!email || !password) {
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail || !password) {
       setError('Email ou mot de passe incorrect')
+      return
+    }
+
+    if (!normalizedEmail.endsWith('@gmail.com') && !normalizedEmail.endsWith('@googlemail.com')) {
+      setError("Merci d'utiliser une adresse Gmail")
       return
     }
 
     const signInResult = await signIn('credentials', {
       redirect: false,
-      email,
+      email: normalizedEmail,
       password,
     })
 
@@ -39,13 +44,12 @@ export default function ConnexionPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <Navbar />
       <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="card-soft">
             <div className="text-center mb-8">
               <LogIn className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+              <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">
                 Connexion
               </h1>
               <p className="text-gray-600">
