@@ -21,6 +21,9 @@ export default function StartProgramButton({
   overrideExercises?: { name: string; sets: number; reps: number; rest: number; videoUrl?: string }[]
 }) {
   const resolveNextSession = () => {
+    if (typeof window === 'undefined') {
+      return program.sessions[0]
+    }
     const historyRaw = localStorage.getItem('fitpulse_history')
     if (!historyRaw) return program.sessions[0]
     try {

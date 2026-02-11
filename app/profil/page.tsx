@@ -111,7 +111,7 @@ export default function ProfilPage() {
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Temps total</div>
                   <div className="text-4xl font-bold text-green-600">{stats.totalMinutes}</div>
-                  <div className="text-sm text-gray-600 mt-1">minutes d'entraînement</div>
+                  <div className="text-sm text-gray-600 mt-1">minutes d&apos;entraînement</div>
                 </div>
                 <Clock className="h-12 w-12 text-green-600" />
               </div>

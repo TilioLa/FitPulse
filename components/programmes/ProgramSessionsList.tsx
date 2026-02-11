@@ -1,26 +1,34 @@
 'use client'
 
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Clock } from 'lucide-react'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import { Program } from '@/data/programs'
 
 export default function ProgramSessionsList({ program }: { program: Program }) {
-  const { nextSessionId, completedIds } = useMemo(() => {
+  const [nextSessionId, setNextSessionId] = useState<string | undefined>(program.sessions[0]?.id)
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set<string>())
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
     try {
       const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as {
         programId?: string
         workoutId?: string
       }[]
       const completed = new Set(
-        history.filter((item) => item.programId === program.id).map((item) => item.workoutId)
+        history
+          .filter((item) => item.programId === program.id && item.workoutId)
+          .map((item) => item.workoutId!)
       )
       const next = program.sessions.find((session) => !completed.has(session.id)) || program.sessions[0]
-      return { nextSessionId: next?.id, completedIds: completed }
+      setCompletedIds(completed)
+      setNextSessionId(next?.id)
     } catch {
-      return { nextSessionId: program.sessions[0]?.id, completedIds: new Set<string>() }
+      setNextSessionId(program.sessions[0]?.id)
+      setCompletedIds(new Set())
     }
   }, [program])
 

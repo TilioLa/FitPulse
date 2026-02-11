@@ -13,7 +13,7 @@ export default function CgvPage() {
             <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Objet</h2>
               <p>
-                Les présentes conditions encadrent l'accès aux services FitPulse et les modalités d'abonnement aux
+                Les présentes conditions encadrent l&apos;accès aux services FitPulse et les modalités d&apos;abonnement aux
                 offres payantes.
               </p>
             </section>
@@ -29,14 +29,14 @@ export default function CgvPage() {
             <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Paiements</h2>
               <p>
-                Dans cette version démo, les paiements sont simulés et aucune transaction réelle n'est effectuée.
+                Dans cette version démo, les paiements sont simulés et aucune transaction réelle n&apos;est effectuée.
               </p>
             </section>
 
             <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Support</h2>
               <p>
-                Notre équipe reste disponible pour toute question à l'adresse fitpulset@gmail.com.
+                Notre équipe reste disponible pour toute question à l&apos;adresse fitpulset@gmail.com.
               </p>
             </section>
           </div>

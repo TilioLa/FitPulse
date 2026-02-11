@@ -22,7 +22,7 @@ export default function ConfidentialitePage() {
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Utilisation</h2>
               <p>
                 Les données sont utilisées pour personnaliser vos programmes, mesurer vos progrès et améliorer
-                l'expérience FitPulse.
+                l&apos;expérience FitPulse.
               </p>
             </section>
 
@@ -37,7 +37,7 @@ export default function ConfidentialitePage() {
             <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Vos droits</h2>
               <p>
-                Vous pouvez demander l'accès, la rectification ou la suppression de vos données en nous contactant.
+                Vous pouvez demander l&apos;accès, la rectification ou la suppression de vos données en nous contactant.
               </p>
             </section>
           </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIcon, Sparkles, History } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
@@ -8,17 +9,24 @@ import { useI18n } from '@/components/I18nProvider'
 
 type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
+type MenuItem = {
+  id: DashboardSection
+  labelKey: string
+  icon: LucideIcon
+  href?: string
+}
+
 interface SidebarProps {
   activeSection: DashboardSection
   setActiveSection: (section: DashboardSection) => void
 }
 
-const menuItems = [
-  { id: 'feed' as DashboardSection, labelKey: 'feed', icon: Home },
-  { id: 'session' as DashboardSection, labelKey: 'session', icon: Activity, href: '/dashboard?view=session' },
-  { id: 'history' as DashboardSection, labelKey: 'history', icon: History },
-  { id: 'programs' as DashboardSection, labelKey: 'programs', icon: BookOpen },
-  { id: 'routines' as DashboardSection, labelKey: 'routines', icon: FolderPlus },
+const menuItems: MenuItem[] = [
+  { id: 'feed', labelKey: 'feed', icon: Home },
+  { id: 'session', labelKey: 'session', icon: Activity, href: '/dashboard?view=session' },
+  { id: 'history', labelKey: 'history', icon: History },
+  { id: 'programs', labelKey: 'programs', icon: BookOpen },
+  { id: 'routines', labelKey: 'routines', icon: FolderPlus },
   { id: 'exercises', labelKey: 'exercises', icon: Dumbbell, href: '/exercices' },
 ]
 
@@ -45,7 +53,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
-          if ('href' in item) {
+          if (item.href) {
             return (
               <Link
                 key={item.id}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/dashboard/Sidebar'
 import ProgramsList from '@/components/programmes/ProgramsList'
 // Social feed removed for now
@@ -17,7 +17,6 @@ type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [activeSection, setActiveSection] = useState<DashboardSection>('feed')
   const { status } = useSession()
 
@@ -27,11 +26,17 @@ export default function DashboardPage() {
     }
   }, [router, status])
 
+  const scheduleSection = (section: DashboardSection) => {
+    queueMicrotask(() => {
+      setActiveSection((prev) => (prev !== section ? section : prev))
+    })
+  }
+
   useEffect(() => {
     if (status !== 'authenticated') return
-    const view = searchParams?.get('view')
+    const view = new URLSearchParams(window.location.search).get('view')
     if (view === 'session') {
-      setActiveSection('session')
+      scheduleSection('session')
       return
     }
     try {
@@ -39,12 +44,12 @@ export default function DashboardPage() {
       if (!stored) return
       const parsed = JSON.parse(stored)
       if (parsed?.status === 'in_progress') {
-        setActiveSection('session')
+        scheduleSection('session')
       }
     } catch {
       // ignore
     }
-  }, [searchParams, status])
+  }, [status])
 
   if (status === 'loading') {
     return (
@@ -84,14 +89,16 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      <div className="flex flex-grow">
-        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-grow p-6 lg:p-8">
-          {renderSection()}
-        </main>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Chargement du dashboard...</div>}>
+      <div className="min-h-screen flex flex-col bg-gray-50">
+        <div className="flex flex-grow">
+          <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
+          <main className="flex-grow p-6 lg:p-8">
+            {renderSection()}
+          </main>
+        </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
+    </Suspense>
   )
 }

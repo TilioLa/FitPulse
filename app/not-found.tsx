@@ -13,10 +13,10 @@ export default function NotFound() {
             Page introuvable
           </h1>
           <p className="text-gray-600 mb-6">
-            La page que vous cherchez n'existe pas ou a été déplacée.
+            La page que vous cherchez n&apos;existe pas ou a été déplacée.
           </p>
           <Link href="/" className="btn-primary">
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
           </div>
         </main>

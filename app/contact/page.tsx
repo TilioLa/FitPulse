@@ -92,7 +92,7 @@ export default function ContactPage() {
               <div className="card-soft bg-gradient-to-br from-primary-50 to-accent-50">
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">Support prioritaire</h3>
                 <p className="text-gray-600">
-                  Les abonnés Pro et Pro+ bénéficient d'une réponse sous 12 heures ouvrées.
+                  Les abonnés Pro et Pro+ bénéficient d&apos;une réponse sous 12 heures ouvrées.
                 </p>
               </div>
             </div>

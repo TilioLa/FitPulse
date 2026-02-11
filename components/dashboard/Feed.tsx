@@ -45,7 +45,7 @@ export default function Feed() {
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5)
         .map((item) => ({
-          id: item.id,
+          id: `${item.workoutId || item.programId || item.date}`,
           workoutName: item.workoutName,
           date: item.date,
           duration: item.duration,

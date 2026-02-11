@@ -99,7 +99,7 @@ export default function InscriptionPage() {
                 Créer un compte
               </h1>
               <p className="text-gray-600">
-                Commencez votre parcours fitness dès aujourd'hui
+                Commencez votre parcours fitness dès aujourd&apos;hui
               </p>
             </div>
 

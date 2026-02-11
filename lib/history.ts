@@ -1,7 +1,35 @@
+export type WorkoutHistoryMuscleUse = {
+  id: string
+  percent: number
+}
+
+export type WorkoutExerciseHistory = {
+  id: string
+  name: string
+  notes: string
+  sets: { weight: number; reps: number }[]
+}
+
+export type WorkoutRecord = {
+  id: string
+  name: string
+  bestOneRm: number
+  bestWeight: number
+}
+
 export type WorkoutHistoryItem = {
+  id: string
   workoutId: string
+  workoutName: string
+  programId?: string
+  programName?: string
   date: string
   duration: number
+  calories?: number
+  volume?: number
+  records?: WorkoutRecord[]
+  muscleUsage?: WorkoutHistoryMuscleUse[]
+  exercises?: WorkoutExerciseHistory[]
 }
 
 export function toLocalDateKey(value: string | Date) {
