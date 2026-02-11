@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint -c node_modules/eslint-config-next/dist/core-web-vitals.js . --ext .ts,.tsx"
+    "lint": "eslint -c node_modules/eslint-config-next/dist/core-web-vitals.js . --ext .ts,.tsx",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.7.2",
