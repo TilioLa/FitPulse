@@ -16,13 +16,15 @@ import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X } from 'lucide
 import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
 
+type SessionExercise = { name: string; sets: number; reps: number; rest: number; videoUrl?: string }
+
 export default function SessionDetailPage() {
   const params = useParams<{ id?: string; sessionId?: string }>()
   const [isStarted, setIsStarted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
-  const [customExercises, setCustomExercises] = useState<{ name: string; sets: number; reps: number; rest: number }[]>([])
+  const [customExercises, setCustomExercises] = useState<SessionExercise[]>([])
 
   const { program, session } = useMemo(() => {
     const rawId = decodeURIComponent(params?.id || '').trim()
