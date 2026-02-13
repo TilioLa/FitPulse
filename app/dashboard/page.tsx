@@ -6,7 +6,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import ProgramsList from '@/components/programmes/ProgramsList'
 // Social feed removed for now
 import Footer from '@/components/Footer'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 import CustomRoutines from '@/components/dashboard/CustomRoutines'
 import Feed from '@/components/dashboard/Feed'
 import History from '@/components/dashboard/History'
@@ -18,7 +18,7 @@ type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines'
 export default function DashboardPage() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState<DashboardSection>('feed')
-  const { status } = useSession()
+  const { status } = useAuth()
 
   useEffect(() => {
     if (status === 'unauthenticated') {

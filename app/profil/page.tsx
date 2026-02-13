@@ -4,13 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
 import { User, Calendar, Trophy, TrendingUp, Clock } from 'lucide-react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ProfilPage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
+  const { user, status } = useAuth()
   const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
 
   useEffect(() => {
@@ -19,13 +19,14 @@ export default function ProfilPage() {
       return
     }
 
-    // Charger les statistiques locales
-    const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-    const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
-    setStats({
-      streak,
-      completedWorkouts: totalWorkouts,
-      totalMinutes,
+    queueMicrotask(() => {
+      const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+      const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
+      setStats({
+        streak,
+        completedWorkouts: totalWorkouts,
+        totalMinutes,
+      })
     })
   }, [router, status])
 
@@ -58,11 +59,11 @@ export default function ProfilPage() {
               </div>
               <div className="flex-1">
                 <h1 className="section-title mb-2">
-                  {session?.user?.name || 'Utilisateur FitPulse'}
+                  {user?.name || 'Utilisateur FitPulse'}
                 </h1>
-                <p className="text-gray-600 mb-1">{session?.user?.email}</p>
-                {session?.user?.phone && (
-                  <p className="text-gray-600 mb-1">{session.user.phone}</p>
+                <p className="text-gray-600 mb-1">{user?.email}</p>
+                {user?.phone && (
+                  <p className="text-gray-600 mb-1">{user.phone}</p>
                 )}
                 <p className="text-sm text-gray-500">
                   Membre depuis {new Date().toLocaleDateString('fr-FR', {
@@ -159,11 +160,16 @@ function HistoryList() {
   const [history, setHistory] = useState<any[]>([])
 
   useEffect(() => {
-    const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-    const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
-    setHistory(deduped.sort((a: any, b: any) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    ).slice(0, 5))
+    queueMicrotask(() => {
+      const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+      const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
+      setHistory(
+        deduped
+          .slice()
+          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 5)
+      )
+    })
   }, [])
 
   if (history.length === 0) {

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { Search, Plus, Dumbbell, ImageIcon } from 'lucide-react'
@@ -24,7 +24,7 @@ const CUSTOM_KEY = 'fitpulse_custom_exercises'
 
 export default function ExercicesPage() {
   const router = useRouter()
-  const { status } = useSession()
+  const { status } = useAuth()
   const [query, setQuery] = useState('')
   const [equipment, setEquipment] = useState('all')
   const [muscle, setMuscle] = useState('all')
@@ -38,11 +38,14 @@ export default function ExercicesPage() {
   }, [router, status])
 
   useEffect(() => {
+    const applyStored = (value: ExerciseCatalogItem[]) => {
+      queueMicrotask(() => setCustomExercises(value))
+    }
     try {
-      const stored = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]')
-      setCustomExercises(stored)
+      const stored = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]') as ExerciseCatalogItem[]
+      applyStored(stored)
     } catch {
-      setCustomExercises([])
+      applyStored([])
     }
   }, [])
 

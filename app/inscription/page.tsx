@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { UserPlus, Mail, Lock, User } from 'lucide-react'
-import { registerUser } from '@/lib/authApi'
-import { signIn } from 'next-auth/react'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 
 export default function InscriptionPage() {
   const router = useRouter()
@@ -41,26 +40,30 @@ export default function InscriptionPage() {
 
     const normalizedEmail = email.trim().toLowerCase()
 
-    // Créer le compte
-    let newUser = {
-      id: Date.now().toString(),
-      name: name || normalizedEmail.split('@')[0],
-      email: normalizedEmail,
-      password, // En production, ne jamais stocker le mot de passe en clair !
-      phone: phone || undefined,
-      createdAt: new Date().toISOString(),
-    }
+    const safeName = name || normalizedEmail.split('@')[0]
 
     try {
-      const apiUser = await registerUser(newUser.name, normalizedEmail, password, phone || undefined)
-      newUser = { ...newUser, ...apiUser, phone: apiUser.phone ?? undefined }
-      const signInResult = await signIn('credentials', {
-        redirect: false,
+      const supabase = getSupabaseBrowserClient()
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            full_name: safeName,
+            phone: phone || null,
+          },
+        },
+      })
+      if (signUpError) {
+        throw signUpError
+      }
+
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
       })
-      if (signInResult?.error) {
-        throw new Error(signInResult.error)
+      if (signInError) {
+        throw new Error("Compte créé. Vérifiez vos emails si la confirmation est activée, puis connectez-vous.")
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
