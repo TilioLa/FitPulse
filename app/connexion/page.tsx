@@ -23,11 +23,6 @@ export default function ConnexionPage() {
       return
     }
 
-    if (!normalizedEmail.endsWith('@gmail.com') && !normalizedEmail.endsWith('@googlemail.com')) {
-      setError("Merci d'utiliser une adresse Gmail")
-      return
-    }
-
     const signInResult = await signIn('credentials', {
       redirect: false,
       email: normalizedEmail,

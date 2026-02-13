@@ -40,10 +40,6 @@ export default function InscriptionPage() {
     }
 
     const normalizedEmail = email.trim().toLowerCase()
-    if (!normalizedEmail.endsWith('@gmail.com') && !normalizedEmail.endsWith('@googlemail.com')) {
-      setError("Merci d'utiliser une adresse Gmail pour l'inscription")
-      return
-    }
 
     // Créer le compte
     let newUser = {
@@ -60,7 +56,7 @@ export default function InscriptionPage() {
       newUser = { ...newUser, ...apiUser, phone: apiUser.phone ?? undefined }
       const signInResult = await signIn('credentials', {
         redirect: false,
-        email,
+        email: normalizedEmail,
         password,
       })
       if (signInResult?.error) {

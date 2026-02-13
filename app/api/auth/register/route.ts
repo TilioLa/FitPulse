@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(request: Request) {
@@ -14,8 +15,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Email et mot de passe requis' }, { status: 400 })
     }
 
-    if (!email.endsWith('@gmail.com') && !email.endsWith('@googlemail.com')) {
-      return NextResponse.json({ error: "Merci d'utiliser une adresse Gmail" }, { status: 400 })
+    if (password.length < 6) {
+      return NextResponse.json({ error: 'Le mot de passe doit contenir au moins 6 caractères' }, { status: 400 })
     }
 
     const existing = await prisma.user.findUnique({ where: { email } })
@@ -40,6 +41,15 @@ export async function POST(request: Request) {
       createdAt: user.createdAt.toISOString(),
     }, { status: 201 })
   } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json({ error: 'Un compte existe déjà avec cet email' }, { status: 409 })
+      }
+      if (error.code === 'P2021' || error.code === 'P2022') {
+        return NextResponse.json({ error: 'Base de données non initialisée en production' }, { status: 500 })
+      }
+    }
+
     const message = error instanceof Error ? error.message : 'Erreur serveur'
     console.error('Register error:', message)
     return NextResponse.json(
