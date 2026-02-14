@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { muscleLabel } from '@/lib/muscles'
+import { recommendProgram } from '@/lib/recommendation'
 
 type FeedItem = {
   id: string
@@ -48,6 +49,11 @@ export default function Feed() {
     delta: 0,
     suggestion: 'Commence avec une charge modérée et augmente progressivement.',
   })
+  const [deloadAlert, setDeloadAlert] = useState<{
+    active: boolean
+    reason?: string
+    action?: string
+  }>({ active: false })
 
   useEffect(() => {
     try {
@@ -149,6 +155,23 @@ export default function Feed() {
         delta,
         suggestion,
       })
+      const monthlySessionRate = sessions
+      const highVolumeSpike = delta >= 20 && currentLoad > 0
+      const highFrequency = monthlySessionRate >= 12
+      const needsDeload = highVolumeSpike || (delta >= 12 && highFrequency)
+      setDeloadAlert(
+        needsDeload
+          ? {
+              active: true,
+              reason:
+                delta >= 20
+                  ? `Charge +${delta}% vs semaine précédente`
+                  : `Fréquence élevée (${monthlySessionRate} séances ce mois-ci)`,
+              action:
+                'Semaine prochaine: -30% de volume, garde la technique, puis reprise progressive.',
+            }
+          : { active: false }
+      )
 
       const lastProgramEntry = stored.find((item) => (item as any).programId)
       if (lastProgramEntry) {
@@ -172,23 +195,14 @@ export default function Feed() {
           level?: string
           goals?: string[]
           equipment?: string[]
+          sessionsPerWeek?: number
         }
-        const level = String(settings.level || '').toLowerCase()
-        const goals = (settings.goals || []).map((goal) => goal.toLowerCase())
-        const equipments = (settings.equipment || []).map((equipment) => equipment.toLowerCase())
-        const pick = programs
-          .map((program) => {
-            let score = 0
-            const programLevel = program.level.toLowerCase()
-            const programGoals = program.goals.map((goal) => goal.toLowerCase())
-            const programEquipment = program.equipment.toLowerCase()
-            if (level && programLevel.includes(level)) score += 2
-            if (goals.some((goal) => programGoals.some((programGoal) => programGoal.includes(goal)))) score += 2
-            if (equipments.some((equipment) => programEquipment.includes(equipment))) score += 3
-            if (program.recommended) score += 1
-            return { program, score }
-          })
-          .sort((a, b) => b.score - a.score)[0]?.program
+        const pick = recommendProgram(programs, {
+          level: settings.level,
+          goals: settings.goals,
+          equipment: settings.equipment,
+          sessionsPerWeek: settings.sessionsPerWeek,
+        })?.program
 
         setFocus({
           programId: pick?.id,
@@ -260,6 +274,16 @@ export default function Feed() {
                 </Link>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {deloadAlert.active && (
+        <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">Alerte récupération</div>
+          <div className="mt-1 text-base font-semibold text-amber-900">Deload recommandé</div>
+          <div className="mt-1 text-sm text-amber-800">
+            {deloadAlert.reason}. {deloadAlert.action}
           </div>
         </div>
       )}
