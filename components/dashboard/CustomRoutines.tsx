@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/ToastProvider'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCustomRoutinesForUser, persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import { getEntitlement, hasProAccess } from '@/lib/subscription'
 
 type RoutineExercise = {
   name: string
@@ -61,8 +62,6 @@ const templates = [
 ]
 
 const STORAGE_KEY = 'fitpulse_custom_routines'
-const PLAN_KEY = 'fitpulse_plan'
-
 function loadRoutines(): Routine[] {
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
@@ -89,6 +88,7 @@ export default function CustomRoutines() {
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
+  const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   useEffect(() => {
     const apply = () => setRoutines(loadRoutines())
@@ -107,11 +107,18 @@ export default function CustomRoutines() {
     }
   }, [pickerOpen])
 
-
-  const isPro = useMemo(() => {
-    return localStorage.getItem(PLAN_KEY) === 'pro'
+  useEffect(() => {
+    const apply = () => setEntitlement(getEntitlement())
+    apply()
+    window.addEventListener('fitpulse-plan', apply)
+    window.addEventListener('storage', apply)
+    return () => {
+      window.removeEventListener('fitpulse-plan', apply)
+      window.removeEventListener('storage', apply)
+    }
   }, [])
 
+  const isPro = useMemo(() => hasProAccess(entitlement), [entitlement])
   const canCreate = isPro || routines.length < 5
 
   const handleAddExercise = () => {
@@ -211,9 +218,17 @@ export default function CustomRoutines() {
         <p className="section-subtitle">
           Crée tes routines personnalisées. Limite gratuite : 5 routines.
         </p>
+        {entitlement.isTrialActive && entitlement.plan === 'free' && (
+          <div className="mt-4 rounded-lg border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
+            Essai premium actif: {entitlement.trialDaysLeft} jour(s) restant(s).
+          </div>
+        )}
         {!isPro && (
           <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Tu as {routines.length}/5 routines. Pour en créer plus, passe Pro.
+            <a href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
+              Voir les plans
+            </a>
           </div>
         )}
       </div>

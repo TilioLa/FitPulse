@@ -17,6 +17,7 @@ import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import { canAccessProgram, getEntitlement } from '@/lib/subscription'
 
 type SessionExercise = { name: string; sets: number; reps: number; rest: number; videoUrl?: string }
 
@@ -30,6 +31,7 @@ export default function SessionDetailPage() {
   const [customExercises, setCustomExercises] = useState<SessionExercise[]>([])
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
   const [nextUnlockedId, setNextUnlockedId] = useState<string | undefined>(undefined)
+  const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   const { program, session } = useMemo(() => {
     const rawId = decodeURIComponent(params?.id || '').trim()
@@ -56,6 +58,17 @@ export default function SessionDetailPage() {
 
     return { program: foundProgram, session: foundSession }
   }, [params])
+
+  useEffect(() => {
+    const apply = () => setEntitlement(getEntitlement())
+    apply()
+    window.addEventListener('fitpulse-plan', apply)
+    window.addEventListener('storage', apply)
+    return () => {
+      window.removeEventListener('fitpulse-plan', apply)
+      window.removeEventListener('storage', apply)
+    }
+  }, [])
 
   useEffect(() => {
     if (!program || !session) return
@@ -118,6 +131,7 @@ export default function SessionDetailPage() {
     !completedIds.has(session.id) &&
     !!nextUnlockedId &&
     session.id !== nextUnlockedId
+  const isProgramLocked = !!program && !canAccessProgram(program.id, entitlement)
 
   useEffect(() => {
     if (!session) return
@@ -213,6 +227,19 @@ export default function SessionDetailPage() {
               <p className="text-gray-600 mb-6">Impossible de charger cette séance. Retourne aux programmes.</p>
               <Link href="/programmes" className="btn-primary">
                 Voir les programmes
+              </Link>
+            </div>
+          ) : isProgramLocked ? (
+            <div className="card-soft text-center py-12">
+              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h1 className="section-title mb-3">Programme premium</h1>
+              <p className="text-gray-600 mb-6">
+                Cette séance est réservée au plan Pro.
+              </p>
+              <Link href="/pricing" className="btn-primary">
+                Voir les plans
               </Link>
             </div>
           ) : isLocked ? (

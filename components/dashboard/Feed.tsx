@@ -8,6 +8,7 @@ import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { muscleLabel } from '@/lib/muscles'
 import { recommendProgram } from '@/lib/recommendation'
+import { getEntitlement, hasProAccess } from '@/lib/subscription'
 
 type FeedItem = {
   id: string
@@ -54,6 +55,18 @@ export default function Feed() {
     reason?: string
     action?: string
   }>({ active: false })
+  const [entitlement, setEntitlement] = useState(() => getEntitlement())
+
+  useEffect(() => {
+    const applyPlan = () => setEntitlement(getEntitlement())
+    applyPlan()
+    window.addEventListener('fitpulse-plan', applyPlan)
+    window.addEventListener('storage', applyPlan)
+    return () => {
+      window.removeEventListener('fitpulse-plan', applyPlan)
+      window.removeEventListener('storage', applyPlan)
+    }
+  }, [])
 
   useEffect(() => {
     try {
@@ -238,6 +251,16 @@ export default function Feed() {
         </div>
         <div className="text-xs text-gray-500">Dernière mise à jour automatique</div>
       </div>
+      {!hasProAccess(entitlement) && (
+        <div className="mb-8 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
+          {entitlement.isTrialActive
+            ? `Essai premium actif: ${entitlement.trialDaysLeft} jour(s) restant(s).`
+            : 'Passe en Pro pour débloquer tous les programmes et routines.'}
+          <Link href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
+            Voir les plans
+          </Link>
+        </div>
+      )}
 
       {focus && (
         <div className="mb-8 rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-white p-8 shadow-sm reveal">

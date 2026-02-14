@@ -10,6 +10,7 @@ import { persistSettingsForUser } from '@/lib/user-state-store'
 import { programs } from '@/data/programs'
 import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
+import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
 
 export default function InscriptionPage() {
   const router = useRouter()
@@ -126,6 +127,8 @@ export default function InscriptionPage() {
       weight: weight ? Number(weight) : undefined,
       height: height ? Number(height) : undefined,
     }))
+    setStoredPlan('free')
+    ensureTrialStarted()
 
     router.push('/dashboard')
   }

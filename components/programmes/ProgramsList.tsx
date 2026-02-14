@@ -1,16 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Dumbbell, Timer, Target, Filter, ArrowRight } from 'lucide-react'
+import { Dumbbell, Timer, Target, Filter, ArrowRight, Lock } from 'lucide-react'
 import { programs as allPrograms } from '@/data/programs'
 import { labelize } from '@/lib/labels'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
+import { canAccessProgram, getEntitlement } from '@/lib/subscription'
 
 export default function ProgramsList() {
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
+  const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   const levels = ['all', 'Debutant', 'Intermediaire', 'Avance', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Elastiques', 'Machines', 'Halteres', 'Aucun materiel']
@@ -22,6 +24,17 @@ export default function ProgramsList() {
     const bodyPartMatch = selectedBodyPart === 'all' || program.bodyParts.includes(selectedBodyPart)
     return levelMatch && equipmentMatch && bodyPartMatch
   })
+
+  useEffect(() => {
+    const apply = () => setEntitlement(getEntitlement())
+    apply()
+    window.addEventListener('fitpulse-plan', apply)
+    window.addEventListener('storage', apply)
+    return () => {
+      window.removeEventListener('fitpulse-plan', apply)
+      window.removeEventListener('storage', apply)
+    }
+  }, [])
 
   return (
     <div>
@@ -84,6 +97,7 @@ export default function ProgramsList() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPrograms.map((program, index) => {
           const programHref = `/programmes/${program.slug}`
+          const unlocked = canAccessProgram(program.id, entitlement)
           return (
           <div
             key={program.id}
@@ -142,11 +156,18 @@ export default function ProgramsList() {
                 Voir le détail
                 <ArrowRight className="h-4 w-4 ml-2" />
               </Link>
-              <StartProgramButton
-                program={program}
-                label="Démarrer la prochaine séance"
-                className="btn-primary w-full flex items-center justify-center space-x-2 shadow-md"
-              />
+              {unlocked ? (
+                <StartProgramButton
+                  program={program}
+                  label="Démarrer la prochaine séance"
+                  className="btn-primary w-full flex items-center justify-center space-x-2 shadow-md"
+                />
+              ) : (
+                <Link href="/pricing" className="btn-secondary w-full flex items-center justify-center space-x-2">
+                  <Lock className="h-4 w-4" />
+                  <span>Débloquer en Pro</span>
+                </Link>
+              )}
             </div>
           </div>
         )})}

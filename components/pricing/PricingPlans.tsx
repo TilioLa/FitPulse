@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Check, X, Zap, Crown, ArrowRight } from 'lucide-react'
 import { useToast } from '@/components/ui/ToastProvider'
+import { ensureTrialStarted, getEntitlement, setStoredPlan } from '@/lib/subscription'
 
 const plans = [
   {
@@ -80,7 +81,22 @@ export default function PricingPlans() {
     setSelectedPlan(planId)
 
     if (planId === 'free') {
+      setStoredPlan('free')
+      ensureTrialStarted()
       push('Plan gratuit sélectionné. Créez un compte pour commencer.', 'info')
+      return
+    }
+
+    if (process.env.NEXT_PUBLIC_ENABLE_BILLING !== 'true') {
+      setStoredPlan(planId === 'proplus' ? 'proplus' : 'pro')
+      ensureTrialStarted()
+      const entitlement = getEntitlement()
+      push(
+        entitlement.isTrialActive
+          ? `Mode démo activé. Essai premium: ${entitlement.trialDaysLeft} jour(s) restant(s).`
+          : 'Mode démo activé. Plan premium local appliqué.',
+        'success'
+      )
       return
     }
 

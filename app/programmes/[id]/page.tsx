@@ -8,6 +8,7 @@ import { Dumbbell, Timer, CalendarCheck } from 'lucide-react'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import ProgramSessionsList from '@/components/programmes/ProgramSessionsList'
 import ProgramSchedulePicker from '@/components/programmes/ProgramSchedulePicker'
+import ProgramAccessGate from '@/components/programmes/ProgramAccessGate'
 import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default async function ProgramDetailPage({ params }: { params: { id?: string } | Promise<{ id?: string }> }) {
@@ -70,6 +71,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
               </Link>
             </div>
 
+            <ProgramAccessGate programId={program.id}>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <div className="card">
@@ -138,6 +140,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
               </div>
             </div>
           </div>
+          </ProgramAccessGate>
           </div>
         </main>
       </WithSidebar>
