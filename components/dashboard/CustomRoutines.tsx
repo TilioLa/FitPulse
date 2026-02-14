@@ -5,6 +5,8 @@ import { PlusCircle, Dumbbell, Play } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/ToastProvider'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { persistCustomRoutinesForUser, persistCurrentWorkoutForUser } from '@/lib/user-state-store'
 
 type RoutineExercise = {
   name: string
@@ -75,6 +77,7 @@ function saveRoutines(routines: Routine[]) {
 
 export default function CustomRoutines() {
   const router = useRouter()
+  const { user } = useAuth()
   const { push } = useToast()
   const [routines, setRoutines] = useState<Routine[]>([])
   const [name, setName] = useState('')
@@ -88,7 +91,10 @@ export default function CustomRoutines() {
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
 
   useEffect(() => {
-    setRoutines(loadRoutines())
+    const apply = () => setRoutines(loadRoutines())
+    apply()
+    window.addEventListener('fitpulse-custom-routines', apply)
+    return () => window.removeEventListener('fitpulse-custom-routines', apply)
   }, [])
 
   useEffect(() => {
@@ -138,6 +144,9 @@ export default function CustomRoutines() {
       const next = routines.map((routine) => (routine.id === editingRoutineId ? updated : routine))
       setRoutines(next)
       saveRoutines(next)
+      if (user?.id) {
+        void persistCustomRoutinesForUser(user.id, next as unknown as Record<string, unknown>[])
+      }
       setEditingRoutineId(null)
       setName('')
       setEquipment('Poids du corps')
@@ -158,6 +167,9 @@ export default function CustomRoutines() {
     const next = [routine, ...routines]
     setRoutines(next)
     saveRoutines(next)
+    if (user?.id) {
+      void persistCustomRoutinesForUser(user.id, next as unknown as Record<string, unknown>[])
+    }
     setName('')
     setEquipment('Poids du corps')
     setSessionsPerWeek(3)
@@ -169,6 +181,9 @@ export default function CustomRoutines() {
     const next = routines.filter((routine) => routine.id !== id)
     setRoutines(next)
     saveRoutines(next)
+    if (user?.id) {
+      void persistCustomRoutinesForUser(user.id, next as unknown as Record<string, unknown>[])
+    }
   }
 
   const startRoutine = (routine: Routine) => {
@@ -183,6 +198,9 @@ export default function CustomRoutines() {
       })),
     }
     localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+    if (user?.id) {
+      void persistCurrentWorkoutForUser(user.id, workout as unknown as Record<string, unknown>)
+    }
     router.push('/dashboard?view=session')
   }
 

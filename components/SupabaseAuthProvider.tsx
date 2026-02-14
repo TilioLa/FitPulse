@@ -4,6 +4,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 import { syncHistoryForUser } from '@/lib/history-store'
+import { syncUserStateForUser } from '@/lib/user-state-store'
+import { logClientEvent } from '@/lib/client-telemetry'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -56,7 +58,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     const mapped = mapUser(data.session?.user ?? null)
     if (mapped) {
       setStatus('loading')
-      await syncHistoryForUser(mapped.id)
+      await Promise.all([syncHistoryForUser(mapped.id), syncUserStateForUser(mapped.id)])
       setUser(mapped)
       setStatus('authenticated')
       return
@@ -83,12 +85,44 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       }
       setStatus('loading')
       void (async () => {
-        await syncHistoryForUser(mapped.id)
+        await Promise.all([syncHistoryForUser(mapped.id), syncUserStateForUser(mapped.id)])
         setUser(mapped)
         setStatus('authenticated')
       })()
     })
     return () => data.subscription.unsubscribe()
+  }, [])
+
+  useEffect(() => {
+    const onError = (event: ErrorEvent) => {
+      void logClientEvent({
+        level: 'error',
+        message: event.message || 'Client runtime error',
+        meta: {
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+        },
+      })
+    }
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => {
+      void logClientEvent({
+        level: 'error',
+        message: 'Unhandled promise rejection',
+        meta: {
+          reason:
+            typeof event.reason === 'string'
+              ? event.reason
+              : (event.reason as { message?: string })?.message || 'unknown',
+        },
+      })
+    }
+    window.addEventListener('error', onError)
+    window.addEventListener('unhandledrejection', onUnhandledRejection)
+    return () => {
+      window.removeEventListener('error', onError)
+      window.removeEventListener('unhandledrejection', onUnhandledRejection)
+    }
   }, [])
 
   const value = useMemo<AuthContextValue>(() => ({

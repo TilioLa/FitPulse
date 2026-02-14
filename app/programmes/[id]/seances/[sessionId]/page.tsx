@@ -15,11 +15,14 @@ import { labelize } from '@/lib/labels'
 import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X, Lock } from 'lucide-react'
 import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
 
 type SessionExercise = { name: string; sets: number; reps: number; rest: number; videoUrl?: string }
 
 export default function SessionDetailPage() {
   const params = useParams<{ id?: string; sessionId?: string }>()
+  const { user } = useAuth()
   const [isStarted, setIsStarted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -145,6 +148,9 @@ export default function SessionDetailPage() {
       })),
     }
     localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+    if (user?.id) {
+      void persistCurrentWorkoutForUser(user.id, workout as Record<string, unknown>)
+    }
     setIsStarted(true)
   }
 

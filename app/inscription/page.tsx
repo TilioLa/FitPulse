@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { UserPlus, Mail, Lock, User } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { persistSettingsForUser } from '@/lib/user-state-store'
 
 export default function InscriptionPage() {
   const router = useRouter()
@@ -59,12 +60,30 @@ export default function InscriptionPage() {
         throw signUpError
       }
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,
         password,
       })
       if (signInError) {
         throw new Error("Compte créé. Vérifiez vos emails si la confirmation est activée, puis connectez-vous.")
+      }
+
+      const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
+      const initialSettings = {
+        level,
+        goals: normalizedGoals,
+        goal: normalizedGoals[0],
+        equipment,
+        restTime: 60,
+        weightUnit: 'kg',
+        sessionsPerWeek,
+        focusZones,
+        avoidZones,
+        weight: weight ? Number(weight) : undefined,
+        height: height ? Number(height) : undefined,
+      }
+      if (signInData.user?.id) {
+        void persistSettingsForUser(signInData.user.id, initialSettings)
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')

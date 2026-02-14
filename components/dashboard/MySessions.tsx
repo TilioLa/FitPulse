@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistHistoryForUser } from '@/lib/history-store'
+import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
 
 const playBeep = () => {
   try {
@@ -160,6 +161,9 @@ export default function MySessions() {
       }
       setWorkout(defaultWorkout)
       localStorage.setItem('fitpulse_current_workout', JSON.stringify(defaultWorkout))
+      if (user?.id) {
+        void persistCurrentWorkoutForUser(user.id, defaultWorkout as unknown as Record<string, unknown>)
+      }
       const inputs: ExerciseInputs = {}
       defaultWorkout.exercises.forEach((exercise) => {
         inputs[exercise.id] = Array.from({ length: exercise.sets }).map(() => ({
@@ -410,6 +414,9 @@ export default function MySessions() {
     setIsRunning(false)
     if (workout) {
       localStorage.removeItem('fitpulse_current_workout')
+      if (user?.id) {
+        void persistCurrentWorkoutForUser(user.id, null)
+      }
     }
     setLastSummary({
       calories: caloriesBurned,
@@ -427,6 +434,9 @@ export default function MySessions() {
     const updated = { ...workout, exercises: nextExercises }
     setWorkout(updated)
     localStorage.setItem('fitpulse_current_workout', JSON.stringify(updated))
+    if (user?.id) {
+      void persistCurrentWorkoutForUser(user.id, updated as unknown as Record<string, unknown>)
+    }
     setExerciseInputs((prev) => {
       const next: ExerciseInputs = {}
       nextExercises.forEach((exercise, index) => {
