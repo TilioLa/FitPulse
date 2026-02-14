@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Footer from '@/components/Footer'
 import { Mail } from 'lucide-react'
 import WithSidebar from '@/components/layouts/WithSidebar'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 
 export default function ResetRequestPage() {
   const [email, setEmail] = useState('')
@@ -16,15 +17,13 @@ export default function ResetRequestPage() {
     setMessage('')
 
     try {
-      const response = await fetch('/api/auth/reset/request', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+      const supabase = getSupabaseBrowserClient()
+      const redirectTo = `${window.location.origin}/reset/update`
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo,
       })
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}))
-        throw new Error(data?.error || 'Erreur serveur')
+      if (error) {
+        throw error
       }
 
       setStatus('success')

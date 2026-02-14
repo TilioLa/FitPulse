@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -39,6 +39,11 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<AppUser | null>(null)
 
   const applySession = async () => {
+    if (!isSupabaseConfigured()) {
+      setStatus('unauthenticated')
+      setUser(null)
+      return
+    }
     const supabase = getSupabaseBrowserClient()
     const { data, error } = await supabase.auth.getSession()
     if (error) {
@@ -52,6 +57,11 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   }
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setStatus('unauthenticated')
+      setUser(null)
+      return
+    }
     const supabase = getSupabaseBrowserClient()
     void applySession()
 
@@ -68,12 +78,20 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     user,
     reload: applySession,
     signOut: async () => {
+      if (!isSupabaseConfigured()) {
+        setUser(null)
+        setStatus('unauthenticated')
+        return
+      }
       const supabase = getSupabaseBrowserClient()
       await supabase.auth.signOut()
       setUser(null)
       setStatus('unauthenticated')
     },
     updateProfile: async ({ name, phone }) => {
+      if (!isSupabaseConfigured()) {
+        throw new Error('Missing Supabase environment variables')
+      }
       const supabase = getSupabaseBrowserClient()
       const { error } = await supabase.auth.updateUser({
         data: {
