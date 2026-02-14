@@ -14,6 +14,7 @@ import { inferMuscles, muscleLabel } from '@/lib/muscles'
 import { useRouter } from 'next/navigation'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
+import { persistHistoryForUser } from '@/lib/history-store'
 
 const playBeep = () => {
   try {
@@ -389,6 +390,9 @@ export default function MySessions() {
       })
       localStorage.setItem('fitpulse_history', JSON.stringify(history))
       window.dispatchEvent(new Event('fitpulse-history'))
+      if (user?.id) {
+        void persistHistoryForUser(user.id, history as WorkoutHistoryItem[])
+      }
     }
 
     // Réinitialiser
@@ -564,7 +568,7 @@ export default function MySessions() {
                     {(displayName || 'U').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="text-xs text-gray-500">Created by</div>
+                    <div className="text-xs text-gray-500">Créé par</div>
                     <div className="text-sm font-semibold text-gray-900">{displayName}</div>
                   </div>
                 </div>
@@ -573,26 +577,26 @@ export default function MySessions() {
                 </button>
               </div>
               <div className="mt-4 space-y-2">
-                <button className="btn-primary w-full">Edit Routine</button>
-                <button className="btn-secondary w-full">Copy Routine Link</button>
+                <button className="btn-primary w-full">Modifier la séance</button>
+                <button className="btn-secondary w-full">Copier le lien</button>
               </div>
             </div>
 
             <div className="card-soft">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Routine Summary</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Résumé de la séance</h3>
               <div className="grid grid-cols-3 gap-4 text-sm text-gray-600">
                 <div>
-                  <div className="text-xs text-gray-400">Exercises</div>
+                  <div className="text-xs text-gray-400">Exercices</div>
                   <div className="text-lg font-semibold text-gray-900">{workout.exercises.length}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-400">Total Sets</div>
+                  <div className="text-xs text-gray-400">Séries totales</div>
                   <div className="text-lg font-semibold text-gray-900">
                     {workout.exercises.reduce((sum, ex) => sum + ex.sets, 0)}
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-gray-400">Estimated Duration</div>
+                  <div className="text-xs text-gray-400">Durée estimée</div>
                   <div className="text-lg font-semibold text-gray-900">{lastSummary.duration} min</div>
                 </div>
               </div>
@@ -604,7 +608,7 @@ export default function MySessions() {
             </div>
 
             <div className="card-soft">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Muscles</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Groupes musculaires</h3>
               <div className="space-y-3">
                 {lastSummary.muscleUsage
                   .slice()

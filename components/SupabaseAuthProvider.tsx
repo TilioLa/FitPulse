@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
+import { syncHistoryForUser } from '@/lib/history-store'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -53,8 +54,15 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       return
     }
     const mapped = mapUser(data.session?.user ?? null)
-    setUser(mapped)
-    setStatus(mapped ? 'authenticated' : 'unauthenticated')
+    if (mapped) {
+      setStatus('loading')
+      await syncHistoryForUser(mapped.id)
+      setUser(mapped)
+      setStatus('authenticated')
+      return
+    }
+    setUser(null)
+    setStatus('unauthenticated')
   }
 
   useEffect(() => {
@@ -68,8 +76,17 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const mapped = mapUser(session?.user ?? null)
-      setUser(mapped)
-      setStatus(mapped ? 'authenticated' : 'unauthenticated')
+      if (!mapped) {
+        setUser(null)
+        setStatus('unauthenticated')
+        return
+      }
+      setStatus('loading')
+      void (async () => {
+        await syncHistoryForUser(mapped.id)
+        setUser(mapped)
+        setStatus('authenticated')
+      })()
     })
     return () => data.subscription.unsubscribe()
   }, [])
