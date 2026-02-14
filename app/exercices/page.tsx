@@ -163,9 +163,9 @@ export default function ExercicesPage() {
     )
   }
 
-  return (
+    return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <div className="flex flex-grow">
+      <div className="flex flex-col lg:flex-row flex-grow">
         <Sidebar
           activeSection="exercises"
           setActiveSection={(section) => {
@@ -177,7 +177,7 @@ export default function ExercicesPage() {
             if (section === 'settings') router.push('/dashboard?view=settings')
           }}
         />
-        <main className="flex-grow p-6 lg:p-8">
+        <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">Exercices</h1>

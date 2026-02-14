@@ -91,9 +91,9 @@ export default function DashboardPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Chargement du dashboard...</div>}>
       <div className="min-h-screen flex flex-col bg-gray-50">
-        <div className="flex flex-grow">
+        <div className="flex flex-col lg:flex-row flex-grow">
           <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-          <main className="flex-grow p-6 lg:p-8">
+          <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8">
             {renderSection()}
           </main>
         </div>

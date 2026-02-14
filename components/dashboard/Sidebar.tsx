@@ -43,13 +43,13 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
   }
 
   return (
-    <aside className="w-64 bg-white shadow-lg min-h-screen p-4">
-      <div className="flex items-center space-x-2 mb-6 pb-4 border-b">
+    <aside className="w-full lg:w-64 bg-white shadow-lg lg:min-h-screen p-3 lg:p-4 border-b lg:border-b-0">
+      <div className="flex items-center space-x-2 mb-3 lg:mb-6 pb-3 lg:pb-4 border-b">
         <Activity className="h-6 w-6 text-primary-600" />
         <span className="text-xl font-bold text-gray-900">FitPulse</span>
       </div>
 
-      <nav className="space-y-1">
+      <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 lg:space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
@@ -58,14 +58,14 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
               <Link
                 key={item.id}
                 href={item.href}
-                className={`w-full grid grid-cols-[20px_1fr] items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+                className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
                   item.href === '/dashboard?view=session' && activeSection === 'session'
                     ? 'bg-primary-600 text-white'
                     : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="font-medium leading-tight">{t(item.labelKey as any)}</span>
+                <span className="text-sm font-medium leading-tight truncate">{t(item.labelKey as any)}</span>
               </Link>
             )
           }
@@ -73,40 +73,40 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
             <button
               key={item.id}
               onClick={() => setActiveSection(item.id)}
-              className={`w-full grid grid-cols-[20px_1fr] items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+              className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
                 isActive
                   ? 'bg-primary-600 text-white shadow-sm'
                   : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
               }`}
             >
               <Icon className="h-5 w-5" />
-              <span className="font-medium leading-tight">{t(item.labelKey as any)}</span>
+              <span className="text-sm font-medium leading-tight truncate">{t(item.labelKey as any)}</span>
             </button>
           )
         })}
       </nav>
 
-      <div className="mt-8 pt-4 border-t space-y-2">
+      <div className="mt-4 lg:mt-8 pt-3 lg:pt-4 border-t grid grid-cols-2 gap-2 lg:space-y-2 lg:grid-cols-1">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="w-full flex items-center justify-center lg:justify-start space-x-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
         >
-          <span className="font-medium">{t('logout')}</span>
+          <span className="text-sm font-medium">{t('logout')}</span>
         </button>
         <button
           onClick={() => setActiveSection('settings')}
-          className={`w-full grid grid-cols-[20px_1fr] items-center gap-3 px-4 py-3 rounded-lg transition-colors text-left ${
+          className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
             activeSection === 'settings'
               ? 'bg-primary-600 text-white'
               : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
           }`}
         >
           <SettingsIcon className="h-5 w-5" />
-          <span className="font-medium leading-tight">{t('settings')}</span>
+          <span className="text-sm font-medium leading-tight truncate">{t('settings')}</span>
         </button>
       </div>
 
-      <div className="mt-6 pt-4 border-t">
+      <div className="hidden lg:block mt-6 pt-4 border-t">
         <div className="rounded-2xl bg-gray-100 px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="text-sm font-bold text-gray-900">FitPulse</span>

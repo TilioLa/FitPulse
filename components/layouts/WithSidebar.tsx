@@ -16,7 +16,7 @@ export default function WithSidebar({
   const router = useRouter()
 
   return (
-    <div className="flex flex-grow">
+    <div className="flex flex-col lg:flex-row flex-grow">
       <Sidebar
         activeSection={active}
         setActiveSection={(section) => {
@@ -29,7 +29,7 @@ export default function WithSidebar({
           if (section === 'exercises') router.push('/exercices')
         }}
       />
-      <div className="flex-grow">{children}</div>
+      <div className="flex-grow min-w-0">{children}</div>
     </div>
   )
 }
