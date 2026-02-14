@@ -2,6 +2,8 @@
 
 import { ArrowRight } from 'lucide-react'
 import { Program } from '@/data/programs'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
 
 export default function StartProgramButton({
   program,
@@ -20,6 +22,8 @@ export default function StartProgramButton({
   hrefOverride?: string | null
   overrideExercises?: { name: string; sets: number; reps: number; rest: number; videoUrl?: string }[]
 }) {
+  const { user } = useAuth()
+
   const resolveNextSession = () => {
     if (typeof window === 'undefined') {
       return program.sessions[0]
@@ -64,6 +68,9 @@ export default function StartProgramButton({
     }
 
     localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+    if (user?.id) {
+      void persistCurrentWorkoutForUser(user.id, workout as Record<string, unknown>)
+    }
     onStart?.()
   }
 
