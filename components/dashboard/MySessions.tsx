@@ -647,6 +647,69 @@ export default function MySessions() {
   const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
   const isLastExercise = currentExerciseIndex === workout.exercises.length - 1
 
+  const toggleSetCompleted = (setIndex: number, checked: boolean) => {
+    setExerciseInputs((prev) => {
+      const updated = {
+        ...prev,
+        [currentExercise.id]: (prev[currentExercise.id] || []).map((row, idx) =>
+          idx === setIndex ? { ...row, completed: checked } : row
+        ),
+      }
+      if (!checked) return updated
+      const allDone = (updated[currentExercise.id] || []).every((row) => row.completed)
+      if (allDone) {
+        if (effectiveExerciseRest > 0) {
+          handleStartTimer(effectiveExerciseRest, 'exercise')
+        } else {
+          setTimeout(() => {
+            handleNextExercise()
+          }, 100)
+        }
+      } else if (effectiveRest > 0) {
+        handleStartTimer(effectiveRest, 'set')
+      }
+      return updated
+    })
+  }
+
+  const markNextSetCompleted = () => {
+    const nextIndex = currentInputs.findIndex((set) => !set.completed)
+    if (nextIndex === -1) {
+      if (effectiveExerciseRest > 0) {
+        handleStartTimer(effectiveExerciseRest, 'exercise')
+      } else {
+        handleNextExercise()
+      }
+      return
+    }
+    toggleSetCompleted(nextIndex, true)
+  }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        markNextSetCompleted()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        if (isLastExercise) {
+          handleCompleteWorkout()
+        } else {
+          handleNextExercise()
+        }
+      } else if (event.code === 'Space') {
+        event.preventDefault()
+        if (isRunning) handlePauseTimer()
+        else handleStartTimer(effectiveRest, timerKind ?? 'set')
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [currentExercise.id, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest])
+
   const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as any[]
   const exerciseHistory = history.flatMap((item) =>
     (item.exercises || []).map((ex: any) => ({
@@ -883,28 +946,7 @@ export default function MySessions() {
                       checked={set.completed || false}
                       onChange={(event) => {
                         const checked = event.target.checked
-                        setExerciseInputs((prev) => {
-                          const updated = {
-                            ...prev,
-                            [currentExercise.id]: prev[currentExercise.id].map((row, idx) =>
-                              idx === index ? { ...row, completed: checked } : row
-                            ),
-                          }
-                          const allDone = (updated[currentExercise.id] || []).every((row) => row.completed)
-                          if (allDone) {
-                            if (effectiveExerciseRest > 0) {
-                              handleStartTimer(effectiveExerciseRest, 'exercise')
-                            } else {
-                              setTimeout(() => {
-                                handleNextExercise()
-                              }, 100)
-                            }
-                          }
-                          return updated
-                        })
-                        if (checked) {
-                          handleStartTimer(effectiveRest, 'set')
-                        }
+                        toggleSetCompleted(index, checked)
                       }}
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
@@ -948,6 +990,13 @@ export default function MySessions() {
               ))}
             </div>
             <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={markNextSetCompleted}
+                className="text-xs font-semibold px-3 py-1 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300"
+              >
+                Valider la prochaine série (Entrée)
+              </button>
               <button
                 type="button"
                 onClick={() =>

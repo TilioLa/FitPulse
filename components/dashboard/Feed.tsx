@@ -37,6 +37,17 @@ export default function Feed() {
     subtitle: string
     duration?: number
   } | null>(null)
+  const [weeklyLoad, setWeeklyLoad] = useState<{
+    current: number
+    previous: number
+    delta: number
+    suggestion: string
+  }>({
+    current: 0,
+    previous: 0,
+    delta: 0,
+    suggestion: 'Commence avec une charge modérée et augmente progressivement.',
+  })
 
   useEffect(() => {
     try {
@@ -104,6 +115,41 @@ export default function Feed() {
       }, null)
       setMonthlyPr(bestRecord)
 
+      const nowTs = Date.now()
+      const dayMs = 24 * 60 * 60 * 1000
+      const currentWindowStart = nowTs - 7 * dayMs
+      const previousWindowStart = nowTs - 14 * dayMs
+      const previousWindowEnd = currentWindowStart
+
+      const currentLoad = stored
+        .filter((item: any) => {
+          const ts = new Date(item.date).getTime()
+          return ts >= currentWindowStart && ts <= nowTs
+        })
+        .reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
+
+      const previousLoad = stored
+        .filter((item: any) => {
+          const ts = new Date(item.date).getTime()
+          return ts >= previousWindowStart && ts < previousWindowEnd
+        })
+        .reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
+
+      const delta =
+        previousLoad > 0 ? Math.round(((currentLoad - previousLoad) / previousLoad) * 100) : 0
+      const suggestion =
+        delta >= 20
+          ? 'Charge en hausse forte: prévois une semaine allégée (deload) si fatigue élevée.'
+          : delta <= -20
+          ? 'Charge en baisse: remonte progressivement de 5 à 10% cette semaine.'
+          : 'Progression stable: garde la qualité des exécutions et le tempo.'
+      setWeeklyLoad({
+        current: Math.round(currentLoad),
+        previous: Math.round(previousLoad),
+        delta,
+        suggestion,
+      })
+
       const lastProgramEntry = stored.find((item) => (item as any).programId)
       if (lastProgramEntry) {
         const programId = (lastProgramEntry as any).programId as string
@@ -122,9 +168,34 @@ export default function Feed() {
           })
         }
       } else if (programs.length > 0) {
+        const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}') as {
+          level?: string
+          goals?: string[]
+          equipment?: string[]
+        }
+        const level = String(settings.level || '').toLowerCase()
+        const goals = (settings.goals || []).map((goal) => goal.toLowerCase())
+        const equipments = (settings.equipment || []).map((equipment) => equipment.toLowerCase())
+        const pick = programs
+          .map((program) => {
+            let score = 0
+            const programLevel = program.level.toLowerCase()
+            const programGoals = program.goals.map((goal) => goal.toLowerCase())
+            const programEquipment = program.equipment.toLowerCase()
+            if (level && programLevel.includes(level)) score += 2
+            if (goals.some((goal) => programGoals.some((programGoal) => programGoal.includes(goal)))) score += 2
+            if (equipments.some((equipment) => programEquipment.includes(equipment))) score += 3
+            if (program.recommended) score += 1
+            return { program, score }
+          })
+          .sort((a, b) => b.score - a.score)[0]?.program
+
         setFocus({
-          title: 'Commencer un programme',
-          subtitle: 'Choisis un programme pour démarrer.',
+          programId: pick?.id,
+          sessionId: pick?.sessions[0]?.id,
+          title: pick?.name || 'Commencer un programme',
+          subtitle: pick ? `Recommandé selon ton profil: ${pick.sessions[0]?.name || 'Séance 1'}` : 'Choisis un programme pour démarrer.',
+          duration: pick?.sessions[0]?.duration,
         })
       }
     } catch {
@@ -265,9 +336,18 @@ export default function Feed() {
           </div>
         </div>
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
-          <div className="text-xs text-gray-500">Conseil du jour</div>
-          <div className="mt-3 text-sm text-gray-700">
-            Garde une exécution contrôlée. Qualité d’abord, progression ensuite.
+          <div className="text-xs text-gray-500">Charge hebdo</div>
+          <div className="mt-2 text-sm text-gray-700">
+            Semaine actuelle: <span className="font-semibold text-gray-900">{weeklyLoad.current} kg</span>
+          </div>
+          <div className="text-sm text-gray-700">
+            Semaine précédente: <span className="font-semibold text-gray-900">{weeklyLoad.previous} kg</span>
+          </div>
+          <div className={`mt-2 text-xs font-semibold ${weeklyLoad.delta >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+            Variation: {weeklyLoad.delta >= 0 ? '+' : ''}{weeklyLoad.delta}%
+          </div>
+          <div className="mt-2 text-sm text-gray-700">
+            {weeklyLoad.suggestion}
           </div>
         </div>
       </div>
