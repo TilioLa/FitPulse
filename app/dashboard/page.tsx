@@ -2,16 +2,30 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter } from 'next/navigation'
+import dynamic from 'next/dynamic'
 import Sidebar from '@/components/dashboard/Sidebar'
-import ProgramsList from '@/components/programmes/ProgramsList'
-// Social feed removed for now
 import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import CustomRoutines from '@/components/dashboard/CustomRoutines'
-import Feed from '@/components/dashboard/Feed'
-import History from '@/components/dashboard/History'
-import MySessions from '@/components/dashboard/MySessions'
-import Settings from '@/components/dashboard/Settings'
+import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
+
+const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
+  loading: () => <SectionSkeleton />,
+})
+const History = dynamic(() => import('@/components/dashboard/History'), {
+  loading: () => <SectionSkeleton />,
+})
+const MySessions = dynamic(() => import('@/components/dashboard/MySessions'), {
+  loading: () => <SectionSkeleton />,
+})
+const ProgramsList = dynamic(() => import('@/components/programmes/ProgramsList'), {
+  loading: () => <SectionSkeleton />,
+})
+const CustomRoutines = dynamic(() => import('@/components/dashboard/CustomRoutines'), {
+  loading: () => <SectionSkeleton />,
+})
+const Settings = dynamic(() => import('@/components/dashboard/Settings'), {
+  loading: () => <SectionSkeleton />,
+})
 
 type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines' | 'settings' | 'exercises'
 
