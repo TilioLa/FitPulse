@@ -102,7 +102,8 @@ export default function PricingPlans() {
         window.location.href = data.url
       }
     } catch (error) {
-      push("Impossible d'initier le paiement. Réessayez.", 'error')
+      const message = error instanceof Error ? error.message : "Impossible d'initier le paiement. Réessayez."
+      push(message, 'error')
     } finally {
       setIsLoading(null)
     }

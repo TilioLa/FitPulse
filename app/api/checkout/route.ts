@@ -8,6 +8,13 @@ const PRICE_MAP: Record<string, string | undefined> = {
 
 export async function POST(request: Request) {
   try {
+    if (!stripe || !process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: 'Paiement temporairement indisponible' },
+        { status: 503 }
+      )
+    }
+
     const body = await request.json()
     const planId = String(body?.planId || '')
 
