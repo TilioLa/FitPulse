@@ -84,3 +84,19 @@ export function inferMuscles(name: string): ExerciseMuscle[] {
   }
   return []
 }
+
+export function muscleLabel(id: string, locale: 'fr' | 'en' = 'fr') {
+  const labels: Record<string, { fr: string; en: string }> = {
+    chest: { fr: 'Pectoraux', en: 'Chest' },
+    shoulders: { fr: 'Epaules', en: 'Shoulders' },
+    biceps: { fr: 'Biceps', en: 'Biceps' },
+    triceps: { fr: 'Triceps', en: 'Triceps' },
+    back: { fr: 'Dos', en: 'Back' },
+    core: { fr: 'Abdominaux', en: 'Abdominals' },
+    glutes: { fr: 'Fessiers', en: 'Glutes' },
+    quads: { fr: 'Quadriceps', en: 'Quads' },
+    hamstrings: { fr: 'Ischios', en: 'Hamstrings' },
+    calves: { fr: 'Mollets', en: 'Calves' },
+  }
+  return labels[id]?.[locale] || id
+}

@@ -6,6 +6,7 @@ import { WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
+import { muscleLabel } from '@/lib/muscles'
 
 type FeedItem = {
   id: string
@@ -241,7 +242,7 @@ export default function Feed() {
             {monthlyMuscles.map((muscle) => (
               <div key={muscle.id}>
                 <div className="flex items-center justify-between text-xs text-gray-600">
-                  <span>{muscle.id}</span>
+                  <span>{muscleLabel(muscle.id, 'fr')}</span>
                   <span>{muscle.percent}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">

@@ -10,7 +10,7 @@ import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import SupersetToggle from '@/components/exercises/SupersetToggle'
 import { computeHistoryStats, WorkoutHistoryItem, toLocalDateKey } from '@/lib/history'
 import { programs as allPrograms } from '@/data/programs'
-import { inferMuscles } from '@/lib/muscles'
+import { inferMuscles, muscleLabel } from '@/lib/muscles'
 import { useRouter } from 'next/navigation'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
@@ -612,7 +612,7 @@ export default function MySessions() {
                   .map((muscle) => (
                     <div key={muscle.id}>
                       <div className="flex items-center justify-between text-xs text-gray-600">
-                        <span>{muscle.id}</span>
+                        <span>{muscleLabel(muscle.id, 'fr')}</span>
                         <span>{muscle.percent}%</span>
                       </div>
                       <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
