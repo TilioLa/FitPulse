@@ -17,12 +17,13 @@ export default function InscriptionPage() {
   const [error, setError] = useState('')
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
-  const [goal, setGoal] = useState('Cardio')
+  const [goals, setGoals] = useState<string[]>(['Cardio'])
   const [focusZones, setFocusZones] = useState<string[]>([])
   const [avoidZones, setAvoidZones] = useState<string[]>([])
   const [level, setLevel] = useState('debutant')
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
+  const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -71,9 +72,11 @@ export default function InscriptionPage() {
     }
 
     // Initialiser les paramètres par défaut
+    const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
     localStorage.setItem('fitpulse_settings', JSON.stringify({
       level,
-      goals: [goal],
+      goals: normalizedGoals,
+      goal: normalizedGoals[0],
       equipment,
       restTime: 60,
       weightUnit: 'kg',
@@ -227,19 +230,31 @@ export default function InscriptionPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Objectif principal</label>
-                  <select
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  >
-                    <option>Cardio</option>
-                    <option>Perte de poids</option>
-                    <option>Prise de masse</option>
-                    <option>Force</option>
-                    <option>Sèche</option>
-                    <option>Souplesse</option>
-                  </select>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Objectifs (plusieurs choix possibles)
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {goalsOptions.map((goalOption) => (
+                      <button
+                        type="button"
+                        key={goalOption}
+                        onClick={() =>
+                          setGoals((prev) =>
+                            prev.includes(goalOption)
+                              ? prev.filter((item) => item !== goalOption)
+                              : [...prev, goalOption]
+                          )
+                        }
+                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                          goals.includes(goalOption)
+                            ? 'bg-primary-600 text-white border-primary-600'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                        }`}
+                      >
+                        {goalOption}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div>
