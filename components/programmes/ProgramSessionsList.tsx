@@ -63,14 +63,14 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
           <div className="flex flex-col gap-2">
             <Link
               href={`/programmes/${program.slug}/seances/${nextSession.id}`}
-              className="btn-secondary hover:shadow-sm"
+              className="btn-secondary min-h-11 hover:shadow-sm flex items-center justify-center"
             >
               Voir la séance
             </Link>
             <StartProgramButton
               program={program}
               label="Démarrer la prochaine séance"
-              className="btn-primary shadow-lg hover:shadow-xl"
+              className="btn-primary min-h-11 shadow-lg hover:shadow-xl"
             />
           </div>
         </div>
@@ -122,14 +122,14 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
                     </div>
                   ) : (
                     <>
-                      <Link href={`/programmes/${program.slug}/seances/${session.id}`} className="btn-secondary">
+                      <Link href={`/programmes/${program.slug}/seances/${session.id}`} className="btn-secondary min-h-11 flex items-center justify-center">
                         Voir le détail
                       </Link>
                       <StartProgramButton
                         program={program}
                         sessionId={session.id}
                         label="Démarrer cette séance"
-                        className="btn-primary"
+                        className="btn-primary min-h-11"
                       />
                     </>
                   )}

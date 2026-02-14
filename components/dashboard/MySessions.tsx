@@ -823,13 +823,13 @@ export default function MySessions() {
                         setPickerIndex(index)
                         setPickerOpen(true)
                       }}
-                      className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                      className="min-h-10 px-3 rounded-lg border border-primary-200 text-xs font-semibold text-primary-700 hover:bg-primary-50"
                     >
                       Remplacer
                     </button>
                     <button
                       onClick={() => removeExerciseAt(index)}
-                      className="text-xs font-semibold text-red-600 hover:text-red-700"
+                      className="min-h-10 px-3 rounded-lg border border-red-200 text-xs font-semibold text-red-700 hover:bg-red-50"
                     >
                       Supprimer
                     </button>
@@ -948,7 +948,7 @@ export default function MySessions() {
                         const checked = event.target.checked
                         toggleSetCompleted(index, checked)
                       }}
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     Série {index + 1}
                   </label>
@@ -993,7 +993,7 @@ export default function MySessions() {
               <button
                 type="button"
                 onClick={markNextSetCompleted}
-                className="text-xs font-semibold px-3 py-1 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300"
+                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300"
               >
                 Valider la prochaine série (Entrée)
               </button>
@@ -1008,7 +1008,7 @@ export default function MySessions() {
                     ],
                   }))
                 }
-                className="text-xs font-semibold px-3 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300"
+                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300"
               >
                 + Ajouter une série
               </button>
@@ -1021,7 +1021,7 @@ export default function MySessions() {
                   }))
                 }
                 disabled={(currentInputs?.length || 0) <= 1}
-                className="text-xs font-semibold px-3 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 − Supprimer une série
               </button>
@@ -1054,24 +1054,24 @@ export default function MySessions() {
                 </div>
                 <div className="text-gray-600">Temps de repos</div>
               </div>
-              <div className="flex justify-center space-x-4">
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
                 {!isRunning && timeRemaining === 0 && (
                   <button
                     onClick={() => handleStartTimer(effectiveRest, 'set')}
-                    className="btn-primary flex items-center space-x-2"
+                    className="btn-primary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2"
                   >
                     <Play className="h-5 w-5" />
                     <span>{effectiveRest === 0 ? 'Passer au superset' : 'Démarrer le repos'}</span>
                   </button>
                 )}
                 {isRunning && (
-                  <button onClick={handlePauseTimer} className="btn-secondary flex items-center space-x-2">
+                  <button onClick={handlePauseTimer} className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2">
                     <Pause className="h-5 w-5" />
                     <span>Pause</span>
                   </button>
                 )}
                 {timeRemaining > 0 && (
-                  <button onClick={handleResetTimer} className="btn-secondary flex items-center space-x-2">
+                  <button onClick={handleResetTimer} className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2">
                     <RotateCcw className="h-5 w-5" />
                     <span>Reset</span>
                   </button>
@@ -1080,7 +1080,7 @@ export default function MySessions() {
             </div>
 
             {/* Navigation */}
-            <div className="flex justify-between">
+            <div className="flex flex-col sm:flex-row justify-between gap-3">
               <button
                 onClick={() => {
                   if (currentExerciseIndex > 0) {
@@ -1090,16 +1090,16 @@ export default function MySessions() {
                   }
                 }}
                 disabled={currentExerciseIndex === 0}
-                className="px-4 py-2 text-gray-600 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-11 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 ← Précédent
               </button>
               {isLastExercise ? (
-                <button onClick={handleCompleteWorkout} className="btn-primary">
+                <button onClick={handleCompleteWorkout} className="btn-primary min-h-11">
                   Terminer la séance
                 </button>
               ) : (
-                <button onClick={handleNextExercise} className="btn-primary">
+                <button onClick={handleNextExercise} className="btn-primary min-h-11">
                   Suivant →
                 </button>
               )}

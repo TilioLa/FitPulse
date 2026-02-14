@@ -72,13 +72,13 @@ export default function ExerciseCatalog({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Rechercher un exercice"
-            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
+            className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-3 text-sm"
           />
         </div>
         <select
           value={tag}
           onChange={(e) => setTag(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-gray-300 px-3 py-3 text-sm"
         >
           {tags.map((value) => (
             <option key={value} value={value}>
@@ -89,7 +89,7 @@ export default function ExerciseCatalog({
         <select
           value={equipment}
           onChange={(e) => setEquipment(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          className="rounded-lg border border-gray-300 px-3 py-3 text-sm"
         >
           {equipments.map((value) => (
             <option key={value} value={value}>
@@ -99,7 +99,7 @@ export default function ExerciseCatalog({
         </select>
         <button
           onClick={() => setOnlyFavorites((prev) => !prev)}
-          className={`rounded-lg border px-3 py-2 text-sm font-semibold ${
+          className={`rounded-lg border px-3 py-3 text-sm font-semibold ${
             onlyFavorites ? 'border-amber-400 text-amber-600' : 'border-gray-300 text-gray-600'
           }`}
         >
@@ -111,7 +111,7 @@ export default function ExerciseCatalog({
         {filtered.map((item) => {
           const isFav = favorites.includes(item.id)
           return (
-            <div key={item.id} className="rounded-lg border border-gray-200 p-4">
+            <div key={item.id} className="rounded-lg border border-gray-200 p-4 active:scale-[0.99] transition-transform">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
@@ -134,7 +134,7 @@ export default function ExerciseCatalog({
                 </div>
                 <button
                   onClick={() => toggleFavorite(item.id)}
-                  className={`p-1 rounded-full border ${
+                  className={`p-2 rounded-full border ${
                     isFav ? 'border-amber-400 text-amber-500' : 'border-gray-200 text-gray-400'
                   }`}
                 >
@@ -144,7 +144,7 @@ export default function ExerciseCatalog({
               <div className="mt-3 flex justify-end">
                 <button
                   onClick={() => onSelect?.(item)}
-                  className="text-xs font-semibold text-primary-600 hover:text-primary-700"
+                  className="min-h-11 px-4 rounded-lg border border-primary-200 text-sm font-semibold text-primary-700 hover:bg-primary-50"
                 >
                   Ajouter
                 </button>
