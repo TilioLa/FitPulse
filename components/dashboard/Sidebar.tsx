@@ -4,8 +4,8 @@ import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIco
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { signOut, useSession } from 'next-auth/react'
 import { useI18n } from '@/components/I18nProvider'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 
 type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
@@ -32,13 +32,13 @@ const menuItems: MenuItem[] = [
 
 export default function Sidebar({ activeSection, setActiveSection }: SidebarProps) {
   const router = useRouter()
-  const { data: session } = useSession()
+  const { user, signOut } = useAuth()
   const { t } = useI18n()
-  const displayName = session?.user?.name || 'Utilisateur'
+  const displayName = user?.name || 'Utilisateur'
   const initials = displayName.trim().charAt(0).toUpperCase() || 'U'
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/' })
+  const handleLogout = async () => {
+    await signOut()
     router.push('/')
   }
 

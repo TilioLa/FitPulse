@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Plan invalide' }, { status: 400 })
     }
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const successUrl = process.env.STRIPE_SUCCESS_URL || `${baseUrl}/dashboard?checkout=success`
     const cancelUrl = process.env.STRIPE_CANCEL_URL || `${baseUrl}/pricing?checkout=cancel`
 

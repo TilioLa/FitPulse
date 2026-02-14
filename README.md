@@ -21,9 +21,9 @@
 
 ### Fonctionnalités techniques
 - Navigation complète fonctionnelle
-- Authentification simulée avec localStorage
+- Authentification Supabase Auth (email + mot de passe)
 - Dashboard dynamique avec séances, timer, historique
-- Base de données simple (localStorage)
+- Données d'entraînement en localStorage
 - Design responsive et moderne
 - Palette de couleurs dynamiques
 
@@ -39,25 +39,20 @@ npm run dev
 
 Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-## 🔐 Auth & Base de données (Supabase + Prisma)
+## 🔐 Authentification (Supabase Auth)
 
-1. Créez un projet Supabase et récupérez la chaîne de connexion Postgres.
+1. Créez un projet Supabase et récupérez :
+- `Project URL`
+- `anon public key`
 2. Créez un fichier `.env` en vous basant sur `.env.example` :
 
 ```env
-DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@db.uhldlcrfncbnnhwmeaje.supabase.co:5432/postgres"
-NEXTAUTH_SECRET="replace-with-strong-secret"
-NEXTAUTH_URL="http://localhost:3000"
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NEXT_PUBLIC_SUPABASE_URL="https://YOUR_PROJECT_REF.supabase.co"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY"
 ```
 
-3. Générez le client Prisma et migrez :
-
-```bash
-npx prisma generate
-npx prisma migrate dev --name init
-```
-
-4. Lancez le projet :
+3. Lancez le projet :
 
 ```bash
 npm run dev
@@ -77,21 +72,11 @@ STRIPE_CANCEL_URL="http://localhost:3000/pricing?checkout=cancel"
 
 Les boutons Pro/Pro+ redirigent vers Stripe Checkout.
 
-## 🔁 Mot de passe oublié (SMTP Gmail)
-
-Ajoutez les variables SMTP dans `.env` :
-
-```env
-SMTP_HOST="smtp.gmail.com"
-SMTP_PORT="587"
-SMTP_USER="your_gmail@gmail.com"
-SMTP_PASS="your_gmail_app_password"
-EMAIL_FROM="FitPulse <your_gmail@gmail.com>"
-```
+## 🔁 Mot de passe oublié (Supabase)
 
 Les pages de reset sont :
 - `/reset` (demande de lien)
-- `/reset/[token]` (nouveau mot de passe)
+- `/reset/update` (nouveau mot de passe)
 
 ## 📦 Technologies utilisées
 
@@ -101,10 +86,9 @@ Les pages de reset sont :
 - **Lucide React** : Icônes modernes
 - **localStorage** : Stockage local pour simulation de base de données
 - **SEO Next.js** : `sitemap.xml` et `robots.txt` générés via l'App Router
-- **API Next.js** : Endpoints d'authentification
+- **API Next.js** : Endpoint Stripe checkout
 - **Toasts** : Notifications locales pour feedback utilisateur
-- **Auth.js (NextAuth v5)** : Authentification avec Credentials
-- **Prisma + Supabase Postgres** : ORM et base de données
+- **Supabase Auth** : Authentification et reset password
 
 ## 📁 Structure du projet
 
@@ -134,21 +118,17 @@ FitPulse/
 
 ## 📝 Notes
 
-- L'authentification utilise Auth.js (NextAuth) avec Prisma + Supabase
+- L'authentification utilise Supabase Auth
 - Les paiements sont simulés (pas de transaction réelle)
 - Les données d'entraînement (séances, stats, préférences) restent en local via `localStorage`
 - Parfait pour prototyper et tester l'expérience utilisateur
 - Les pages légales et la page contact sont statiques dans cette version
 - Le sitemap et le robots.txt utilisent `https://fitpulse.fr` comme URL de base (à adapter pour la prod)
-- Les endpoints d'authentification (`/api/auth/*`) sont des stubs pour préparer l'intégration backend
-- Les endpoints `/api/auth/*` utilisent Prisma + Supabase
-- L'inscription est limitée aux adresses Gmail
 - Un champ `phone` est disponible pour le profil utilisateur
 
 ## 🚧 Prochaines étapes
 
 - Connecter à une vraie base de données (PostgreSQL, MongoDB)
-- Implémenter un système d'authentification réel (NextAuth.js)
 - Ajouter un système de paiement (Stripe)
 - Intégrer des vidéos réelles pour les exercices
 - Ajouter plus de programmes et exercices

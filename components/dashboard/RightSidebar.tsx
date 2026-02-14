@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
 import { Users } from 'lucide-react'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 
 type Activity = {
   title: string
@@ -10,7 +10,7 @@ type Activity = {
 }
 
 export default function RightSidebar() {
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const [latest, setLatest] = useState<Activity | null>(null)
 
   useEffect(() => {
@@ -34,12 +34,12 @@ export default function RightSidebar() {
     <div className="space-y-6">
       <div className="card text-center">
         <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-primary-100 flex items-center justify-center text-xl font-bold text-primary-700">
-          {(session?.user?.name || session?.user?.email || 'U').charAt(0).toUpperCase()}
+          {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
         </div>
         <div className="text-lg font-semibold text-gray-900">
-          {session?.user?.name || 'Utilisateur FitPulse'}
+          {user?.name || 'Utilisateur FitPulse'}
         </div>
-        <div className="text-sm text-gray-500 mb-4">{session?.user?.email}</div>
+        <div className="text-sm text-gray-500 mb-4">{user?.email}</div>
         <button className="btn-secondary w-full">Voir votre profil</button>
       </div>
 

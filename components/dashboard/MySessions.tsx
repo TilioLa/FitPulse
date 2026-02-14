@@ -11,9 +11,9 @@ import SupersetToggle from '@/components/exercises/SupersetToggle'
 import { computeHistoryStats, WorkoutHistoryItem, toLocalDateKey } from '@/lib/history'
 import { programs as allPrograms } from '@/data/programs'
 import { inferMuscles } from '@/lib/muscles'
-import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 
 const playBeep = () => {
   try {
@@ -76,7 +76,7 @@ interface Workout {
 
 export default function MySessions() {
   const { push } = useToast()
-  const { data: session } = useSession()
+  const { user } = useAuth()
   const router = useRouter()
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
@@ -522,7 +522,7 @@ export default function MySessions() {
   }
 
   if (showSummary && lastSummary) {
-    const displayName = session?.user?.name || 'Utilisateur'
+    const displayName = user?.name || 'Utilisateur'
     return (
       <div className="page-wrap panel-stack">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-8">

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { User, Target, Dumbbell, Save } from 'lucide-react'
-import { useSession } from 'next-auth/react'
 import { useToast } from '@/components/ui/ToastProvider'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 
 interface UserSettings {
   name: string
@@ -26,7 +26,7 @@ interface UserSettings {
 }
 
 export default function Settings() {
-  const { data: session, update } = useSession()
+  const { user, updateProfile } = useAuth()
   const { push } = useToast()
   const [settings, setSettings] = useState<UserSettings>({
     name: '',
@@ -53,9 +53,9 @@ export default function Settings() {
     const userSettings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{"level": "debutant", "goals": [], "equipment": [], "restTime": 60, "restBetweenExercises": 180, "soundEnabled": true, "voiceEnabled": false, "weightUnit": "kg", "goal": "Cardio", "sessionsPerWeek": 3, "focusZones": [], "avoidZones": []}')
     
     setSettings({
-      name: userSettings.name || session?.user?.name || '',
-      email: userSettings.email || session?.user?.email || '',
-      phone: userSettings.phone || session?.user?.phone || '',
+      name: userSettings.name || user?.name || '',
+      email: userSettings.email || user?.email || '',
+      phone: userSettings.phone || user?.phone || '',
       level: userSettings.level || 'debutant',
       goals: userSettings.goals || [],
       equipment: userSettings.equipment || [],
@@ -71,27 +71,12 @@ export default function Settings() {
       focusZones: userSettings.focusZones || [],
       avoidZones: userSettings.avoidZones || [],
     })
-  }, [session?.user?.email, session?.user?.name, session?.user?.phone])
+  }, [user?.email, user?.name, user?.phone])
 
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      try {
-        const response = await fetch('/api/user', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: settings.name,
-            email: settings.email,
-            phone: settings.phone,
-          }),
-        })
-        if (response.ok) {
-          await update({ name: settings.name, email: settings.email, phone: settings.phone })
-        }
-      } catch {
-        // ignore API failure, keep local settings
-      }
+      await updateProfile({ name: settings.name, phone: settings.phone })
 
       localStorage.setItem('fitpulse_settings', JSON.stringify({
         name: settings.name,
