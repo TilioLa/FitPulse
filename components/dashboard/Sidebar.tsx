@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useI18n } from '@/components/I18nProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
+import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
 
 type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
@@ -49,7 +50,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
         <span className="text-xl font-bold text-gray-900">FitPulse</span>
       </div>
 
-      <nav className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2 lg:space-y-1">
+      <nav className="hidden lg:grid lg:grid-cols-1 gap-2 lg:space-y-1">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
@@ -86,7 +87,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
         })}
       </nav>
 
-      <div className="mt-4 lg:mt-8 pt-3 lg:pt-4 border-t grid grid-cols-2 gap-2 lg:space-y-2 lg:grid-cols-1">
+      <div className="hidden lg:grid mt-4 lg:mt-8 pt-3 lg:pt-4 border-t grid-cols-2 gap-2 lg:space-y-2 lg:grid-cols-1">
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center lg:justify-start space-x-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
@@ -136,6 +137,8 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
           </button>
         </div>
       </div>
+
+      <MobileBottomNav activeSection={activeSection} setActiveSection={setActiveSection} />
     </aside>
   )
 }

@@ -177,7 +177,7 @@ export default function ExercicesPage() {
             if (section === 'settings') router.push('/dashboard?view=settings')
           }}
         />
-        <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8">
+        <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">Exercices</h1>

@@ -29,7 +29,7 @@ export default function WithSidebar({
           if (section === 'exercises') router.push('/exercices')
         }}
       />
-      <div className="flex-grow min-w-0">{children}</div>
+      <div className="flex-grow min-w-0 pb-24 lg:pb-0">{children}</div>
     </div>
   )
 }
