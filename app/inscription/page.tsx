@@ -1,12 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { UserPlus, Mail, Lock, User } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { persistSettingsForUser } from '@/lib/user-state-store'
+import { programs } from '@/data/programs'
+import { recommendProgram } from '@/lib/recommendation'
+import { generateWeeklyPlan } from '@/lib/weekly-plan'
 
 export default function InscriptionPage() {
   const router = useRouter()
@@ -25,6 +28,16 @@ export default function InscriptionPage() {
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
   const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
+  const recommended = useMemo(
+    () =>
+      recommendProgram(programs, {
+        level,
+        goals,
+        equipment,
+        sessionsPerWeek,
+      }),
+    [level, goals, equipment, sessionsPerWeek]
+  )
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,11 +82,15 @@ export default function InscriptionPage() {
       }
 
       const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
+      const weeklyPlan = generateWeeklyPlan(sessionsPerWeek)
       const initialSettings = {
         level,
         goals: normalizedGoals,
         goal: normalizedGoals[0],
         equipment,
+        recommendedProgramId: recommended?.program.id,
+        recommendedProgramSlug: recommended?.program.slug,
+        weeklyPlan,
         restTime: 60,
         weightUnit: 'kg',
         sessionsPerWeek,
@@ -92,11 +109,15 @@ export default function InscriptionPage() {
 
     // Initialiser les paramètres par défaut
     const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
+    const weeklyPlan = generateWeeklyPlan(sessionsPerWeek)
     localStorage.setItem('fitpulse_settings', JSON.stringify({
       level,
       goals: normalizedGoals,
       goal: normalizedGoals[0],
       equipment,
+      recommendedProgramId: recommended?.program.id,
+      recommendedProgramSlug: recommended?.program.slug,
+      weeklyPlan,
       restTime: 60,
       weightUnit: 'kg',
       sessionsPerWeek,
@@ -373,6 +394,21 @@ export default function InscriptionPage() {
                     ))}
                   </div>
                 </div>
+
+                {recommended && (
+                  <div className="rounded-xl border border-primary-200 bg-primary-50/40 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">
+                      Plan de départ recommandé
+                    </div>
+                    <div className="mt-1 text-lg font-semibold text-gray-900">{recommended.program.name}</div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      Première séance: {recommended.program.sessions[0]?.name || 'Séance 1'}
+                    </div>
+                    <div className="text-xs text-gray-600 mt-2">
+                      Pourquoi: {recommended.reasons.length > 0 ? recommended.reasons.join(' • ') : 'adapté à ton profil'}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <button

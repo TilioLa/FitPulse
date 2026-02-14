@@ -1,9 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { User, Target, Dumbbell, Save } from 'lucide-react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
+import { persistSettingsForUser } from '@/lib/user-state-store'
+import { generateWeeklyPlan, type WeeklyPlanDay } from '@/lib/weekly-plan'
 
 interface UserSettings {
   name: string
@@ -23,6 +25,7 @@ interface UserSettings {
   sessionsPerWeek?: number
   focusZones?: string[]
   avoidZones?: string[]
+  weeklyPlan?: WeeklyPlanDay[]
 }
 
 export default function Settings() {
@@ -47,6 +50,10 @@ export default function Settings() {
   })
   const [saved, setSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const previewWeeklyPlan = useMemo(
+    () => generateWeeklyPlan(settings.sessionsPerWeek ?? 3),
+    [settings.sessionsPerWeek]
+  )
 
   useEffect(() => {
     // Charger les paramètres utilisateur
@@ -70,6 +77,9 @@ export default function Settings() {
       sessionsPerWeek: Number.isFinite(userSettings.sessionsPerWeek) ? userSettings.sessionsPerWeek : 3,
       focusZones: userSettings.focusZones || [],
       avoidZones: userSettings.avoidZones || [],
+      weeklyPlan: Array.isArray(userSettings.weeklyPlan)
+        ? userSettings.weeklyPlan
+        : generateWeeklyPlan(Number.isFinite(userSettings.sessionsPerWeek) ? userSettings.sessionsPerWeek : 3),
     })
   }, [user?.email, user?.name, user?.phone])
 
@@ -78,6 +88,7 @@ export default function Settings() {
     try {
       await updateProfile({ name: settings.name, phone: settings.phone })
 
+      const weeklyPlan = generateWeeklyPlan(settings.sessionsPerWeek ?? 3)
       localStorage.setItem('fitpulse_settings', JSON.stringify({
         name: settings.name,
         email: settings.email,
@@ -96,7 +107,30 @@ export default function Settings() {
         sessionsPerWeek: settings.sessionsPerWeek,
         focusZones: settings.focusZones,
         avoidZones: settings.avoidZones,
+        weeklyPlan,
       }))
+      if (user?.id) {
+        void persistSettingsForUser(user.id, {
+          name: settings.name,
+          email: settings.email,
+          phone: settings.phone,
+          level: settings.level,
+          goals: settings.goals,
+          equipment: settings.equipment,
+          restTime: settings.restTime,
+          restBetweenExercises: settings.restBetweenExercises,
+          soundEnabled: settings.soundEnabled,
+          voiceEnabled: settings.voiceEnabled,
+          weightUnit: settings.weightUnit,
+          weight: settings.weight,
+          height: settings.height,
+          goal: settings.goal,
+          sessionsPerWeek: settings.sessionsPerWeek,
+          focusZones: settings.focusZones,
+          avoidZones: settings.avoidZones,
+          weeklyPlan,
+        })
+      }
       window.dispatchEvent(new Event('fitpulse-settings'))
 
       setSaved(true)
@@ -290,6 +324,23 @@ export default function Settings() {
               className="w-full accent-primary-600"
             />
             <div className="text-sm text-gray-600 mt-2">{settings.sessionsPerWeek ?? 3} séance(s) / semaine</div>
+            <div className="mt-3">
+              <div className="text-xs font-semibold text-gray-500 mb-2">Plan 7 jours auto</div>
+              <div className="grid grid-cols-7 gap-1">
+                {previewWeeklyPlan.map((day) => (
+                  <div
+                    key={day.date}
+                    className={`text-center rounded-lg px-1 py-2 text-[11px] font-semibold ${
+                      day.type === 'training'
+                        ? 'bg-primary-100 text-primary-700 border border-primary-200'
+                        : 'bg-gray-100 text-gray-500 border border-gray-200'
+                    }`}
+                  >
+                    {day.label}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="mt-4">
