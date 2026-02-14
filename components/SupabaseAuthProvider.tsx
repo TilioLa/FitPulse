@@ -26,10 +26,11 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 function mapUser(user: User | null): AppUser | null {
   if (!user?.email) return null
   const meta = (user.user_metadata || {}) as { full_name?: string; phone?: string }
+  const normalizedName = meta.full_name?.trim() || user.email.split('@')[0]
   return {
     id: user.id,
     email: user.email,
-    name: meta.full_name ?? null,
+    name: normalizedName,
     phone: meta.phone ?? null,
   }
 }
