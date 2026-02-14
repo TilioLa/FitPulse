@@ -12,7 +12,7 @@ import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import RestTimeDisplay from '@/components/exercises/RestTimeDisplay'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { labelize } from '@/lib/labels'
-import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X } from 'lucide-react'
+import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X, Lock } from 'lucide-react'
 import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
 
@@ -25,6 +25,8 @@ export default function SessionDetailPage() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
   const [customExercises, setCustomExercises] = useState<SessionExercise[]>([])
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
+  const [nextUnlockedId, setNextUnlockedId] = useState<string | undefined>(undefined)
 
   const { program, session } = useMemo(() => {
     const rawId = decodeURIComponent(params?.id || '').trim()
@@ -77,9 +79,42 @@ export default function SessionDetailPage() {
     }
   }, [pickerOpen])
 
+  useEffect(() => {
+    if (!program) return
+    const applyProgress = () => {
+      try {
+        const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as {
+          programId?: string
+          workoutId?: string
+        }[]
+        const completed = new Set(
+          history
+            .filter((item) => item.programId === program.id && item.workoutId)
+            .map((item) => item.workoutId!)
+        )
+        const next = program.sessions.find((item) => !completed.has(item.id)) || program.sessions[0]
+        setCompletedIds(completed)
+        setNextUnlockedId(next?.id)
+      } catch {
+        setCompletedIds(new Set())
+        setNextUnlockedId(program.sessions[0]?.id)
+      }
+    }
+
+    applyProgress()
+    window.addEventListener('fitpulse-history', applyProgress)
+    return () => window.removeEventListener('fitpulse-history', applyProgress)
+  }, [program])
+
   const sessionExercises = customExercises.length > 0 ? customExercises : session?.exercises || []
   const totalSets = session ? sessionExercises.reduce((sum, ex) => sum + ex.sets, 0) : 0
   const totalReps = session ? sessionExercises.reduce((sum, ex) => sum + ex.sets * ex.reps, 0) : 0
+  const isLocked =
+    !!program &&
+    !!session &&
+    !completedIds.has(session.id) &&
+    !!nextUnlockedId &&
+    session.id !== nextUnlockedId
 
   useEffect(() => {
     if (!session) return
@@ -172,6 +207,19 @@ export default function SessionDetailPage() {
               <p className="text-gray-600 mb-6">Impossible de charger cette séance. Retourne aux programmes.</p>
               <Link href="/programmes" className="btn-primary">
                 Voir les programmes
+              </Link>
+            </div>
+          ) : isLocked ? (
+            <div className="card-soft text-center py-12">
+              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h1 className="section-title mb-3">Séance verrouillée</h1>
+              <p className="text-gray-600 mb-6">
+                Termine d&apos;abord la séance en cours avant d&apos;accéder à celle-ci.
+              </p>
+              <Link href={`/programmes/${program.slug}/seances/${nextUnlockedId}`} className="btn-primary">
+                Aller à la séance actuelle
               </Link>
             </div>
           ) : (

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Clock } from 'lucide-react'
+import { Clock, Lock } from 'lucide-react'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import { Program } from '@/data/programs'
@@ -81,6 +81,7 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
         {program.sessions.map((session) => {
           const isNext = session.id === nextSessionId
           const isDone = completedIds.has(session.id)
+          const isLocked = !isDone && !isNext
           return (
             <div
               key={session.id}
@@ -102,6 +103,12 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
                         Terminée
                       </span>
                     )}
+                    {isLocked && (
+                      <span className="text-[11px] font-semibold px-2 py-1 rounded-full bg-gray-100 text-gray-600 inline-flex items-center gap-1">
+                        <Lock className="h-3 w-3" />
+                        Verrouillée
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-gray-600">{session.focus}</p>
                   <div className="text-sm text-gray-600 mt-2">
@@ -109,15 +116,23 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
                   </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <Link href={`/programmes/${program.slug}/seances/${session.id}`} className="btn-secondary">
-                    Voir le détail
-                  </Link>
-                  <StartProgramButton
-                    program={program}
-                    sessionId={session.id}
-                    label="Démarrer cette séance"
-                    className="btn-primary"
-                  />
+                  {isLocked ? (
+                    <div className="px-4 py-2 rounded-lg border border-gray-200 text-sm text-gray-500">
+                      Disponible après la séance actuelle
+                    </div>
+                  ) : (
+                    <>
+                      <Link href={`/programmes/${program.slug}/seances/${session.id}`} className="btn-secondary">
+                        Voir le détail
+                      </Link>
+                      <StartProgramButton
+                        program={program}
+                        sessionId={session.id}
+                        label="Démarrer cette séance"
+                        className="btn-primary"
+                      />
+                    </>
+                  )}
                 </div>
               </div>
             </div>
