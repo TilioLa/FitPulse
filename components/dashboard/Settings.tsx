@@ -19,6 +19,7 @@ interface UserSettings {
   restBetweenExercises: number
   soundEnabled: boolean
   voiceEnabled: boolean
+  reminderEmailsEnabled: boolean
   weightUnit: 'kg' | 'lbs'
   weight?: number
   height?: number
@@ -43,6 +44,7 @@ export default function Settings() {
     restBetweenExercises: 180,
     soundEnabled: true,
     voiceEnabled: false,
+    reminderEmailsEnabled: true,
     weightUnit: 'kg',
     goal: 'Cardio',
     sessionsPerWeek: 3,
@@ -72,6 +74,8 @@ export default function Settings() {
       restBetweenExercises: Number.isFinite(userSettings.restBetweenExercises) ? userSettings.restBetweenExercises : 180,
       soundEnabled: typeof userSettings.soundEnabled === 'boolean' ? userSettings.soundEnabled : true,
       voiceEnabled: typeof userSettings.voiceEnabled === 'boolean' ? userSettings.voiceEnabled : false,
+      reminderEmailsEnabled:
+        typeof userSettings.reminderEmailsEnabled === 'boolean' ? userSettings.reminderEmailsEnabled : true,
       weightUnit: userSettings.weightUnit === 'lbs' ? 'lbs' : 'kg',
       weight: Number.isFinite(userSettings.weight) ? userSettings.weight : undefined,
       height: Number.isFinite(userSettings.height) ? userSettings.height : undefined,
@@ -113,6 +117,7 @@ export default function Settings() {
         restBetweenExercises: settings.restBetweenExercises,
         soundEnabled: settings.soundEnabled,
         voiceEnabled: settings.voiceEnabled,
+        reminderEmailsEnabled: settings.reminderEmailsEnabled,
         weightUnit: settings.weightUnit,
         weight: settings.weight,
         height: settings.height,
@@ -134,6 +139,7 @@ export default function Settings() {
           restBetweenExercises: settings.restBetweenExercises,
           soundEnabled: settings.soundEnabled,
           voiceEnabled: settings.voiceEnabled,
+          reminderEmailsEnabled: settings.reminderEmailsEnabled,
           weightUnit: settings.weightUnit,
           weight: settings.weight,
           height: settings.height,
@@ -215,6 +221,25 @@ export default function Settings() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="card-soft">
+          <div className="flex items-center space-x-2 mb-4">
+            <Target className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Rappels</h2>
+          </div>
+          <label className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Recevoir les emails de rappel</div>
+              <div className="text-xs text-gray-500">Séance planifiée et reprise de rythme</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.reminderEmailsEnabled}
+              onChange={(e) => setSettings({ ...settings, reminderEmailsEnabled: e.target.checked })}
+              className="h-5 w-5 accent-primary-600"
+            />
+          </label>
         </div>
 
         {/* Informations personnelles */}

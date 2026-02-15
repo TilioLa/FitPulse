@@ -7,6 +7,7 @@ import { syncHistoryForUser } from '@/lib/history-store'
 import { syncUserStateForUser } from '@/lib/user-state-store'
 import { logClientEvent } from '@/lib/client-telemetry'
 import { maybeSendLifecycleEmails } from '@/lib/lifecycle-client'
+import { maybeSendDailyWorkoutReminder } from '@/lib/reminder-client'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -103,6 +104,11 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       email: user.email,
       name: user.name,
       createdAt: user.createdAt,
+    })
+    void maybeSendDailyWorkoutReminder({
+      id: user.id,
+      email: user.email,
+      name: user.name,
     })
   }, [status, user?.id, user?.email, user?.name, user?.createdAt])
 

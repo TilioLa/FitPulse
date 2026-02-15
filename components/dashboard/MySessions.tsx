@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Play, Pause, RotateCcw, Clock, Flame, Trophy, Dumbbell } from 'lucide-react'
 import TrainingModeView from '@/components/dashboard/TrainingModeView'
 import { useToast } from '@/components/ui/ToastProvider'
@@ -75,6 +75,14 @@ interface Workout {
   status?: 'default' | 'in_progress' | 'completed'
   startedAt?: string
   completedAt?: string
+  draft?: {
+    exerciseInputs?: ExerciseInputs
+    exerciseNotes?: Record<string, string>
+    currentExerciseIndex?: number
+    timeRemaining?: number
+    timerKind?: 'set' | 'exercise' | null
+    savedAt?: string
+  }
 }
 
 export default function MySessions() {
@@ -112,6 +120,19 @@ export default function MySessions() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
   const [trainingMode, setTrainingMode] = useState(false)
+  const lastCloudPersistRef = useRef(0)
+
+  const buildWorkoutSnapshot = (base: Workout) => ({
+    ...base,
+    draft: {
+      exerciseInputs,
+      exerciseNotes,
+      currentExerciseIndex,
+      timeRemaining,
+      timerKind,
+      savedAt: new Date().toISOString(),
+    },
+  })
 
   useEffect(() => {
     // Charger la séance du jour
@@ -119,6 +140,7 @@ export default function MySessions() {
     if (storedWorkout) {
       const parsed = JSON.parse(storedWorkout)
       setWorkout(parsed)
+      const parsedDraft = parsed?.draft
       if (parsed?.exercises?.length) {
         const inputs: ExerciseInputs = {}
         parsed.exercises.forEach((exercise: Exercise) => {
@@ -127,7 +149,20 @@ export default function MySessions() {
             reps: exercise.reps,
           }))
         })
-        setExerciseInputs(inputs)
+        setExerciseInputs(parsedDraft?.exerciseInputs || inputs)
+      }
+      if (parsedDraft?.exerciseNotes) {
+        setExerciseNotes(parsedDraft.exerciseNotes)
+      }
+      if (Number.isInteger(parsedDraft?.currentExerciseIndex)) {
+        const nextIndex = Math.max(0, Math.min(parsedDraft.currentExerciseIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
+        setCurrentExerciseIndex(nextIndex)
+      }
+      if (Number.isFinite(parsedDraft?.timeRemaining) && parsedDraft.timeRemaining > 0) {
+        setTimeRemaining(parsedDraft.timeRemaining)
+      }
+      if (parsedDraft?.timerKind === 'set' || parsedDraft?.timerKind === 'exercise') {
+        setTimerKind(parsedDraft.timerKind)
       }
       if (parsed?.equipment) setEquipment(parsed.equipment)
       if (parsed?.programId) {
@@ -288,6 +323,45 @@ export default function MySessions() {
       if (interval) clearInterval(interval)
     }
   }, [isRunning, timeRemaining, timerKind, soundEnabled, voiceEnabled])
+
+  useEffect(() => {
+    if (!workout) return
+
+    const timeout = setTimeout(() => {
+      const snapshot = buildWorkoutSnapshot(workout)
+      localStorage.setItem('fitpulse_current_workout', JSON.stringify(snapshot))
+      const now = Date.now()
+      if (user?.id && now - lastCloudPersistRef.current > 10_000) {
+        lastCloudPersistRef.current = now
+        void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeout)
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id])
+
+  useEffect(() => {
+    const saveNow = () => {
+      if (!workout) return
+      const snapshot = buildWorkoutSnapshot(workout)
+      localStorage.setItem('fitpulse_current_workout', JSON.stringify(snapshot))
+      if (user?.id) {
+        void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
+      }
+    }
+
+    const onBeforeUnload = () => saveNow()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') saveNow()
+    }
+
+    window.addEventListener('beforeunload', onBeforeUnload)
+    document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.removeEventListener('beforeunload', onBeforeUnload)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id])
 
   const handleStartTimer = (restTime: number, kind: 'set' | 'exercise') => {
     setTimerKind(kind)
