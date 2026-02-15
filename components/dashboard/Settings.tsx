@@ -7,6 +7,11 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistSettingsForUser } from '@/lib/user-state-store'
 import { generateWeeklyPlan, type WeeklyPlanDay } from '@/lib/weekly-plan'
 import { getEntitlement, setStoredPlan, type PlanId } from '@/lib/subscription'
+import {
+  canUseBrowserNotifications,
+  requestBrowserNotificationPermission,
+  sendTestBrowserNotification,
+} from '@/lib/web-notification-reminder'
 
 interface UserSettings {
   name: string
@@ -20,6 +25,7 @@ interface UserSettings {
   soundEnabled: boolean
   voiceEnabled: boolean
   reminderEmailsEnabled: boolean
+  pushRemindersEnabled: boolean
   weightUnit: 'kg' | 'lbs'
   weight?: number
   height?: number
@@ -45,6 +51,7 @@ export default function Settings() {
     soundEnabled: true,
     voiceEnabled: false,
     reminderEmailsEnabled: true,
+    pushRemindersEnabled: true,
     weightUnit: 'kg',
     goal: 'Cardio',
     sessionsPerWeek: 3,
@@ -76,6 +83,8 @@ export default function Settings() {
       voiceEnabled: typeof userSettings.voiceEnabled === 'boolean' ? userSettings.voiceEnabled : false,
       reminderEmailsEnabled:
         typeof userSettings.reminderEmailsEnabled === 'boolean' ? userSettings.reminderEmailsEnabled : true,
+      pushRemindersEnabled:
+        typeof userSettings.pushRemindersEnabled === 'boolean' ? userSettings.pushRemindersEnabled : true,
       weightUnit: userSettings.weightUnit === 'lbs' ? 'lbs' : 'kg',
       weight: Number.isFinite(userSettings.weight) ? userSettings.weight : undefined,
       height: Number.isFinite(userSettings.height) ? userSettings.height : undefined,
@@ -118,6 +127,7 @@ export default function Settings() {
         soundEnabled: settings.soundEnabled,
         voiceEnabled: settings.voiceEnabled,
         reminderEmailsEnabled: settings.reminderEmailsEnabled,
+        pushRemindersEnabled: settings.pushRemindersEnabled,
         weightUnit: settings.weightUnit,
         weight: settings.weight,
         height: settings.height,
@@ -140,6 +150,7 @@ export default function Settings() {
           soundEnabled: settings.soundEnabled,
           voiceEnabled: settings.voiceEnabled,
           reminderEmailsEnabled: settings.reminderEmailsEnabled,
+          pushRemindersEnabled: settings.pushRemindersEnabled,
           weightUnit: settings.weightUnit,
           weight: settings.weight,
           height: settings.height,
@@ -183,6 +194,7 @@ export default function Settings() {
   const focusOptions = ['Pectoraux', 'Dos', 'Bras', 'Jambes', 'Épaules', 'Abdos', 'Fessiers']
   const avoidOptions = ['Dos', 'Genoux', 'Épaules', 'Hanches']
   const equipmentOptions = ['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines de salle']
+  const notificationsSupported = canUseBrowserNotifications()
 
   return (
     <div className="page-wrap">
@@ -240,6 +252,47 @@ export default function Settings() {
               className="h-5 w-5 accent-primary-600"
             />
           </label>
+          <label className="mt-3 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Recevoir les notifications navigateur</div>
+              <div className="text-xs text-gray-500">
+                Rappel local sur cet appareil
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.pushRemindersEnabled}
+              onChange={(e) => setSettings({ ...settings, pushRemindersEnabled: e.target.checked })}
+              className="h-5 w-5 accent-primary-600"
+            />
+          </label>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={async () => {
+                if (!notificationsSupported) {
+                  push('Notifications non supportées sur ce navigateur.', 'error')
+                  return
+                }
+                const status = await requestBrowserNotificationPermission()
+                if (status === 'granted') push('Notifications navigateur activées.', 'success')
+                else if (status === 'denied') push('Notifications refusées par le navigateur.', 'error')
+              }}
+              className="btn-secondary"
+            >
+              Activer les notifications
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (sendTestBrowserNotification()) push('Notification de test envoyée.', 'success')
+                else push('Active d’abord les notifications navigateur.', 'error')
+              }}
+              className="btn-secondary"
+            >
+              Tester la notification
+            </button>
+          </div>
         </div>
 
         {/* Informations personnelles */}

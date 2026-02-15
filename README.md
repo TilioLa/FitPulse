@@ -94,6 +94,7 @@ ENABLE_SERVER_CRON_EMAILS="true"
 ENABLE_LIFECYCLE_EMAILS="true"
 ENABLE_REMINDER_EMAILS="true"
 NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION="false"
+NEXT_PUBLIC_ENABLE_WEB_NOTIFICATIONS="true"
 SMTP_HOST="smtp.gmail.com"
 SMTP_PORT="587"
 SMTP_USER="your-email@gmail.com"
@@ -102,6 +103,7 @@ EMAIL_FROM="FitPulse <your-email@gmail.com>"
 ```
 
 Le cron Vercel est défini dans `vercel.json` et appelle `/api/cron/engagement` chaque jour.
+Les notifications navigateur locales (non-email) sont activées via `NEXT_PUBLIC_ENABLE_WEB_NOTIFICATIONS`.
 
 ## 📦 Technologies utilisées
 
