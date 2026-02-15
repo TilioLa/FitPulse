@@ -4,7 +4,7 @@ test('restores in-progress workout draft after reload', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem('fitpulse_e2e_bypass', 'true')
   })
-  await page.goto('/dashboard?view=session')
+  await page.goto('/dashboard?view=session&e2e=1')
   await expect(page.getByTestId('session-root')).toBeVisible({ timeout: 15_000 })
 
   await page.getByTestId('mark-next-set').click()

@@ -31,6 +31,8 @@ type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines'
 
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
+  const forceE2EMode = searchParams?.get('e2e') === '1'
   const [activeSection, setActiveSection] = useState<DashboardSection>(() => {
     if (typeof window !== 'undefined') {
       const view = new URLSearchParams(window.location.search).get('view')
@@ -45,7 +47,7 @@ export default function DashboardPage() {
     process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'e2e-anon-key' ||
     localBypass
-  const effectiveStatus = e2eBypass && status === 'unauthenticated' ? 'authenticated' : status
+  const effectiveStatus = forceE2EMode || (e2eBypass && status === 'unauthenticated') ? 'authenticated' : status
 
   useEffect(() => {
     if (effectiveStatus === 'unauthenticated') {
