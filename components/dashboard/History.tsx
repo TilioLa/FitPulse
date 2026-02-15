@@ -7,7 +7,7 @@ import DashboardCalendar from '@/components/dashboard/Calendar'
 import { useI18n } from '@/components/I18nProvider'
 import Link from 'next/link'
 import { programsById } from '@/data/programs'
-import { applyHistoryLimit, FREE_HISTORY_LIMIT, getEntitlement, hasProAccess } from '@/lib/subscription'
+import { applyHistoryLimit, getEntitlement } from '@/lib/subscription'
 
 interface WorkoutHistory {
   id: string
@@ -24,7 +24,6 @@ export default function History() {
   const [history, setHistory] = useState<WorkoutHistory[]>([])
   const [stats, setStats] = useState({ total: 0, streak: 0, totalMinutes: 0, totalWeight: 0 })
   const [locale, setLocale] = useState('fr')
-  const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const { t } = useI18n()
 
   useEffect(() => {
@@ -32,16 +31,8 @@ export default function History() {
     if (typeof navigator !== 'undefined') {
       setLocale(navigator.language || 'fr')
     }
-    const applyPlan = () => {
-      setEntitlement(getEntitlement())
-      loadHistory()
-    }
-    window.addEventListener('fitpulse-plan', applyPlan)
-    window.addEventListener('storage', applyPlan)
-    return () => {
-      window.removeEventListener('fitpulse-plan', applyPlan)
-      window.removeEventListener('storage', applyPlan)
-    }
+    window.addEventListener('storage', loadHistory)
+    return () => window.removeEventListener('storage', loadHistory)
   }, [])
 
   const loadHistory = () => {
@@ -123,7 +114,6 @@ export default function History() {
   }
 
   const exportCsv = () => {
-    if (!hasProAccess(entitlement)) return
     const rows = [
       ['date', 'workout', 'duration_min', 'volume_kg', 'calories'],
       ...history.map((workout) => [
@@ -147,7 +137,6 @@ export default function History() {
   }
 
   const exportPdf = () => {
-    if (!hasProAccess(entitlement)) return
     const popup = window.open('', '_blank', 'width=900,height=700')
     if (!popup) return
     const rows = history
@@ -203,36 +192,16 @@ export default function History() {
     <div className="page-wrap">
       <h1 className="section-title mb-8 reveal">{t('sessionHistory')}</h1>
       <div className="mb-6 flex flex-wrap gap-2">
-        {hasProAccess(entitlement) ? (
-          <>
-            <button onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export CSV
-            </button>
-            <button onClick={exportPdf} className="btn-secondary inline-flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Export PDF
-            </button>
-          </>
-        ) : (
-          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
-            Exports CSV/PDF disponibles en Pro.
-            <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
-              Débloquer
-            </Link>
-          </div>
-        )}
+        <button onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
+          <Download className="h-4 w-4" />
+          Export CSV
+        </button>
+        <button onClick={exportPdf} className="btn-secondary inline-flex items-center gap-2">
+          <FileText className="h-4 w-4" />
+          Export PDF
+        </button>
       </div>
 
-      {/* Statistiques */}
-      {!hasProAccess(entitlement) && (
-        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-          Plan gratuit: historique visible limité aux {FREE_HISTORY_LIMIT} dernières séances.
-          <Link href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
-            Débloquer l’historique illimité
-          </Link>
-        </div>
-      )}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="card-compact bg-gradient-to-br from-primary-50 to-primary-100 reveal reveal-1 hover:shadow-md transition-all">
           <div className="flex items-center justify-between">

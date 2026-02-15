@@ -105,20 +105,20 @@ export default function Feed() {
 
       if (ent.isTrialActive && ent.trialDaysLeft <= 3) {
         setBusinessNudge({
-          title: `Essai premium: ${ent.trialDaysLeft} jour(s) restant(s)`,
-          body: 'Conserve les analytics avancées et les exports en passant Pro avant la fin de l’essai.',
-          cta: 'Passer Pro',
-          href: '/pricing',
+          title: `Continue sur ta lancée: ${ent.trialDaysLeft} jour(s)`,
+          body: 'Maintiens ton rythme avec 2 à 3 séances cette semaine.',
+          cta: 'Voir le dashboard',
+          href: '/dashboard',
         })
         return
       }
 
       if (signals.lockedProgramAttempts >= 2) {
         setBusinessNudge({
-          title: 'Tu explores des programmes premium',
-          body: 'Débloque tous les programmes pour garder ton rythme sans friction.',
-          cta: 'Débloquer les programmes',
-          href: '/pricing',
+          title: 'Tu explores plusieurs programmes',
+          body: 'Choisis un plan hebdo simple pour garder une progression régulière.',
+          cta: 'Voir les programmes',
+          href: '/programmes',
         })
         return
       }
@@ -126,9 +126,9 @@ export default function Feed() {
       if (signals.freeRoutineLimitHits >= 1) {
         setBusinessNudge({
           title: 'Limite de routines atteinte',
-          body: 'Passe en Pro pour créer des routines illimitées et les adapter à ta progression.',
-          cta: 'Débloquer les routines',
-          href: '/pricing',
+          body: 'Fais le tri dans tes routines ou adapte ton planning sur 3 séances fixes.',
+          cta: 'Voir les routines',
+          href: '/dashboard?view=routines',
         })
         return
       }
@@ -136,9 +136,9 @@ export default function Feed() {
       if (!ent.isTrialActive && history.length >= 6) {
         setBusinessNudge({
           title: 'Tu es régulier, optimise ta progression',
-          body: 'Débloque la comparaison mensuelle, la charge hebdo et les exports CSV/PDF.',
-          cta: 'Voir Pro',
-          href: '/pricing',
+          body: 'Analyse tes volumes hebdo et ajuste une semaine allégée si nécessaire.',
+          cta: 'Voir l’historique',
+          href: '/dashboard?view=history',
         })
         return
       }
@@ -389,10 +389,10 @@ export default function Feed() {
       {!hasProAccess(entitlement) && (
         <div className="mb-8 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
           {entitlement.isTrialActive
-            ? `Essai premium actif: ${entitlement.trialDaysLeft} jour(s) restant(s).`
-            : 'Passe en Pro pour débloquer tous les programmes et routines.'}
-          <Link href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
-            Voir les plans
+            ? `Mode guidé actif: ${entitlement.trialDaysLeft} jour(s) restants.`
+            : 'Toutes les fonctionnalités sont disponibles dans ta version actuelle.'}
+          <Link href="/programmes" className="ml-2 font-semibold underline underline-offset-2">
+            Voir les programmes
           </Link>
         </div>
       )}
@@ -529,9 +529,9 @@ export default function Feed() {
             </div>
           ) : (
             <div className="mt-4 text-sm text-gray-600">
-              Disponible en Pro.
-              <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
-                Débloquer
+              Stat indisponible temporairement.
+              <Link href="/dashboard?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+                Historique
               </Link>
             </div>
           )}
@@ -555,9 +555,9 @@ export default function Feed() {
             </>
           ) : (
             <div className="mt-4 text-sm text-gray-600">
-              Analyse de charge disponible en Pro.
-              <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
-                Débloquer
+              Analyse de charge indisponible temporairement.
+              <Link href="/dashboard?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+                Historique
               </Link>
             </div>
           )}
@@ -587,9 +587,9 @@ export default function Feed() {
           </div>
         ) : (
           <div className="mt-3 text-sm text-gray-600">
-            Comparaison semaine/mois disponible en Pro.
-            <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
-              Débloquer
+            Comparaison indisponible temporairement.
+            <Link href="/dashboard?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+              Historique
             </Link>
           </div>
         )}

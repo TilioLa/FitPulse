@@ -1,12 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Program } from '@/data/programs'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCurrentWorkoutForUser, writeLocalCurrentWorkout } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
-import { canAccessProgram, getEntitlement, trackLockedProgramAttempt } from '@/lib/subscription'
 
 export default function StartProgramButton({
   program,
@@ -26,20 +24,6 @@ export default function StartProgramButton({
   overrideExercises?: { name: string; sets: number; reps: number; rest: number; videoUrl?: string }[]
 }) {
   const { user } = useAuth()
-  const [entitlement, setEntitlement] = useState(() => getEntitlement())
-
-  useEffect(() => {
-    const apply = () => setEntitlement(getEntitlement())
-    apply()
-    window.addEventListener('fitpulse-plan', apply)
-    window.addEventListener('storage', apply)
-    return () => {
-      window.removeEventListener('fitpulse-plan', apply)
-      window.removeEventListener('storage', apply)
-    }
-  }, [])
-
-  const isProgramLocked = !canAccessProgram(program.id, entitlement)
 
   const resolveNextSession = () => {
     if (typeof window === 'undefined') return program.sessions[0]
@@ -56,11 +40,6 @@ export default function StartProgramButton({
   }
 
   const handleStart = () => {
-    if (isProgramLocked) {
-      trackLockedProgramAttempt()
-      return
-    }
-
     const session = sessionId
       ? program.sessions.find((item) => item.id === sessionId)
       : resolveNextSession()
@@ -95,7 +74,7 @@ export default function StartProgramButton({
   const targetSession =
     sessionId ? program.sessions.find((item) => item.id === sessionId) : resolveNextSession()
   const targetUrl =
-    isProgramLocked ? '/pricing' : hrefOverride === undefined
+    hrefOverride === undefined
       ? targetSession
         ? `/programmes/${program.slug}/seances/${targetSession.id}`
         : '#'
@@ -110,7 +89,7 @@ export default function StartProgramButton({
           'btn-primary w-full flex items-center justify-center space-x-2'
         }
       >
-        <span>{isProgramLocked ? 'Débloquer en Pro' : label || 'Démarrer la prochaine séance'}</span>
+        <span>{label || 'Démarrer la prochaine séance'}</span>
         <ArrowRight className="h-5 w-5" />
       </button>
     )
@@ -125,7 +104,7 @@ export default function StartProgramButton({
         'btn-primary w-full flex items-center justify-center space-x-2'
       }
     >
-      <span>{isProgramLocked ? 'Débloquer en Pro' : label || 'Démarrer la prochaine séance'}</span>
+      <span>{label || 'Démarrer la prochaine séance'}</span>
       <ArrowRight className="h-5 w-5" />
     </a>
   )

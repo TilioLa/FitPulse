@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { PlusCircle, Dumbbell, Play } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/ToastProvider'
@@ -13,7 +13,6 @@ import {
   writeLocalCustomRoutines,
   writeLocalCurrentWorkout,
 } from '@/lib/user-state-store'
-import { getEntitlement, hasProAccess, trackFreeRoutineLimitHit } from '@/lib/subscription'
 
 type RoutineExercise = {
   name: string
@@ -93,7 +92,6 @@ export default function CustomRoutines() {
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
-  const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   useEffect(() => {
     const apply = () => setRoutines(loadRoutines())
@@ -112,20 +110,6 @@ export default function CustomRoutines() {
     }
   }, [pickerOpen])
 
-  useEffect(() => {
-    const apply = () => setEntitlement(getEntitlement())
-    apply()
-    window.addEventListener('fitpulse-plan', apply)
-    window.addEventListener('storage', apply)
-    return () => {
-      window.removeEventListener('fitpulse-plan', apply)
-      window.removeEventListener('storage', apply)
-    }
-  }, [])
-
-  const isPro = useMemo(() => hasProAccess(entitlement), [entitlement])
-  const canCreate = isPro || routines.length < 5
-
   const handleAddExercise = () => {
     setExercises((prev) => [...prev, { name: `Exercice ${prev.length + 1}`, sets: 3, reps: 10, rest: 60 }])
   }
@@ -135,11 +119,6 @@ export default function CustomRoutines() {
   }
 
   const handleCreate = () => {
-    if (!canCreate) {
-      trackFreeRoutineLimitHit()
-      push('Limite gratuite atteinte. Passe Pro pour créer plus de routines.', 'error')
-      return
-    }
     if (!name.trim()) {
       push('Donne un nom à ta routine.', 'error')
       return
@@ -222,21 +201,8 @@ export default function CustomRoutines() {
       <div className="mb-8">
         <h1 className="section-title mb-2">Mes routines</h1>
         <p className="section-subtitle">
-          Crée tes routines personnalisées. Limite gratuite : 5 routines.
+          Crée tes routines personnalisées en illimité.
         </p>
-        {entitlement.isTrialActive && entitlement.plan === 'free' && (
-          <div className="mt-4 rounded-lg border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
-            Essai premium actif: {entitlement.trialDaysLeft} jour(s) restant(s).
-          </div>
-        )}
-        {!isPro && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Tu as {routines.length}/5 routines. Pour en créer plus, passe Pro.
-            <a href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
-              Voir les plans
-            </a>
-          </div>
-        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -449,8 +415,7 @@ export default function CustomRoutines() {
             <div className="grid grid-cols-1 gap-2">
               <button
                 onClick={handleCreate}
-                disabled={!canCreate}
-                className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                className="btn-primary w-full flex items-center justify-center gap-2"
               >
                 <Dumbbell className="h-4 w-4" />
                 {editingRoutineId ? 'Enregistrer la routine' : 'Créer la routine'}

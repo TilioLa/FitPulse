@@ -13,23 +13,22 @@ export default function CgvPage() {
             <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Objet</h2>
               <p>
-                Les présentes conditions encadrent l&apos;accès aux services FitPulse et les modalités d&apos;abonnement aux
-                offres payantes.
+                Les présentes conditions encadrent l&apos;accès aux services FitPulse.
               </p>
             </section>
 
             <section>
-              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Abonnements</h2>
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Tarification</h2>
               <p>
-                Les abonnements sont sans engagement et peuvent être annulés à tout moment. Les tarifs affichés sont
-                exprimés en euros et peuvent évoluer.
+                À ce jour, FitPulse est accessible gratuitement. Si une offre payante est proposée plus tard, ces
+                conditions seront mises à jour.
               </p>
             </section>
 
             <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Paiements</h2>
               <p>
-                Dans cette version démo, les paiements sont simulés et aucune transaction réelle n&apos;est effectuée.
+                Aucun paiement n&apos;est requis pour utiliser l&apos;application actuellement.
               </p>
             </section>
 

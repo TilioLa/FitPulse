@@ -3,13 +3,13 @@ import { Shield, RefreshCw, Headphones } from 'lucide-react'
 const guarantees = [
   {
     icon: <Shield className="h-10 w-10 text-primary-600" />,
-    title: 'Sans engagement',
-    description: 'Annulez votre abonnement à tout moment, sans frais supplémentaires ni questions.'
+    title: 'Accès gratuit',
+    description: 'Toutes les fonctionnalités essentielles sont disponibles sans paiement.'
   },
   {
     icon: <RefreshCw className="h-10 w-10 text-primary-600" />,
-    title: 'Changement de plan gratuit',
-    description: 'Passez d\'un plan à l\'autre quand vous le souhaitez, votre historique est préservé.'
+    title: 'Évolutions continues',
+    description: 'De nouvelles fonctionnalités sont ajoutées régulièrement sans changer ton accès.'
   },
   {
     icon: <Headphones className="h-10 w-10 text-primary-600" />,
@@ -40,11 +40,10 @@ export default function PricingFeatures() {
       
       <div className="mt-12 text-center bg-primary-50 rounded-lg p-6">
         <p className="text-lg text-gray-700 mb-2">
-          <strong>Essayez gratuitement pendant 14 jours</strong>
+          <strong>Utilisation 100% gratuite</strong>
         </p>
         <p className="text-gray-600">
-          Tous les plans incluent une période d'essai de 14 jours. Annulez avant la fin de l'essai, 
-          aucun frais ne vous sera facturé.
+          La monétisation pourra être ajoutée plus tard, mais pour l’instant FitPulse reste entièrement gratuit.
         </p>
       </div>
     </div>

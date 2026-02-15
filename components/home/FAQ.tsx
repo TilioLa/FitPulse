@@ -18,7 +18,7 @@ const faqs = [
   },
   {
     question: "Y a-t-il un engagement minimum ?",
-    answer: "Non, aucun engagement ! Vous pouvez annuler votre abonnement à tout moment. L'abonnement gratuit vous donne accès à un programme complet de base, et les versions payantes offrent plus de fonctionnalités."
+    answer: "Non. FitPulse est actuellement gratuit, sans engagement, et vous avez accès à toutes les fonctionnalités."
   },
   {
     question: "Les programmes sont-ils adaptés aux débutants ?",
