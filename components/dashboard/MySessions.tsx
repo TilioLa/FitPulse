@@ -18,6 +18,7 @@ import { persistHistoryForUser } from '@/lib/history-store'
 import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 import { encodeSharedSession } from '@/lib/session-share'
+import { slugify } from '@/lib/slug'
 
 const playBeep = () => {
   try {
@@ -116,6 +117,7 @@ export default function MySessions() {
     volume: number
     duration: number
     muscleUsage: { id: string; percent: number }[]
+    bestPrKg: number
   } | null>(null)
   const [editWorkout, setEditWorkout] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -504,6 +506,7 @@ export default function MySessions() {
       volume: Math.round(sessionVolume),
       duration: workout.duration,
       muscleUsage,
+      bestPrKg: Math.round(Math.max(...exerciseRecords.map((item) => item.bestOneRm || 0), 0)),
     })
     setShowSummary(true)
     push(`Séance terminée !`, 'success')
@@ -593,21 +596,67 @@ export default function MySessions() {
 
   const buildShareUrl = () => {
     if (!workout || !lastSummary) return null
+    const authorName = user?.name || 'Utilisateur FitPulse'
+    const authorSlug = user?.id
+      ? `${slugify(authorName) || 'athlete'}-${user.id.slice(0, 6)}`
+      : slugify(authorName) || 'athlete'
     const token = encodeSharedSession({
       workoutName: workout.name,
-      author: user?.name || 'Utilisateur FitPulse',
+      author: authorName,
+      authorSlug,
       date: new Date().toISOString(),
       duration: lastSummary.duration,
       volume: lastSummary.volume,
       calories: lastSummary.calories,
       muscleUsage: lastSummary.muscleUsage,
+      bestPrKg: lastSummary.bestPrKg,
     })
     const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
     return `${base}/share?s=${token}`
   }
 
   const handleShareSession = async () => {
-    const url = buildShareUrl()
+    if (!workout || !lastSummary) {
+      push('Impossible de générer le lien pour le moment.', 'error')
+      return
+    }
+
+    const authorName = user?.name || 'Utilisateur FitPulse'
+    const authorSlug = user?.id
+      ? `${slugify(authorName) || 'athlete'}-${user.id.slice(0, 6)}`
+      : slugify(authorName) || 'athlete'
+    const payload = {
+      workoutName: workout.name,
+      author: authorName,
+      authorSlug,
+      date: new Date().toISOString(),
+      duration: lastSummary.duration,
+      volume: lastSummary.volume,
+      calories: lastSummary.calories,
+      muscleUsage: lastSummary.muscleUsage,
+      bestPrKg: lastSummary.bestPrKg,
+    }
+
+    let url: string | null = null
+    try {
+      const response = await fetch('/api/share/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session: payload }),
+      })
+      if (response.ok) {
+        const data = (await response.json().catch(() => ({}))) as { id?: string }
+        if (data?.id) {
+          const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+          url = `${base}/share?id=${encodeURIComponent(data.id)}`
+        }
+      }
+    } catch {
+      // fallback to encoded share link below
+    }
+    if (!url) {
+      url = buildShareUrl()
+    }
     if (!url) {
       push('Impossible de générer le lien pour le moment.', 'error')
       return

@@ -1,11 +1,13 @@
 export type SharedSessionPayload = {
   workoutName: string
   author: string
+  authorSlug?: string
   date: string
   duration: number
   volume: number
   calories: number
   muscleUsage: { id: string; percent: number }[]
+  bestPrKg?: number
 }
 
 function base64UrlEncode(value: string) {

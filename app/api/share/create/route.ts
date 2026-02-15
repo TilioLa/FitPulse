@@ -1,0 +1,48 @@
+import { NextResponse } from 'next/server'
+import { randomUUID } from 'crypto'
+import { getSupabaseAdminClient, isSupabaseAdminConfigured } from '@/lib/supabase-admin'
+import type { SharedSessionPayload } from '@/lib/session-share'
+
+export const runtime = 'nodejs'
+
+type Payload = {
+  session?: SharedSessionPayload
+}
+
+function isValidSessionPayload(value: unknown): value is SharedSessionPayload {
+  if (!value || typeof value !== 'object') return false
+  const item = value as SharedSessionPayload
+  return Boolean(item.workoutName && item.date && Array.isArray(item.muscleUsage))
+}
+
+export async function POST(request: Request) {
+  try {
+    if (!isSupabaseAdminConfigured()) {
+      return NextResponse.json({ ok: false, error: 'missing_supabase_admin_env' }, { status: 500 })
+    }
+
+    const body = (await request.json().catch(() => ({}))) as Payload
+    const session = body?.session
+    if (!isValidSessionPayload(session)) {
+      return NextResponse.json({ ok: false, error: 'invalid_payload' }, { status: 400 })
+    }
+
+    const id = randomUUID().replace(/-/g, '').slice(0, 12)
+    const supabase = getSupabaseAdminClient()
+    const { error } = await supabase.from('workout_shares').insert({
+      id,
+      payload: session,
+      created_at: new Date().toISOString(),
+    })
+    if (error) {
+      return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true, id })
+  } catch (error) {
+    return NextResponse.json(
+      { ok: false, error: error instanceof Error ? error.message : 'create_failed' },
+      { status: 500 }
+    )
+  }
+}

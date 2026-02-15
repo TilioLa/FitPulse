@@ -1,15 +1,53 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { decodeSharedSession } from '@/lib/session-share'
+import { decodeSharedSession, type SharedSessionPayload } from '@/lib/session-share'
 import { muscleLabel } from '@/lib/muscles'
 
 export default function ShareSessionView() {
   const params = useSearchParams()
+  const id = params.get('id') || ''
   const token = params.get('s') || ''
-  const session = useMemo(() => decodeSharedSession(token), [token])
+  const fallbackSession = useMemo(() => decodeSharedSession(token), [token])
+  const [session, setSession] = useState<SharedSessionPayload | null>(fallbackSession)
+  const [loading, setLoading] = useState(Boolean(id))
+
+  useEffect(() => {
+    if (!id) {
+      setSession(fallbackSession)
+      setLoading(false)
+      return
+    }
+    let active = true
+    const load = async () => {
+      setLoading(true)
+      try {
+        const response = await fetch(`/api/share/${encodeURIComponent(id)}`)
+        if (!response.ok) {
+          if (active) setSession(fallbackSession)
+          return
+        }
+        const data = (await response.json().catch(() => ({}))) as { session?: SharedSessionPayload }
+        if (active) {
+          setSession(data?.session || fallbackSession)
+        }
+      } catch {
+        if (active) setSession(fallbackSession)
+      } finally {
+        if (active) setLoading(false)
+      }
+    }
+    void load()
+    return () => {
+      active = false
+    }
+  }, [id, fallbackSession])
+
+  if (loading) {
+    return <div className="max-w-3xl mx-auto text-gray-600">Chargement du partage...</div>
+  }
 
   if (!session) {
     return (
@@ -30,6 +68,13 @@ export default function ShareSessionView() {
         <p className="text-gray-600">
           Par <span className="font-semibold text-gray-900">{session.author}</span> · {new Date(session.date).toLocaleDateString('fr-FR')}
         </p>
+        {session.authorSlug && (
+          <div className="mt-2">
+            <Link href={`/u/${session.authorSlug}`} className="text-sm font-semibold text-primary-700 hover:text-primary-800">
+              Voir le profil public
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="card-soft">

@@ -128,6 +128,29 @@ EMAIL_FROM="FitPulse <your-email@gmail.com>"
 Le cron Vercel est défini dans `vercel.json` et appelle `/api/cron/engagement` chaque jour.
 Les notifications navigateur locales (non-email) sont activées via `NEXT_PUBLIC_ENABLE_WEB_NOTIFICATIONS`.
 
+## 🔗 Partage public de séance (persistant Supabase)
+
+Endpoints:
+- `POST /api/share/create`
+- `GET /api/share/[id]`
+- `GET /api/profile/public/[slug]`
+
+Pages:
+- `/share?id=...` (séance partagée)
+- `/u/[slug]` (profil public léger)
+
+Table SQL requise:
+
+```sql
+create table if not exists public.workout_shares (
+  id text primary key,
+  payload jsonb not null,
+  created_at timestamptz not null default now()
+);
+```
+
+Le client essaie d’abord le lien court persistant (`/share?id=...`) et garde un fallback encodé (`/share?s=...`) si la table n’est pas encore disponible.
+
 ## 📦 Technologies utilisées
 
 - **Next.js 14** : Framework React avec App Router
