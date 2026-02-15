@@ -12,13 +12,12 @@ import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import RestTimeDisplay from '@/components/exercises/RestTimeDisplay'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { labelize } from '@/lib/labels'
-import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X, Lock } from 'lucide-react'
+import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X } from 'lucide-react'
 import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCurrentWorkoutForUser, readLocalCurrentWorkout, writeLocalCurrentWorkout } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
-import { canAccessProgram, getEntitlement } from '@/lib/subscription'
 
 type SessionExercise = { name: string; sets: number; reps: number; rest: number; videoUrl?: string }
 
@@ -32,7 +31,6 @@ export default function SessionDetailPage() {
   const [customExercises, setCustomExercises] = useState<SessionExercise[]>([])
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set())
   const [nextUnlockedId, setNextUnlockedId] = useState<string | undefined>(undefined)
-  const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   const { program, session } = useMemo(() => {
     const rawId = decodeURIComponent(params?.id || '').trim()
@@ -59,17 +57,6 @@ export default function SessionDetailPage() {
 
     return { program: foundProgram, session: foundSession }
   }, [params])
-
-  useEffect(() => {
-    const apply = () => setEntitlement(getEntitlement())
-    apply()
-    window.addEventListener('fitpulse-plan', apply)
-    window.addEventListener('storage', apply)
-    return () => {
-      window.removeEventListener('fitpulse-plan', apply)
-      window.removeEventListener('storage', apply)
-    }
-  }, [])
 
   useEffect(() => {
     if (!program || !session) return
@@ -126,13 +113,12 @@ export default function SessionDetailPage() {
   const sessionExercises = customExercises.length > 0 ? customExercises : session?.exercises || []
   const totalSets = session ? sessionExercises.reduce((sum, ex) => sum + ex.sets, 0) : 0
   const totalReps = session ? sessionExercises.reduce((sum, ex) => sum + ex.sets * ex.reps, 0) : 0
-  const isLocked =
+  const isOutOfSequence =
     !!program &&
     !!session &&
     !completedIds.has(session.id) &&
     !!nextUnlockedId &&
     session.id !== nextUnlockedId
-  const isProgramLocked = !!program && !canAccessProgram(program.id, entitlement)
 
   useEffect(() => {
     if (!session) return
@@ -230,34 +216,19 @@ export default function SessionDetailPage() {
                 Voir les programmes
               </Link>
             </div>
-          ) : isProgramLocked ? (
-            <div className="card-soft text-center py-12">
-              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center">
-                <Lock className="h-6 w-6" />
-              </div>
-              <h1 className="section-title mb-3">Programme premium</h1>
-              <p className="text-gray-600 mb-6">
-                Cette séance est réservée au plan Pro.
-              </p>
-              <Link href="/pricing" className="btn-primary">
-                Voir les plans
-              </Link>
-            </div>
-          ) : isLocked ? (
-            <div className="card-soft text-center py-12">
-              <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center">
-                <Lock className="h-6 w-6" />
-              </div>
-              <h1 className="section-title mb-3">Séance verrouillée</h1>
-              <p className="text-gray-600 mb-6">
-                Termine d&apos;abord la séance en cours avant d&apos;accéder à celle-ci.
-              </p>
-              <Link href={`/programmes/${program.slug}/seances/${nextUnlockedId}`} className="btn-primary">
-                Aller à la séance actuelle
-              </Link>
-            </div>
           ) : (
             <>
+              {isOutOfSequence && nextUnlockedId && (
+                <div className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                  Cette séance n&apos;est pas la prochaine recommandée, mais tu peux la faire quand même.
+                  <Link
+                    href={`/programmes/${program.slug}/seances/${nextUnlockedId}`}
+                    className="ml-2 font-semibold underline underline-offset-2"
+                  >
+                    Aller à la séance conseillée
+                  </Link>
+                </div>
+              )}
               <div className="mb-10">
                 <Link href={`/programmes/${program.slug}`} className="text-sm text-primary-600 hover:text-primary-700">
                   ← Retour au programme
