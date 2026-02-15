@@ -4,8 +4,8 @@ const nextConfig = {
   async headers() {
     const isProd = process.env.NODE_ENV === 'production'
     const scriptSrc = isProd
-      ? "script-src 'self'"
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+      ? "script-src 'self' 'unsafe-inline' https://js.stripe.com"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
 
     const csp = [
       "default-src 'self'",
