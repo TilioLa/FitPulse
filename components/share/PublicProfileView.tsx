@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { muscleLabel } from '@/lib/muscles'
+import { isProfileFollowed, toggleFollowProfile } from '@/lib/public-profile-follow'
 
 type PublicSession = {
   id: string
@@ -31,6 +32,7 @@ export default function PublicProfileView() {
   const slug = decodeURIComponent(params?.slug || '').trim()
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isFollowed, setIsFollowed] = useState(false)
 
   useEffect(() => {
     if (!slug) {
@@ -60,6 +62,14 @@ export default function PublicProfileView() {
     }
   }, [slug])
 
+  useEffect(() => {
+    if (!slug) return
+    setIsFollowed(isProfileFollowed(slug))
+    const onFollowChange = () => setIsFollowed(isProfileFollowed(slug))
+    window.addEventListener('fitpulse-followed-profiles', onFollowChange)
+    return () => window.removeEventListener('fitpulse-followed-profiles', onFollowChange)
+  }, [slug])
+
   if (loading) {
     return <div className="max-w-4xl mx-auto text-gray-600">Chargement du profil public...</div>
   }
@@ -85,8 +95,23 @@ export default function PublicProfileView() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card-soft">
-        <h1 className="section-title mb-2">{profile.author}</h1>
-        <p className="text-gray-600">Profil public FitPulse</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="section-title mb-2">{profile.author}</h1>
+            <p className="text-gray-600">Profil public FitPulse</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsFollowed(toggleFollowProfile(profile.slug))}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold border ${
+              isFollowed
+                ? 'border-primary-600 bg-primary-50 text-primary-700'
+                : 'border-gray-300 bg-white text-gray-700'
+            }`}
+          >
+            {isFollowed ? 'Suivi' : 'Suivre'}
+          </button>
+        </div>
         {badges.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {badges.map((badge) => (

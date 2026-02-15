@@ -141,6 +141,8 @@ Pages:
 - `/share` (classement public simple)
 - `/u/[slug]` (profil public léger)
 
+Note: le suivi de profils (`Suivre`) est local au navigateur (localStorage), sans compte social.
+
 Table SQL requise:
 
 ```sql
