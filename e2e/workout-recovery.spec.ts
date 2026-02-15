@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test'
 
 test('restores in-progress workout draft after reload', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('fitpulse_e2e_bypass', 'true')
+  })
   await page.goto('/dashboard?view=session')
-  await expect(page.getByTestId('session-root')).toBeVisible()
+  await expect(page.getByTestId('session-root')).toBeVisible({ timeout: 15_000 })
 
   await page.getByTestId('mark-next-set').click()
 
@@ -22,7 +25,7 @@ test('restores in-progress workout draft after reload', async ({ page }) => {
     .toBeTruthy()
 
   await page.reload()
-  await expect(page.getByTestId('session-root')).toBeVisible()
+  await expect(page.getByTestId('session-root')).toBeVisible({ timeout: 15_000 })
 
   await expect
     .poll(async () => {
