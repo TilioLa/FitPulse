@@ -56,6 +56,7 @@ function getDueEvents(user: LifecycleUser): LifecycleEmailEvent[] {
 
 export async function maybeSendLifecycleEmails(user: LifecycleUser) {
   if (typeof window === 'undefined') return
+  if (process.env.NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION !== 'true') return
   if (!user?.email) return
 
   const dueEvents = getDueEvents(user)

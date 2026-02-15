@@ -67,6 +67,8 @@ export default function InscriptionPage() {
           data: {
             full_name: safeName,
             phone: phone || null,
+            fitpulse_plan: 'free',
+            fitpulse_trial_started_at: new Date().toISOString(),
           },
         },
       })

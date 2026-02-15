@@ -78,6 +78,31 @@ Les pages de reset sont :
 - `/reset` (demande de lien)
 - `/reset/update` (nouveau mot de passe)
 
+## ⏰ Emails lifecycle + reminders (Vercel Cron)
+
+Le projet inclut:
+- `POST /api/lifecycle/send` (emails J+1, J+7, fin d'essai)
+- `POST /api/reminders/send` (rappel séance du jour)
+- `POST/GET /api/cron/engagement` (orchestrateur serveur)
+
+Variables nécessaires:
+
+```env
+SUPABASE_SERVICE_ROLE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
+CRON_SECRET="CHANGE_ME"
+ENABLE_SERVER_CRON_EMAILS="true"
+ENABLE_LIFECYCLE_EMAILS="true"
+ENABLE_REMINDER_EMAILS="true"
+NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION="false"
+SMTP_HOST="smtp.gmail.com"
+SMTP_PORT="587"
+SMTP_USER="your-email@gmail.com"
+SMTP_PASS="your-app-password"
+EMAIL_FROM="FitPulse <your-email@gmail.com>"
+```
+
+Le cron Vercel est défini dans `vercel.json` et appelle `/api/cron/engagement` chaque jour.
+
 ## 📦 Technologies utilisées
 
 - **Next.js 14** : Framework React avec App Router

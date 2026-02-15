@@ -1,30 +1,10 @@
 import { toLocalDateKey, type WorkoutHistoryItem } from '@/lib/history'
+import { didWorkoutToday, shouldTrainToday } from '@/lib/reminder-logic'
 
 type ReminderUser = {
   id: string
   email: string
   name?: string | null
-}
-
-type WeeklyPlanDay = {
-  id?: string
-  day?: string
-  shouldTrain?: boolean
-}
-
-function todayLabelFr() {
-  const labels = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi']
-  return labels[new Date().getDay()]
-}
-
-function shouldTrainTodayFromSettings(settings: Record<string, unknown>) {
-  const weeklyPlan = (settings.weeklyPlan || []) as WeeklyPlanDay[]
-  if (!Array.isArray(weeklyPlan) || weeklyPlan.length === 0) return false
-  const today = todayLabelFr()
-  return weeklyPlan.some((day) => {
-    const name = String(day.day || '').toLowerCase()
-    return day.shouldTrain === true && name.includes(today)
-  })
 }
 
 function wasReminderSentToday(userId: string) {
@@ -37,17 +17,16 @@ function markReminderSentToday(userId: string) {
 
 export async function maybeSendDailyWorkoutReminder(user: ReminderUser) {
   if (typeof window === 'undefined') return
+  if (process.env.NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION !== 'true') return
   if (!user?.email) return
   if (wasReminderSentToday(user.id)) return
 
   const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}') as Record<string, unknown>
   if (settings.reminderEmailsEnabled === false) return
-  if (!shouldTrainTodayFromSettings(settings)) return
+  if (!shouldTrainToday(settings)) return
 
   const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
-  const todayKey = toLocalDateKey(new Date())
-  const hasWorkoutToday = history.some((item) => toLocalDateKey(item.date) === todayKey)
-  if (hasWorkoutToday) return
+  if (didWorkoutToday(history)) return
 
   try {
     const response = await fetch('/api/reminders/send', {
