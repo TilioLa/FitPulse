@@ -832,7 +832,7 @@ export default function MySessions() {
       : null
 
   return (
-    <div className="page-wrap panel-stack">
+    <div className="page-wrap panel-stack" data-testid="session-root">
       <div className="mb-8 reveal">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">{workout.name}</h1>
@@ -1073,6 +1073,7 @@ export default function MySessions() {
               <button
                 type="button"
                 onClick={markNextSetCompleted}
+                data-testid="mark-next-set"
                 className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300"
               >
                 Valider la prochaine série (Entrée)
@@ -1175,7 +1176,7 @@ export default function MySessions() {
                 ← Précédent
               </button>
               {isLastExercise ? (
-                <button onClick={handleCompleteWorkout} className="btn-primary min-h-11">
+                <button onClick={handleCompleteWorkout} data-testid="complete-workout" className="btn-primary min-h-11">
                   Terminer la séance
                 </button>
               ) : (

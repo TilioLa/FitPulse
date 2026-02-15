@@ -46,8 +46,20 @@ function mapUser(user: User | null): AppUser | null {
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<AppUser | null>(null)
+  const e2eBypass = process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true'
 
   const applySession = async () => {
+    if (e2eBypass) {
+      setUser({
+        id: 'e2e-user',
+        email: 'e2e@fitpulse.local',
+        name: 'E2E User',
+        phone: null,
+        createdAt: new Date().toISOString(),
+      })
+      setStatus('authenticated')
+      return
+    }
     if (!isSupabaseConfigured()) {
       setStatus('unauthenticated')
       setUser(null)
@@ -73,6 +85,17 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   }
 
   useEffect(() => {
+    if (e2eBypass) {
+      setUser({
+        id: 'e2e-user',
+        email: 'e2e@fitpulse.local',
+        name: 'E2E User',
+        phone: null,
+        createdAt: new Date().toISOString(),
+      })
+      setStatus('authenticated')
+      return
+    }
     if (!isSupabaseConfigured()) {
       setStatus('unauthenticated')
       setUser(null)
@@ -96,7 +119,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       })()
     })
     return () => data.subscription.unsubscribe()
-  }, [])
+  }, [e2eBypass])
 
   useEffect(() => {
     if (status !== 'authenticated' || !user) return
@@ -154,6 +177,10 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     user,
     reload: applySession,
     signOut: async () => {
+      if (e2eBypass) {
+        setStatus('authenticated')
+        return
+      }
       if (!isSupabaseConfigured()) {
         setUser(null)
         setStatus('unauthenticated')
@@ -180,7 +207,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       }
       await applySession()
     },
-  }), [status, user])
+  }), [status, user, e2eBypass])
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

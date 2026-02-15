@@ -39,6 +39,29 @@ npm run dev
 
 Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
+## ✅ Tests E2E (Playwright)
+
+```bash
+npx playwright install chromium
+npm run test:e2e
+```
+
+Le mode e2e active un bypass auth dédié (`NEXT_PUBLIC_E2E_BYPASS_AUTH=true`) pour tester le flux workout sans dépendre de Supabase en direct.
+
+Commandes utiles:
+
+```bash
+npm run test:e2e:standard   # pages publiques + workout + recovery
+npm run test:e2e:auth-real  # login réel Supabase (nécessite secrets)
+```
+
+Pour `test:e2e:auth-real`, définir:
+- `PLAYWRIGHT_E2E_BYPASS_AUTH=false`
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `E2E_USER_EMAIL`
+- `E2E_USER_PASSWORD`
+
 ## 🔐 Authentification (Supabase Auth)
 
 1. Créez un projet Supabase et récupérez :

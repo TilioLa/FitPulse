@@ -7,6 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint -c node_modules/eslint-config-next/dist/core-web-vitals.js . --ext .ts,.tsx",
+    "test:e2e": "playwright test",
+    "test:e2e:standard": "playwright test e2e/public-pages.spec.ts e2e/workout-flow.spec.ts e2e/workout-recovery.spec.ts",
+    "test:e2e:auth-real": "playwright test e2e/auth-real.spec.ts",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "postinstall": "echo \"postinstall complete\""
   },
   "dependencies": {
@@ -29,6 +34,7 @@
     "typescript": "^5.3.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/nodemailer": "^7.0.9"
   }
 }

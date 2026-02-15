@@ -1,0 +1,41 @@
+import { expect, test } from '@playwright/test'
+
+test('restores in-progress workout draft after reload', async ({ page }) => {
+  await page.goto('/dashboard?view=session')
+  await expect(page.getByTestId('session-root')).toBeVisible()
+
+  await page.getByTestId('mark-next-set').click()
+
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const raw = localStorage.getItem('fitpulse_current_workout')
+        if (!raw) return false
+        const parsed = JSON.parse(raw)
+        const exerciseInputs = parsed?.draft?.exerciseInputs
+        if (!exerciseInputs) return false
+        const firstExerciseId = Object.keys(exerciseInputs)[0]
+        const firstSet = exerciseInputs[firstExerciseId]?.[0]
+        return Boolean(firstSet?.completed)
+      })
+    })
+    .toBeTruthy()
+
+  await page.reload()
+  await expect(page.getByTestId('session-root')).toBeVisible()
+
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const raw = localStorage.getItem('fitpulse_current_workout')
+        if (!raw) return false
+        const parsed = JSON.parse(raw)
+        const exerciseInputs = parsed?.draft?.exerciseInputs
+        if (!exerciseInputs) return false
+        const firstExerciseId = Object.keys(exerciseInputs)[0]
+        const firstSet = exerciseInputs[firstExerciseId]?.[0]
+        return Boolean(firstSet?.completed)
+      })
+    })
+    .toBeTruthy()
+})
