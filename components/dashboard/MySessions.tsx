@@ -17,6 +17,7 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistHistoryForUser } from '@/lib/history-store'
 import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
+import { encodeSharedSession } from '@/lib/session-share'
 
 const playBeep = () => {
   try {
@@ -504,9 +505,8 @@ export default function MySessions() {
       duration: workout.duration,
       muscleUsage,
     })
-    setShowSummary(false)
+    setShowSummary(true)
     push(`Séance terminée !`, 'success')
-    window.location.href = '/dashboard?view=feed'
   }
 
   const updateWorkoutExercises = (nextExercises: Exercise[]) => {
@@ -591,6 +591,49 @@ export default function MySessions() {
     return `${value} ${weightUnit}`
   }
 
+  const buildShareUrl = () => {
+    if (!workout || !lastSummary) return null
+    const token = encodeSharedSession({
+      workoutName: workout.name,
+      author: user?.name || 'Utilisateur FitPulse',
+      date: new Date().toISOString(),
+      duration: lastSummary.duration,
+      volume: lastSummary.volume,
+      calories: lastSummary.calories,
+      muscleUsage: lastSummary.muscleUsage,
+    })
+    const base = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+    return `${base}/share?s=${token}`
+  }
+
+  const handleShareSession = async () => {
+    const url = buildShareUrl()
+    if (!url) {
+      push('Impossible de générer le lien pour le moment.', 'error')
+      return
+    }
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Ma séance FitPulse',
+          text: 'Regarde ma séance FitPulse',
+          url,
+        })
+        return
+      } catch {
+        // fallback copy below
+      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url)
+      push('Lien de partage copié.', 'success')
+    } catch {
+      push(url, 'info')
+    }
+  }
+
   const supersetKey = workout ? `fitpulse_superset_${workout.id}` : 'fitpulse_superset'
   const currentExercise = workout ? workout.exercises[currentExerciseIndex] : null
   const currentSupersetGroup = workout
@@ -667,8 +710,15 @@ export default function MySessions() {
                 </button>
               </div>
               <div className="mt-4 space-y-2">
-                <button className="btn-primary w-full">Modifier la séance</button>
-                <button className="btn-secondary w-full">Copier le lien</button>
+                <button className="btn-primary w-full" onClick={() => setShowSummary(false)}>
+                  Retour à la séance
+                </button>
+                <button className="btn-secondary w-full" onClick={handleShareSession}>
+                  Copier le lien
+                </button>
+                <button className="btn-secondary w-full" onClick={() => router.push('/dashboard?view=feed')}>
+                  Retour au dashboard
+                </button>
               </div>
             </div>
 
