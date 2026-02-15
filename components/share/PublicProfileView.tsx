@@ -38,6 +38,7 @@ export default function PublicProfileView() {
   const [goalTargetInput, setGoalTargetInput] = useState('')
   const [exportFormat, setExportFormat] = useState<'post' | 'story'>('post')
   const [exportTheme, setExportTheme] = useState<'light' | 'dark'>('light')
+  const [previewDataUrl, setPreviewDataUrl] = useState<string>('')
 
   useEffect(() => {
     if (!slug) {
@@ -178,14 +179,14 @@ export default function PublicProfileView() {
   const hasGoal = Number.isFinite(goalTarget) && goalTarget > 0
   const goalProgressPct = hasGoal ? Math.min(100, Math.max(0, Math.round((currentWeeklyValue / goalTarget) * 100))) : 0
 
-  const handleDownloadShareCard = () => {
+  const buildShareCardDataUrl = (): string | null => {
     const width = 1080
     const height = exportFormat === 'story' ? 1920 : 1350
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
     const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    if (!ctx) return null
 
     const isDark = exportTheme === 'dark'
     const bgGradient = ctx.createLinearGradient(0, 0, width, height)
@@ -272,11 +273,38 @@ export default function PublicProfileView() {
     ctx.fillText('fitpulse', 72, height - 70)
     ctx.fillText(new Date().toLocaleDateString('fr-FR'), 860, height - 70)
 
-    const dataUrl = canvas.toDataURL('image/png')
+    return canvas.toDataURL('image/png')
+  }
+
+  const handleDownloadShareCard = () => {
+    const dataUrl = buildShareCardDataUrl()
+    if (!dataUrl) return
     const link = document.createElement('a')
     link.href = dataUrl
     link.download = `fitpulse-profile-${profile.slug}-${exportFormat}-${exportTheme}.png`
     link.click()
+  }
+
+  useEffect(() => {
+    const dataUrl = buildShareCardDataUrl()
+    setPreviewDataUrl(dataUrl || '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [exportFormat, exportTheme, profile.slug, profile.author, profile.totalShares, profile.totalVolume, profile.totalDuration, profile.bestPrKg, monthlyObjective.title, monthlyObjective.subtitle, badges.join('|')])
+
+  const handleCopyCaption = async () => {
+    const profileUrl = `${window.location.origin}/u/${profile.slug}`
+    const caption =
+      `Progression FitPulse de ${profile.author}\n` +
+      `- Séances partagées: ${profile.totalShares}\n` +
+      `- Volume total: ${profile.totalVolume} kg\n` +
+      `- Meilleur PR: ${profile.bestPrKg} kg\n` +
+      `Voir le profil: ${profileUrl}\n` +
+      `#FitPulse #Fitness #Progression`
+    try {
+      await navigator.clipboard.writeText(caption)
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -323,6 +351,25 @@ export default function PublicProfileView() {
               {isFollowed ? 'Suivi' : 'Suivre'}
             </button>
           </div>
+        </div>
+        {previewDataUrl && (
+          <div className="mt-4">
+            <div className="text-xs text-gray-500 mb-2">Aperçu de la carte</div>
+            <img
+              src={previewDataUrl}
+              alt="Aperçu carte profil"
+              className="w-full max-w-xs rounded-lg border border-gray-200 shadow-sm"
+            />
+          </div>
+        )}
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={handleCopyCaption}
+            className="px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white text-gray-700"
+          >
+            Copier la légende
+          </button>
         </div>
         {badges.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
