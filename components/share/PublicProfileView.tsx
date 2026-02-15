@@ -92,6 +92,43 @@ export default function PublicProfileView() {
     profile.bestPrKg >= 120 ? 'PR Elite' : profile.bestPrKg >= 80 ? 'PR Solide' : null,
   ].filter(Boolean) as string[]
 
+  const weeklyTrend = (() => {
+    const now = new Date()
+    const buckets = Array.from({ length: 4 }).map((_, idx) => {
+      const start = new Date(now)
+      start.setDate(now.getDate() - (3 - idx) * 7)
+      const key = `${start.getFullYear()}-W${Math.ceil((start.getDate() + 6) / 7)}`
+      return {
+        key,
+        label: `S-${4 - idx}`,
+        startTs: start.getTime(),
+        endTs: start.getTime() + 7 * 24 * 60 * 60 * 1000,
+        volume: 0,
+        pr: 0,
+        sessions: 0,
+      }
+    })
+
+    profile.sessions.forEach((session) => {
+      const ts = new Date(session.date).getTime()
+      const bucket = buckets.find((item) => ts >= item.startTs && ts < item.endTs)
+      if (!bucket) return
+      bucket.sessions += 1
+      bucket.volume += Number(session.volume) || 0
+      bucket.pr = Math.max(bucket.pr, Number(session.bestPrKg) || 0)
+    })
+
+    const maxVolume = Math.max(...buckets.map((item) => item.volume), 1)
+    const maxPr = Math.max(...buckets.map((item) => item.pr), 1)
+    return buckets.map((item) => ({
+      ...item,
+      volumeWidth: Math.round((item.volume / maxVolume) * 100),
+      prWidth: Math.round((item.pr / maxPr) * 100),
+      volume: Math.round(item.volume),
+      pr: Math.round(item.pr),
+    }))
+  })()
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card-soft">
@@ -139,6 +176,44 @@ export default function PublicProfileView() {
         <div className="card-soft">
           <div className="text-xs text-gray-500">Meilleur PR</div>
           <div className="text-2xl font-semibold text-gray-900">{profile.bestPrKg || 0} kg</div>
+        </div>
+      </div>
+
+      <div className="card-soft">
+        <h2 className="text-lg font-semibold text-gray-900 mb-3">Activité récente (4 semaines)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <div className="text-xs text-gray-500 mb-2">Volume hebdo (kg)</div>
+            <div className="space-y-2">
+              {weeklyTrend.map((item) => (
+                <div key={`v-${item.key}`}>
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>{item.label}</span>
+                    <span>{item.volume} kg</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-primary-600" style={{ width: `${item.volumeWidth}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-gray-500 mb-2">PR max hebdo (kg)</div>
+            <div className="space-y-2">
+              {weeklyTrend.map((item) => (
+                <div key={`pr-${item.key}`}>
+                  <div className="flex items-center justify-between text-xs text-gray-600">
+                    <span>{item.label}</span>
+                    <span>{item.pr} kg</span>
+                  </div>
+                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-amber-500" style={{ width: `${item.prWidth}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
 
