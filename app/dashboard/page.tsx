@@ -41,7 +41,7 @@ export default function DashboardPage() {
     }
     return 'feed'
   })
-  const { status } = useAuth()
+  const { status, reload } = useAuth()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
   const e2eBypass =
@@ -55,24 +55,46 @@ export default function DashboardPage() {
     let active = true
     const timer = setTimeout(async () => {
       if (!active) return
-      try {
-        if (isSupabaseConfigured()) {
-          const { data } = await getSupabaseBrowserClient().auth.getSession()
-          if (data.session) return
+      const justSignedInAtRaw = localStorage.getItem('fitpulse_login_just_signed_in_at')
+      const justSignedInAt = Number(justSignedInAtRaw || 0)
+      const withinLoginGrace = Number.isFinite(justSignedInAt) && Date.now() - justSignedInAt < 15_000
+
+      if (withinLoginGrace) {
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          if (!active) return
+          await reload()
+          if (isSupabaseConfigured()) {
+            try {
+              const { data } = await getSupabaseBrowserClient().auth.getSession()
+              if (data.session) {
+                localStorage.removeItem('fitpulse_login_just_signed_in_at')
+                return
+              }
+            } catch {
+              // ignore and retry
+            }
+          }
+          await new Promise((resolve) => setTimeout(resolve, 250))
         }
-      } catch {
-        // ignore and continue redirect
+      } else {
+        try {
+          if (isSupabaseConfigured()) {
+            const { data } = await getSupabaseBrowserClient().auth.getSession()
+            if (data.session) return
+          }
+        } catch {
+          // ignore and continue redirect
+        }
       }
-      if (active) {
-        router.replace('/connexion')
-      }
+
+      if (active) router.replace('/connexion')
     }, 900)
 
     return () => {
       active = false
       clearTimeout(timer)
     }
-  }, [router, effectiveStatus])
+  }, [router, effectiveStatus, reload])
 
   const scheduleSection = (section: DashboardSection) => {
     queueMicrotask(() => {

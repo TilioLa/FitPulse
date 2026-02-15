@@ -44,6 +44,11 @@ export default function ConnexionPage() {
         password,
       })
       if (signInError) {
+        const message = (signInError.message || '').toLowerCase()
+        if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+          setError('Email non confirmé. Vérifie ta boîte mail puis clique sur le lien de confirmation.')
+          return
+        }
         setError('Email ou mot de passe incorrect')
         return
       }
@@ -63,6 +68,7 @@ export default function ConnexionPage() {
         return
       }
 
+      localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
       router.replace('/dashboard')
     } finally {
       setIsSubmitting(false)
