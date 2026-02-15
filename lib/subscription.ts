@@ -11,6 +11,7 @@ export type Entitlement = {
 
 export const PLAN_STORAGE_KEY = 'fitpulse_plan'
 export const TRIAL_STARTED_AT_STORAGE_KEY = 'fitpulse_trial_started_at'
+export const FREE_HISTORY_LIMIT = 10
 const TRIAL_DAYS = 14
 
 const PLAN_RANK: Record<PlanId, number> = {
@@ -102,4 +103,19 @@ export function isProgramPremium(programId: string) {
 export function canAccessProgram(programId: string, entitlement: Entitlement) {
   if (!isProgramPremium(programId)) return true
   return hasProAccess(entitlement)
+}
+
+export function getHistoryLimit(entitlement: Entitlement): number | null {
+  if (hasProAccess(entitlement)) return null
+  return FREE_HISTORY_LIMIT
+}
+
+export function applyHistoryLimit<T extends { date?: string }>(items: T[], entitlement: Entitlement): T[] {
+  const limit = getHistoryLimit(entitlement)
+  if (limit == null || items.length <= limit) return items
+
+  return items
+    .slice()
+    .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
+    .slice(0, limit)
 }

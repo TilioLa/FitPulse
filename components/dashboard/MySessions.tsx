@@ -16,6 +16,7 @@ import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistHistoryForUser } from '@/lib/history-store'
 import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 
 const playBeep = () => {
   try {
@@ -392,19 +393,24 @@ export default function MySessions() {
           sets: exerciseInputs[exercise.id] || [],
         })),
       })
-      localStorage.setItem('fitpulse_history', JSON.stringify(history))
+      const cappedHistory = applyHistoryLimit(history as WorkoutHistoryItem[], getEntitlement())
+      localStorage.setItem('fitpulse_history', JSON.stringify(cappedHistory))
       window.dispatchEvent(new Event('fitpulse-history'))
       if (user?.id) {
-        void persistHistoryForUser(user.id, history as WorkoutHistoryItem[])
+        void persistHistoryForUser(user.id, cappedHistory as WorkoutHistoryItem[])
+      }
+      if (!hasProAccess(getEntitlement()) && history.length > cappedHistory.length) {
+        push('Plan gratuit: historique limité aux 10 dernières séances.', 'info')
       }
     }
 
     // Réinitialiser
-    const { streak, totalWorkouts } = computeHistoryStats(history as WorkoutHistoryItem[])
+    const finalHistory = applyHistoryLimit(history as WorkoutHistoryItem[], getEntitlement())
+    const { streak, totalWorkouts } = computeHistoryStats(finalHistory)
     setStreak(streak)
     setCompletedWorkouts(totalWorkouts)
     if (workout.programId) {
-      const completedForProgram = (history as WorkoutHistoryItem[]).filter(
+      const completedForProgram = finalHistory.filter(
         (item: any) => item.programId === workout.programId
       ).length
       setProgramCompletedSessions(completedForProgram)

@@ -7,6 +7,7 @@ import DashboardCalendar from '@/components/dashboard/Calendar'
 import { useI18n } from '@/components/I18nProvider'
 import Link from 'next/link'
 import { programsById } from '@/data/programs'
+import { applyHistoryLimit, FREE_HISTORY_LIMIT, getEntitlement, hasProAccess } from '@/lib/subscription'
 
 interface WorkoutHistory {
   id: string
@@ -23,6 +24,7 @@ export default function History() {
   const [history, setHistory] = useState<WorkoutHistory[]>([])
   const [stats, setStats] = useState({ total: 0, streak: 0, totalMinutes: 0, totalWeight: 0 })
   const [locale, setLocale] = useState('fr')
+  const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const { t } = useI18n()
 
   useEffect(() => {
@@ -30,17 +32,28 @@ export default function History() {
     if (typeof navigator !== 'undefined') {
       setLocale(navigator.language || 'fr')
     }
+    const applyPlan = () => {
+      setEntitlement(getEntitlement())
+      loadHistory()
+    }
+    window.addEventListener('fitpulse-plan', applyPlan)
+    window.addEventListener('storage', applyPlan)
+    return () => {
+      window.removeEventListener('fitpulse-plan', applyPlan)
+      window.removeEventListener('storage', applyPlan)
+    }
   }, [])
 
   const loadHistory = () => {
-    const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-    const { streak } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
-    const totalWorkouts = (storedHistory as WorkoutHistoryItem[]).length
-    const totalMinutes = (storedHistory as WorkoutHistoryItem[]).reduce(
+    const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
+    const visibleHistory = applyHistoryLimit(storedHistory, getEntitlement())
+    const { streak } = computeHistoryStats(visibleHistory)
+    const totalWorkouts = visibleHistory.length
+    const totalMinutes = visibleHistory.reduce(
       (sum, item) => sum + (Number(item.duration) || 0),
       0
     )
-    const totalWeight = (storedHistory as WorkoutHistoryItem[]).reduce((sum, workout) => {
+    const totalWeight = visibleHistory.reduce((sum, workout) => {
       const workoutWeight = (workout.exercises || []).reduce((exerciseSum, exercise) => {
         const setsWeight = (exercise.sets || []).reduce((setSum, set) => {
           const weight = Number(set.weight) || 0
@@ -51,7 +64,7 @@ export default function History() {
       }, 0)
       return sum + workoutWeight
     }, 0)
-    setHistory((storedHistory as WorkoutHistoryItem[]).sort((a: WorkoutHistory, b: WorkoutHistory) =>
+    setHistory(visibleHistory.sort((a: WorkoutHistory, b: WorkoutHistory) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     ))
     setStats({
@@ -114,6 +127,14 @@ export default function History() {
       <h1 className="section-title mb-8 reveal">{t('sessionHistory')}</h1>
 
       {/* Statistiques */}
+      {!hasProAccess(entitlement) && (
+        <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Plan gratuit: historique visible limité aux {FREE_HISTORY_LIMIT} dernières séances.
+          <Link href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
+            Débloquer l’historique illimité
+          </Link>
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="card-compact bg-gradient-to-br from-primary-50 to-primary-100 reveal reveal-1 hover:shadow-md transition-all">
           <div className="flex items-center justify-between">

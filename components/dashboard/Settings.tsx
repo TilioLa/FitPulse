@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistSettingsForUser } from '@/lib/user-state-store'
 import { generateWeeklyPlan, type WeeklyPlanDay } from '@/lib/weekly-plan'
+import { getEntitlement, setStoredPlan, type PlanId } from '@/lib/subscription'
 
 interface UserSettings {
   name: string
@@ -50,6 +51,7 @@ export default function Settings() {
   })
   const [saved, setSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const previewWeeklyPlan = useMemo(
     () => generateWeeklyPlan(settings.sessionsPerWeek ?? 3),
     [settings.sessionsPerWeek]
@@ -82,6 +84,17 @@ export default function Settings() {
         : generateWeeklyPlan(Number.isFinite(userSettings.sessionsPerWeek) ? userSettings.sessionsPerWeek : 3),
     })
   }, [user?.email, user?.name, user?.phone])
+
+  useEffect(() => {
+    const apply = () => setEntitlement(getEntitlement())
+    apply()
+    window.addEventListener('fitpulse-plan', apply)
+    window.addEventListener('storage', apply)
+    return () => {
+      window.removeEventListener('fitpulse-plan', apply)
+      window.removeEventListener('storage', apply)
+    }
+  }, [])
 
   const handleSave = async () => {
     setIsSaving(true)
@@ -170,6 +183,40 @@ export default function Settings() {
       <h1 className="section-title mb-8">Paramètres</h1>
 
       <div className="space-y-6">
+        <div className="card-soft">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Abonnement</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Plan actuel: <span className="font-semibold uppercase">{entitlement.effectivePlan}</span>
+                {entitlement.isTrialActive && entitlement.plan === 'free' ? ` · Essai ${entitlement.trialDaysLeft} jour(s)` : ''}
+              </p>
+            </div>
+            <a href="/pricing" className="btn-secondary">Voir les plans</a>
+          </div>
+          {process.env.NEXT_PUBLIC_ENABLE_BILLING !== 'true' && (
+            <div className="mt-4 border-t pt-4">
+              <div className="text-xs text-gray-500 mb-2">Mode démo (sans Stripe)</div>
+              <div className="flex flex-wrap gap-2">
+                {(['free', 'pro', 'proplus'] as PlanId[]).map((plan) => (
+                  <button
+                    key={plan}
+                    type="button"
+                    onClick={() => setStoredPlan(plan)}
+                    className={`px-3 py-2 rounded-lg text-sm font-semibold border ${
+                      entitlement.plan === plan
+                        ? 'border-primary-600 bg-primary-50 text-primary-700'
+                        : 'border-gray-300 bg-white text-gray-700'
+                    }`}
+                  >
+                    {plan.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Informations personnelles */}
         <div className="card-soft">
           <div className="flex items-center space-x-2 mb-6">

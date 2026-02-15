@@ -8,7 +8,7 @@ import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { muscleLabel } from '@/lib/muscles'
 import { recommendProgram } from '@/lib/recommendation'
-import { getEntitlement, hasProAccess } from '@/lib/subscription'
+import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 
 type FeedItem = {
   id: string
@@ -70,7 +70,8 @@ export default function Feed() {
 
   useEffect(() => {
     try {
-      const stored = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
+      const rawHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
+      const stored = applyHistoryLimit(rawHistory, getEntitlement())
       const list = stored
         .slice()
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -370,32 +371,52 @@ export default function Feed() {
             ))}
           </div>
         </div>
-        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+        <div className={`card-compact transition-all hover:-translate-y-0.5 hover:shadow-md ${!hasProAccess(entitlement) ? 'opacity-75' : ''}`}>
           <div className="text-xs text-gray-500">Meilleur PR ce mois-ci</div>
-          <div className="mt-4 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
-              <Trophy className="h-5 w-5" />
+          {hasProAccess(entitlement) ? (
+            <div className="mt-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <div>
+                <div className="text-lg font-semibold text-gray-900">{monthlyPr?.value ?? '—'} kg</div>
+                <div className="text-xs text-gray-500">{monthlyPr?.label ?? 'Aucun PR enregistré'}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-lg font-semibold text-gray-900">{monthlyPr?.value ?? '—'} kg</div>
-              <div className="text-xs text-gray-500">{monthlyPr?.label ?? 'Aucun PR enregistré'}</div>
+          ) : (
+            <div className="mt-4 text-sm text-gray-600">
+              Disponible en Pro.
+              <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+                Débloquer
+              </Link>
             </div>
-          </div>
+          )}
         </div>
-        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+        <div className={`card-compact transition-all hover:-translate-y-0.5 hover:shadow-md ${!hasProAccess(entitlement) ? 'opacity-75' : ''}`}>
           <div className="text-xs text-gray-500">Charge hebdo</div>
-          <div className="mt-2 text-sm text-gray-700">
-            Semaine actuelle: <span className="font-semibold text-gray-900">{weeklyLoad.current} kg</span>
-          </div>
-          <div className="text-sm text-gray-700">
-            Semaine précédente: <span className="font-semibold text-gray-900">{weeklyLoad.previous} kg</span>
-          </div>
-          <div className={`mt-2 text-xs font-semibold ${weeklyLoad.delta >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
-            Variation: {weeklyLoad.delta >= 0 ? '+' : ''}{weeklyLoad.delta}%
-          </div>
-          <div className="mt-2 text-sm text-gray-700">
-            {weeklyLoad.suggestion}
-          </div>
+          {hasProAccess(entitlement) ? (
+            <>
+              <div className="mt-2 text-sm text-gray-700">
+                Semaine actuelle: <span className="font-semibold text-gray-900">{weeklyLoad.current} kg</span>
+              </div>
+              <div className="text-sm text-gray-700">
+                Semaine précédente: <span className="font-semibold text-gray-900">{weeklyLoad.previous} kg</span>
+              </div>
+              <div className={`mt-2 text-xs font-semibold ${weeklyLoad.delta >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                Variation: {weeklyLoad.delta >= 0 ? '+' : ''}{weeklyLoad.delta}%
+              </div>
+              <div className="mt-2 text-sm text-gray-700">
+                {weeklyLoad.suggestion}
+              </div>
+            </>
+          ) : (
+            <div className="mt-4 text-sm text-gray-600">
+              Analyse de charge disponible en Pro.
+              <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+                Débloquer
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
@@ -414,7 +435,10 @@ export default function Feed() {
             const href = program && item.workoutId
               ? `/programmes/${program.slug}/seances/${item.workoutId}`
               : '/dashboard?view=session'
-            const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as any[]
+            const history = applyHistoryLimit(
+              JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as any[],
+              getEntitlement()
+            )
             const current = history.find((entry) => entry.id === item.id)
             const previous = history.filter((entry) => new Date(entry.date) < new Date(item.date))
             const isPR =
