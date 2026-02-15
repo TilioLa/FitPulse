@@ -33,6 +33,7 @@ type BusinessNudge = {
 export default function Feed() {
   const [items, setItems] = useState<FeedItem[]>([])
   const [monthly, setMonthly] = useState({
+    headline: 'Mois en cours',
     monthLabel: '',
     sessions: 0,
     minutes: 0,
@@ -180,29 +181,37 @@ export default function Feed() {
         setItems(list)
 
         const now = new Date()
-        const month = now.getMonth()
-        const year = now.getFullYear()
+        const recapWindowDays = 5
+        const isRecapWindow = now.getDate() <= recapWindowDays
+        const periodStart = isRecapWindow
+          ? new Date(now.getFullYear(), now.getMonth() - 1, 1)
+          : new Date(now.getFullYear(), now.getMonth(), 1)
+        const periodEnd = isRecapWindow
+          ? new Date(now.getFullYear(), now.getMonth(), 1)
+          : new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
         const monthlyItems = stored.filter((item) => {
           const d = new Date(item.date)
-          return d.getMonth() === month && d.getFullYear() === year
+          return d >= periodStart && d < periodEnd
         })
         const sessions = monthlyItems.length
         const minutes = monthlyItems.reduce((sum, item) => sum + (Number(item.duration) || 0), 0)
         const volume = monthlyItems.reduce((sum, item) => sum + (Number((item as any).volume) || 0), 0)
         const calories = monthlyItems.reduce((sum, item) => sum + (Number((item as any).calories) || 0), 0)
-        const monthLabel = now.toLocaleDateString(navigator.language || 'fr-FR', {
+        const monthLabel = periodStart.toLocaleDateString(navigator.language || 'fr-FR', {
           month: 'long',
           year: 'numeric',
         })
         setMonthly({
+          headline: isRecapWindow ? 'Récap mensuel' : 'Mois en cours',
           monthLabel,
           sessions,
           minutes,
           volume,
           calories,
         })
-        const previousMonthStart = new Date(year, month - 1, 1)
-        const previousMonthEnd = new Date(year, month, 1)
+        const previousMonthStart = new Date(periodStart.getFullYear(), periodStart.getMonth() - 1, 1)
+        const previousMonthEnd = periodStart
         const previousMonthItems = stored.filter((item) => {
           const d = new Date(item.date)
           return d >= previousMonthStart && d < previousMonthEnd
@@ -373,7 +382,7 @@ export default function Feed() {
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="section-title">Home</h1>
-          <p className="text-sm text-gray-500 mt-1">Récap mensuel · {monthly.monthLabel}</p>
+          <p className="text-sm text-gray-500 mt-1">{monthly.headline} · {monthly.monthLabel}</p>
         </div>
         <div className="text-xs text-gray-500">Dernière mise à jour automatique</div>
       </div>
