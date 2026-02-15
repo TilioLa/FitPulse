@@ -58,64 +58,9 @@ export default function InscriptionPage() {
 
     const safeName = name || normalizedEmail.split('@')[0]
 
-    try {
-      const supabase = getSupabaseBrowserClient()
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: {
-            full_name: safeName,
-            phone: phone || null,
-            fitpulse_plan: 'free',
-            fitpulse_trial_started_at: new Date().toISOString(),
-          },
-        },
-      })
-      if (signUpError) {
-        throw signUpError
-      }
-
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      })
-      if (signInError) {
-        throw new Error("Compte créé. Vérifiez vos emails si la confirmation est activée, puis connectez-vous.")
-      }
-
-      const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
-      const weeklyPlan = generateWeeklyPlan(sessionsPerWeek)
-      const initialSettings = {
-        level,
-        goals: normalizedGoals,
-        goal: normalizedGoals[0],
-        equipment,
-        recommendedProgramId: recommended?.program.id,
-        recommendedProgramSlug: recommended?.program.slug,
-        weeklyPlan,
-        reminderEmailsEnabled: true,
-        pushRemindersEnabled: true,
-        restTime: 60,
-        weightUnit: 'kg',
-        sessionsPerWeek,
-        focusZones,
-        avoidZones,
-        weight: weight ? Number(weight) : undefined,
-        height: height ? Number(height) : undefined,
-      }
-      if (signInData.user?.id) {
-        void persistSettingsForUser(signInData.user.id, initialSettings)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
-      return
-    }
-
-    // Initialiser les paramètres par défaut
     const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
     const weeklyPlan = generateWeeklyPlan(sessionsPerWeek)
-    localStorage.setItem('fitpulse_settings', JSON.stringify({
+    const initialSettings = {
       level,
       goals: normalizedGoals,
       goal: normalizedGoals[0],
@@ -132,9 +77,53 @@ export default function InscriptionPage() {
       avoidZones,
       weight: weight ? Number(weight) : undefined,
       height: height ? Number(height) : undefined,
-    }))
-    setStoredPlan('free')
-    ensureTrialStarted()
+    }
+
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            full_name: safeName,
+            phone: phone || null,
+            fitpulse_plan: 'free',
+            fitpulse_trial_started_at: new Date().toISOString(),
+          },
+        },
+      })
+      if (signUpError) {
+        throw signUpError
+      }
+
+      localStorage.setItem('fitpulse_settings', JSON.stringify(initialSettings))
+      setStoredPlan('free')
+      ensureTrialStarted()
+
+      if (signUpData.user?.id) {
+        void persistSettingsForUser(signUpData.user.id, initialSettings)
+      }
+
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      })
+      if (signInError) {
+        const message = (signInError.message || '').toLowerCase()
+        if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+          router.push('/connexion?signup=check-email')
+          return
+        }
+        throw signInError
+      }
+      if (signInData.user?.id) {
+        void persistSettingsForUser(signInData.user.id, initialSettings)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
+      return
+    }
 
     router.push('/dashboard')
   }

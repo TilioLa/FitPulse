@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
@@ -11,10 +11,12 @@ import { useEffect } from 'react'
 
 export default function ConnexionPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { status } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const signupStatus = searchParams.get('signup')
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -62,6 +64,11 @@ export default function ConnexionPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {signupStatus === 'check-email' && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg">
+                  Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
+                </div>
+              )}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
                   {error}
