@@ -4,7 +4,7 @@ test('dashboard workout flow persists draft and completes session', async ({ pag
   await page.addInitScript(() => {
     localStorage.setItem('fitpulse_e2e_bypass', 'true')
   })
-  await page.goto('/dashboard?view=session&e2e=1')
+  await page.goto('/e2e/session')
   await expect(page.getByTestId('session-root')).toBeVisible({ timeout: 15_000 })
 
   await page.getByTestId('mark-next-set').click()

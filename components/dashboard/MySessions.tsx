@@ -709,6 +709,76 @@ export default function MySessions() {
     return exerciseRestOverride && exerciseRestOverride > 0 ? exerciseRestOverride : 180
   }, [exerciseRestOverride, isSupersetWithNext])
 
+  const currentInputs = currentExercise ? (exerciseInputs[currentExercise.id] || []) : []
+  const currentVolume = currentInputs.reduce((sum, set) => sum + set.weight * set.reps, 0)
+  const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
+  const isLastExercise = workout ? currentExerciseIndex === workout.exercises.length - 1 : false
+
+  const toggleSetCompleted = (setIndex: number, checked: boolean) => {
+    if (!currentExercise) return
+    setExerciseInputs((prev) => {
+      const updated = {
+        ...prev,
+        [currentExercise.id]: (prev[currentExercise.id] || []).map((row, idx) =>
+          idx === setIndex ? { ...row, completed: checked } : row
+        ),
+      }
+      if (!checked) return updated
+      const allDone = (updated[currentExercise.id] || []).every((row) => row.completed)
+      if (allDone) {
+        if (effectiveExerciseRest > 0) {
+          handleStartTimer(effectiveExerciseRest, 'exercise')
+        } else {
+          setTimeout(() => {
+            handleNextExercise()
+          }, 100)
+        }
+      } else if (effectiveRest > 0) {
+        handleStartTimer(effectiveRest, 'set')
+      }
+      return updated
+    })
+  }
+
+  const markNextSetCompleted = () => {
+    const nextIndex = currentInputs.findIndex((set) => !set.completed)
+    if (nextIndex === -1) {
+      if (effectiveExerciseRest > 0) {
+        handleStartTimer(effectiveExerciseRest, 'exercise')
+      } else {
+        handleNextExercise()
+      }
+      return
+    }
+    toggleSetCompleted(nextIndex, true)
+  }
+
+  useEffect(() => {
+    if (!workout || !currentExercise) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        markNextSetCompleted()
+      } else if (event.key === 'ArrowRight') {
+        event.preventDefault()
+        if (isLastExercise) {
+          handleCompleteWorkout()
+        } else {
+          handleNextExercise()
+        }
+      } else if (event.code === 'Space') {
+        event.preventDefault()
+        if (isRunning) handlePauseTimer()
+        else handleStartTimer(effectiveRest, timerKind ?? 'set')
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [workout, currentExercise, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest])
+
   if (!workout || !currentExercise) {
     return <div className="text-center text-gray-600">Chargement de la séance...</div>
   }
@@ -826,74 +896,6 @@ export default function MySessions() {
       </div>
     )
   }
-
-  const currentInputs = exerciseInputs[currentExercise.id] || []
-  const currentVolume = currentInputs.reduce((sum, set) => sum + set.weight * set.reps, 0)
-  const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
-  const isLastExercise = currentExerciseIndex === workout.exercises.length - 1
-
-  const toggleSetCompleted = (setIndex: number, checked: boolean) => {
-    setExerciseInputs((prev) => {
-      const updated = {
-        ...prev,
-        [currentExercise.id]: (prev[currentExercise.id] || []).map((row, idx) =>
-          idx === setIndex ? { ...row, completed: checked } : row
-        ),
-      }
-      if (!checked) return updated
-      const allDone = (updated[currentExercise.id] || []).every((row) => row.completed)
-      if (allDone) {
-        if (effectiveExerciseRest > 0) {
-          handleStartTimer(effectiveExerciseRest, 'exercise')
-        } else {
-          setTimeout(() => {
-            handleNextExercise()
-          }, 100)
-        }
-      } else if (effectiveRest > 0) {
-        handleStartTimer(effectiveRest, 'set')
-      }
-      return updated
-    })
-  }
-
-  const markNextSetCompleted = () => {
-    const nextIndex = currentInputs.findIndex((set) => !set.completed)
-    if (nextIndex === -1) {
-      if (effectiveExerciseRest > 0) {
-        handleStartTimer(effectiveExerciseRest, 'exercise')
-      } else {
-        handleNextExercise()
-      }
-      return
-    }
-    toggleSetCompleted(nextIndex, true)
-  }
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
-      if (target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return
-      if (event.key === 'Enter') {
-        event.preventDefault()
-        markNextSetCompleted()
-      } else if (event.key === 'ArrowRight') {
-        event.preventDefault()
-        if (isLastExercise) {
-          handleCompleteWorkout()
-        } else {
-          handleNextExercise()
-        }
-      } else if (event.code === 'Space') {
-        event.preventDefault()
-        if (isRunning) handlePauseTimer()
-        else handleStartTimer(effectiveRest, timerKind ?? 'set')
-      }
-    }
-
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [currentExercise.id, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest])
 
   const history = readLocalHistory() as any[]
   const exerciseHistory = history.flatMap((item) =>
