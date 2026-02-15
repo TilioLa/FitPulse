@@ -55,6 +55,19 @@ export default function Feed() {
     reason?: string
     action?: string
   }>({ active: false })
+  const [monthlyCompare, setMonthlyCompare] = useState<{
+    currentVolume: number
+    previousVolume: number
+    currentSessions: number
+    previousSessions: number
+    deltaVolume: number
+  }>({
+    currentVolume: 0,
+    previousVolume: 0,
+    currentSessions: 0,
+    previousSessions: 0,
+    deltaVolume: 0,
+  })
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   useEffect(() => {
@@ -109,6 +122,27 @@ export default function Feed() {
         minutes,
         volume,
         calories,
+      })
+      const previousMonthStart = new Date(year, month - 1, 1)
+      const previousMonthEnd = new Date(year, month, 1)
+      const previousMonthItems = stored.filter((item) => {
+        const d = new Date(item.date)
+        return d >= previousMonthStart && d < previousMonthEnd
+      })
+      const previousMonthVolume = previousMonthItems.reduce(
+        (sum, item) => sum + (Number((item as any).volume) || 0),
+        0
+      )
+      const deltaVolume =
+        previousMonthVolume > 0
+          ? Math.round(((volume - previousMonthVolume) / previousMonthVolume) * 100)
+          : 0
+      setMonthlyCompare({
+        currentVolume: Math.round(volume),
+        previousVolume: Math.round(previousMonthVolume),
+        currentSessions: monthlyItems.length,
+        previousSessions: previousMonthItems.length,
+        deltaVolume,
       })
 
       const muscleTotals = monthlyItems.reduce((acc: Record<string, number>, item: any) => {
@@ -418,6 +452,37 @@ export default function Feed() {
             </div>
           )}
         </div>
+      </div>
+      <div className={`card-compact mb-8 ${!hasProAccess(entitlement) ? 'opacity-75' : ''}`}>
+        <div className="text-xs text-gray-500">Comparaison mensuelle</div>
+        {hasProAccess(entitlement) ? (
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div className="rounded-lg bg-gray-50 px-3 py-2">
+              Ce mois: <span className="font-semibold text-gray-900">{monthlyCompare.currentVolume} kg</span>
+            </div>
+            <div className="rounded-lg bg-gray-50 px-3 py-2">
+              Mois précédent: <span className="font-semibold text-gray-900">{monthlyCompare.previousVolume} kg</span>
+            </div>
+            <div className="rounded-lg bg-gray-50 px-3 py-2">
+              Variation: <span className={`font-semibold ${monthlyCompare.deltaVolume >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                {monthlyCompare.deltaVolume >= 0 ? '+' : ''}{monthlyCompare.deltaVolume}%
+              </span>
+            </div>
+            <div className="rounded-lg bg-gray-50 px-3 py-2">
+              Séances ce mois: <span className="font-semibold text-gray-900">{monthlyCompare.currentSessions}</span>
+            </div>
+            <div className="rounded-lg bg-gray-50 px-3 py-2">
+              Séances mois précédent: <span className="font-semibold text-gray-900">{monthlyCompare.previousSessions}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="mt-3 text-sm text-gray-600">
+            Comparaison semaine/mois disponible en Pro.
+            <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+              Débloquer
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between mb-4">

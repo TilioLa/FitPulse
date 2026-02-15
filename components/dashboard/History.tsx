@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Calendar, Clock, TrendingUp, Trophy } from 'lucide-react'
+import { Calendar, Clock, TrendingUp, Trophy, Download, FileText } from 'lucide-react'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import DashboardCalendar from '@/components/dashboard/Calendar'
 import { useI18n } from '@/components/I18nProvider'
@@ -122,9 +122,107 @@ export default function History() {
     return items.map((item, idx) => ({ id: item.id, percent: withRemainder[idx] }))
   }
 
+  const exportCsv = () => {
+    if (!hasProAccess(entitlement)) return
+    const rows = [
+      ['date', 'workout', 'duration_min', 'volume_kg', 'calories'],
+      ...history.map((workout) => [
+        workout.date,
+        workout.workoutName,
+        String(workout.duration || 0),
+        String(workout.volume || 0),
+        String(workout.calories || 0),
+      ]),
+    ]
+    const csv = rows
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `fitpulse-history-${new Date().toISOString().slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const exportPdf = () => {
+    if (!hasProAccess(entitlement)) return
+    const popup = window.open('', '_blank', 'width=900,height=700')
+    if (!popup) return
+    const rows = history
+      .map(
+        (workout) => `
+          <tr>
+            <td>${new Date(workout.date).toLocaleDateString(locale.startsWith('fr') ? 'fr-FR' : 'en-US')}</td>
+            <td>${workout.workoutName}</td>
+            <td>${workout.duration} min</td>
+            <td>${workout.volume || 0} kg</td>
+            <td>${workout.calories || 0} kcal</td>
+          </tr>
+        `
+      )
+      .join('')
+    popup.document.write(`
+      <html>
+        <head>
+          <title>FitPulse - Historique</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
+            h1 { margin-bottom: 4px; }
+            p { color: #6b7280; margin-top: 0; }
+            table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+            th, td { border: 1px solid #e5e7eb; text-align: left; padding: 8px; font-size: 12px; }
+            th { background: #f3f4f6; }
+          </style>
+        </head>
+        <body>
+          <h1>FitPulse - Historique des séances</h1>
+          <p>Export du ${new Date().toLocaleDateString(locale.startsWith('fr') ? 'fr-FR' : 'en-US')}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Séance</th>
+                <th>Durée</th>
+                <th>Poids total</th>
+                <th>Calories</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+      </html>
+    `)
+    popup.document.close()
+    popup.focus()
+    popup.print()
+  }
+
   return (
     <div className="page-wrap">
       <h1 className="section-title mb-8 reveal">{t('sessionHistory')}</h1>
+      <div className="mb-6 flex flex-wrap gap-2">
+        {hasProAccess(entitlement) ? (
+          <>
+            <button onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </button>
+            <button onClick={exportPdf} className="btn-secondary inline-flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Export PDF
+            </button>
+          </>
+        ) : (
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-700">
+            Exports CSV/PDF disponibles en Pro.
+            <Link href="/pricing" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+              Débloquer
+            </Link>
+          </div>
+        )}
+      </div>
 
       {/* Statistiques */}
       {!hasProAccess(entitlement) && (
