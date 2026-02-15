@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Program } from '@/data/programs'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import { persistCurrentWorkoutForUser, writeLocalCurrentWorkout } from '@/lib/user-state-store'
+import { readLocalHistory } from '@/lib/history-store'
 import { canAccessProgram, getEntitlement, trackLockedProgramAttempt } from '@/lib/subscription'
 
 export default function StartProgramButton({
@@ -41,13 +42,9 @@ export default function StartProgramButton({
   const isProgramLocked = !canAccessProgram(program.id, entitlement)
 
   const resolveNextSession = () => {
-    if (typeof window === 'undefined') {
-      return program.sessions[0]
-    }
-    const historyRaw = localStorage.getItem('fitpulse_history')
-    if (!historyRaw) return program.sessions[0]
+    if (typeof window === 'undefined') return program.sessions[0]
     try {
-      const history = JSON.parse(historyRaw) as { programId?: string; workoutId?: string }[]
+      const history = readLocalHistory() as { programId?: string; workoutId?: string }[]
       const completedIds = new Set(
         history.filter((item) => item.programId === program.id).map((item) => item.workoutId)
       )
@@ -88,7 +85,7 @@ export default function StartProgramButton({
       })),
     }
 
-    localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+    writeLocalCurrentWorkout(workout as Record<string, unknown>)
     if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, workout as Record<string, unknown>)
     }

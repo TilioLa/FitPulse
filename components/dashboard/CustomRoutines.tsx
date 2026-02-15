@@ -6,7 +6,13 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/ToastProvider'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { persistCustomRoutinesForUser, persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import {
+  persistCustomRoutinesForUser,
+  persistCurrentWorkoutForUser,
+  readLocalCustomRoutines,
+  writeLocalCustomRoutines,
+  writeLocalCurrentWorkout,
+} from '@/lib/user-state-store'
 import { getEntitlement, hasProAccess, trackFreeRoutineLimitHit } from '@/lib/subscription'
 
 type RoutineExercise = {
@@ -61,17 +67,16 @@ const templates = [
   },
 ]
 
-const STORAGE_KEY = 'fitpulse_custom_routines'
 function loadRoutines(): Routine[] {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+    return readLocalCustomRoutines() as unknown as Routine[]
   } catch {
     return []
   }
 }
 
 function saveRoutines(routines: Routine[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(routines))
+  writeLocalCustomRoutines(routines as unknown as Record<string, unknown>[])
 }
 
 export default function CustomRoutines() {
@@ -205,7 +210,7 @@ export default function CustomRoutines() {
         ...exercise,
       })),
     }
-    localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+    writeLocalCurrentWorkout(workout as unknown as Record<string, unknown>)
     if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, workout as unknown as Record<string, unknown>)
     }

@@ -14,8 +14,13 @@ import { inferMuscles, muscleLabel } from '@/lib/muscles'
 import { useRouter } from 'next/navigation'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { persistHistoryForUser } from '@/lib/history-store'
-import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import { persistHistoryForUser, readLocalHistory, writeLocalHistory } from '@/lib/history-store'
+import {
+  persistCurrentWorkoutForUser,
+  readLocalCurrentWorkout,
+  readLocalSettings,
+  writeLocalCurrentWorkout,
+} from '@/lib/user-state-store'
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 import { encodeSharedSession } from '@/lib/session-share'
 import { slugify } from '@/lib/slug'
@@ -139,9 +144,9 @@ export default function MySessions() {
 
   useEffect(() => {
     // Charger la séance du jour
-    const storedWorkout = localStorage.getItem('fitpulse_current_workout')
+    const storedWorkout = readLocalCurrentWorkout()
     if (storedWorkout) {
-      const parsed = JSON.parse(storedWorkout)
+      const parsed = storedWorkout as unknown as Workout
       setWorkout(parsed)
       const parsedDraft = parsed?.draft
       if (parsed?.exercises?.length) {
@@ -157,12 +162,14 @@ export default function MySessions() {
       if (parsedDraft?.exerciseNotes) {
         setExerciseNotes(parsedDraft.exerciseNotes)
       }
-      if (Number.isInteger(parsedDraft?.currentExerciseIndex)) {
-        const nextIndex = Math.max(0, Math.min(parsedDraft.currentExerciseIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
+      const draftIndex = Number(parsedDraft?.currentExerciseIndex)
+      if (Number.isInteger(draftIndex)) {
+        const nextIndex = Math.max(0, Math.min(draftIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
         setCurrentExerciseIndex(nextIndex)
       }
-      if (Number.isFinite(parsedDraft?.timeRemaining) && parsedDraft.timeRemaining > 0) {
-        setTimeRemaining(parsedDraft.timeRemaining)
+      const draftTimeRemaining = Number(parsedDraft?.timeRemaining)
+      if (Number.isFinite(draftTimeRemaining) && draftTimeRemaining > 0) {
+        setTimeRemaining(draftTimeRemaining)
       }
       if (parsedDraft?.timerKind === 'set' || parsedDraft?.timerKind === 'exercise') {
         setTimerKind(parsedDraft.timerKind)
@@ -199,7 +206,7 @@ export default function MySessions() {
         ],
       }
       setWorkout(defaultWorkout)
-      localStorage.setItem('fitpulse_current_workout', JSON.stringify(defaultWorkout))
+      writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
       if (user?.id) {
         void persistCurrentWorkoutForUser(user.id, defaultWorkout as unknown as Record<string, unknown>)
       }
@@ -214,12 +221,12 @@ export default function MySessions() {
     }
 
     // Charger les statistiques depuis l'historique
-    const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+    const history = readLocalHistory()
     const { streak, totalWorkouts } = computeHistoryStats(history as WorkoutHistoryItem[])
     setStreak(streak)
     setCompletedWorkouts(totalWorkouts)
     if (storedWorkout) {
-      const parsed = JSON.parse(storedWorkout)
+      const parsed = storedWorkout as unknown as Workout
       if (parsed?.programId) {
         const completedForProgram = (history as WorkoutHistoryItem[]).filter(
           (item: any) => item.programId === parsed.programId
@@ -241,7 +248,7 @@ export default function MySessions() {
 
 
   useEffect(() => {
-    const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}')
+    const settings = readLocalSettings()
     const override = Number(settings?.restTime)
     if (Number.isFinite(override) && override > 0) {
       setRestOverride(override)
@@ -263,7 +270,7 @@ export default function MySessions() {
     }
 
     const handleSettingsChange = () => {
-      const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}')
+      const settings = readLocalSettings()
       const nextUnit: 'kg' | 'lbs' = settings?.weightUnit === 'lbs' ? 'lbs' : 'kg'
       const between = Number(settings?.restBetweenExercises)
       if (Number.isFinite(between) && between > 0) {
@@ -332,7 +339,7 @@ export default function MySessions() {
 
     const timeout = setTimeout(() => {
       const snapshot = buildWorkoutSnapshot(workout)
-      localStorage.setItem('fitpulse_current_workout', JSON.stringify(snapshot))
+      writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
       const now = Date.now()
       if (user?.id && now - lastCloudPersistRef.current > 10_000) {
         lastCloudPersistRef.current = now
@@ -347,7 +354,7 @@ export default function MySessions() {
     const saveNow = () => {
       if (!workout) return
       const snapshot = buildWorkoutSnapshot(workout)
-      localStorage.setItem('fitpulse_current_workout', JSON.stringify(snapshot))
+      writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
       if (user?.id) {
         void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
       }
@@ -395,7 +402,7 @@ export default function MySessions() {
     if (!workout) return
 
     // Ajouter à l'historique (éviter doublons même jour + même séance)
-    const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+    const history = readLocalHistory()
     const todayKey = toLocalDateKey(new Date())
     const existsSameSessionToday = history.some((item: any) =>
       typeof item.date === 'string' &&
@@ -403,7 +410,7 @@ export default function MySessions() {
       (item.workoutId === workout.id || item.workoutName === workout.name)
     )
 
-    const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}')
+    const settings = readLocalSettings()
     const weightUnitSetting: 'kg' | 'lbs' = settings?.weightUnit === 'lbs' ? 'lbs' : 'kg'
     const weightKgRaw = Number(settings?.weight || 70)
     const weightKg = weightUnitSetting === 'lbs' ? weightKgRaw / 2.20462 : weightKgRaw
@@ -471,8 +478,7 @@ export default function MySessions() {
         })),
       })
       const cappedHistory = applyHistoryLimit(history as WorkoutHistoryItem[], getEntitlement())
-      localStorage.setItem('fitpulse_history', JSON.stringify(cappedHistory))
-      window.dispatchEvent(new Event('fitpulse-history'))
+      writeLocalHistory(cappedHistory)
       if (user?.id) {
         void persistHistoryForUser(user.id, cappedHistory as WorkoutHistoryItem[])
       }
@@ -496,7 +502,7 @@ export default function MySessions() {
     setTimeRemaining(0)
     setIsRunning(false)
     if (workout) {
-      localStorage.removeItem('fitpulse_current_workout')
+      writeLocalCurrentWorkout(null)
       if (user?.id) {
         void persistCurrentWorkoutForUser(user.id, null)
       }
@@ -516,7 +522,7 @@ export default function MySessions() {
     if (!workout) return
     const updated = { ...workout, exercises: nextExercises }
     setWorkout(updated)
-    localStorage.setItem('fitpulse_current_workout', JSON.stringify(updated))
+    writeLocalCurrentWorkout(updated as unknown as Record<string, unknown>)
     if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, updated as unknown as Record<string, unknown>)
     }
@@ -889,7 +895,7 @@ export default function MySessions() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [currentExercise.id, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest])
 
-  const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as any[]
+  const history = readLocalHistory() as any[]
   const exerciseHistory = history.flatMap((item) =>
     (item.exercises || []).map((ex: any) => ({
       date: item.date,

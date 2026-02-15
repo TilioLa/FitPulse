@@ -16,7 +16,8 @@ import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X, Lock } from '
 import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
+import { persistCurrentWorkoutForUser, readLocalCurrentWorkout, writeLocalCurrentWorkout } from '@/lib/user-state-store'
+import { readLocalHistory } from '@/lib/history-store'
 import { canAccessProgram, getEntitlement } from '@/lib/subscription'
 
 type SessionExercise = { name: string; sets: number; reps: number; rest: number; videoUrl?: string }
@@ -99,7 +100,7 @@ export default function SessionDetailPage() {
     if (!program) return
     const applyProgress = () => {
       try {
-        const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as {
+        const history = readLocalHistory() as {
           programId?: string
           workoutId?: string
         }[]
@@ -135,10 +136,10 @@ export default function SessionDetailPage() {
 
   useEffect(() => {
     if (!session) return
-    const stored = localStorage.getItem('fitpulse_current_workout')
+    const stored = readLocalCurrentWorkout()
     if (!stored) return
     try {
-      const parsed = JSON.parse(stored)
+      const parsed = stored as Record<string, unknown>
       if (parsed?.id === session.id && parsed?.status === 'in_progress') {
         setIsStarted(true)
       }
@@ -161,7 +162,7 @@ export default function SessionDetailPage() {
         ...exercise,
       })),
     }
-    localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+    writeLocalCurrentWorkout(workout as Record<string, unknown>)
     if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, workout as Record<string, unknown>)
     }

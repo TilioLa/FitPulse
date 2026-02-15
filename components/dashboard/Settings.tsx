@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { User, Target, Dumbbell, Save } from 'lucide-react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { persistSettingsForUser } from '@/lib/user-state-store'
+import { persistSettingsForUser, readLocalSettings, writeLocalSettings } from '@/lib/user-state-store'
 import { generateWeeklyPlan, type WeeklyPlanDay } from '@/lib/weekly-plan'
 import { getEntitlement, setStoredPlan, type PlanId } from '@/lib/subscription'
 import {
@@ -68,17 +68,17 @@ export default function Settings() {
 
   useEffect(() => {
     // Charger les paramètres utilisateur
-    const userSettings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{"level": "debutant", "goals": [], "equipment": [], "restTime": 60, "restBetweenExercises": 180, "soundEnabled": true, "voiceEnabled": false, "weightUnit": "kg", "goal": "Cardio", "sessionsPerWeek": 3, "focusZones": [], "avoidZones": []}')
+    const userSettings = readLocalSettings() as Partial<UserSettings>
     
     setSettings({
       name: userSettings.name || user?.name || '',
       email: userSettings.email || user?.email || '',
       phone: userSettings.phone || user?.phone || '',
       level: userSettings.level || 'debutant',
-      goals: userSettings.goals || [],
-      equipment: userSettings.equipment || [],
-      restTime: Number.isFinite(userSettings.restTime) ? userSettings.restTime : 60,
-      restBetweenExercises: Number.isFinite(userSettings.restBetweenExercises) ? userSettings.restBetweenExercises : 180,
+      goals: Array.isArray(userSettings.goals) ? userSettings.goals : [],
+      equipment: Array.isArray(userSettings.equipment) ? userSettings.equipment : [],
+      restTime: Number.isFinite(userSettings.restTime) ? Number(userSettings.restTime) : 60,
+      restBetweenExercises: Number.isFinite(userSettings.restBetweenExercises) ? Number(userSettings.restBetweenExercises) : 180,
       soundEnabled: typeof userSettings.soundEnabled === 'boolean' ? userSettings.soundEnabled : true,
       voiceEnabled: typeof userSettings.voiceEnabled === 'boolean' ? userSettings.voiceEnabled : false,
       reminderEmailsEnabled:
@@ -86,15 +86,15 @@ export default function Settings() {
       pushRemindersEnabled:
         typeof userSettings.pushRemindersEnabled === 'boolean' ? userSettings.pushRemindersEnabled : true,
       weightUnit: userSettings.weightUnit === 'lbs' ? 'lbs' : 'kg',
-      weight: Number.isFinite(userSettings.weight) ? userSettings.weight : undefined,
-      height: Number.isFinite(userSettings.height) ? userSettings.height : undefined,
+      weight: Number.isFinite(userSettings.weight) ? Number(userSettings.weight) : undefined,
+      height: Number.isFinite(userSettings.height) ? Number(userSettings.height) : undefined,
       goal: userSettings.goal || 'Cardio',
-      sessionsPerWeek: Number.isFinite(userSettings.sessionsPerWeek) ? userSettings.sessionsPerWeek : 3,
-      focusZones: userSettings.focusZones || [],
-      avoidZones: userSettings.avoidZones || [],
+      sessionsPerWeek: Number.isFinite(userSettings.sessionsPerWeek) ? Number(userSettings.sessionsPerWeek) : 3,
+      focusZones: Array.isArray(userSettings.focusZones) ? userSettings.focusZones : [],
+      avoidZones: Array.isArray(userSettings.avoidZones) ? userSettings.avoidZones : [],
       weeklyPlan: Array.isArray(userSettings.weeklyPlan)
         ? userSettings.weeklyPlan
-        : generateWeeklyPlan(Number.isFinite(userSettings.sessionsPerWeek) ? userSettings.sessionsPerWeek : 3),
+        : generateWeeklyPlan(Number.isFinite(userSettings.sessionsPerWeek) ? Number(userSettings.sessionsPerWeek) : 3),
     })
   }, [user?.email, user?.name, user?.phone])
 
@@ -115,7 +115,7 @@ export default function Settings() {
       await updateProfile({ name: settings.name, phone: settings.phone })
 
       const weeklyPlan = generateWeeklyPlan(settings.sessionsPerWeek ?? 3)
-      localStorage.setItem('fitpulse_settings', JSON.stringify({
+      writeLocalSettings({
         name: settings.name,
         email: settings.email,
         phone: settings.phone,
@@ -136,7 +136,7 @@ export default function Settings() {
         focusZones: settings.focusZones,
         avoidZones: settings.avoidZones,
         weeklyPlan,
-      }))
+      })
       if (user?.id) {
         void persistSettingsForUser(user.id, {
           name: settings.name,
@@ -161,7 +161,6 @@ export default function Settings() {
           weeklyPlan,
         })
       }
-      window.dispatchEvent(new Event('fitpulse-settings'))
 
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
