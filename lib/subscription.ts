@@ -12,6 +12,8 @@ export type Entitlement = {
 export const PLAN_STORAGE_KEY = 'fitpulse_plan'
 export const TRIAL_STARTED_AT_STORAGE_KEY = 'fitpulse_trial_started_at'
 export const FREE_HISTORY_LIMIT = 10
+export const LOCKED_PROGRAM_ATTEMPTS_KEY = 'fitpulse_locked_program_attempts'
+export const FREE_ROUTINE_LIMIT_HITS_KEY = 'fitpulse_free_routine_limit_hits'
 const TRIAL_DAYS = 14
 
 const PLAN_RANK: Record<PlanId, number> = {
@@ -118,4 +120,33 @@ export function applyHistoryLimit<T extends { date?: string }>(items: T[], entit
     .slice()
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
     .slice(0, limit)
+}
+
+function incrementCounter(key: string) {
+  if (typeof window === 'undefined') return
+  const current = Number(localStorage.getItem(key) || '0')
+  const next = Number.isFinite(current) ? current + 1 : 1
+  localStorage.setItem(key, String(next))
+  window.dispatchEvent(new Event('fitpulse-business-signals'))
+}
+
+function readCounter(key: string) {
+  if (typeof window === 'undefined') return 0
+  const value = Number(localStorage.getItem(key) || '0')
+  return Number.isFinite(value) ? value : 0
+}
+
+export function trackLockedProgramAttempt() {
+  incrementCounter(LOCKED_PROGRAM_ATTEMPTS_KEY)
+}
+
+export function trackFreeRoutineLimitHit() {
+  incrementCounter(FREE_ROUTINE_LIMIT_HITS_KEY)
+}
+
+export function readBusinessSignals() {
+  return {
+    lockedProgramAttempts: readCounter(LOCKED_PROGRAM_ATTEMPTS_KEY),
+    freeRoutineLimitHits: readCounter(FREE_ROUTINE_LIMIT_HITS_KEY),
+  }
 }

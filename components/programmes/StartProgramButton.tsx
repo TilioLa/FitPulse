@@ -5,7 +5,7 @@ import { ArrowRight } from 'lucide-react'
 import { Program } from '@/data/programs'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCurrentWorkoutForUser } from '@/lib/user-state-store'
-import { canAccessProgram, getEntitlement } from '@/lib/subscription'
+import { canAccessProgram, getEntitlement, trackLockedProgramAttempt } from '@/lib/subscription'
 
 export default function StartProgramButton({
   program,
@@ -59,7 +59,10 @@ export default function StartProgramButton({
   }
 
   const handleStart = () => {
-    if (isProgramLocked) return
+    if (isProgramLocked) {
+      trackLockedProgramAttempt()
+      return
+    }
 
     const session = sessionId
       ? program.sessions.find((item) => item.id === sessionId)

@@ -6,6 +6,7 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-b
 import { syncHistoryForUser } from '@/lib/history-store'
 import { syncUserStateForUser } from '@/lib/user-state-store'
 import { logClientEvent } from '@/lib/client-telemetry'
+import { maybeSendLifecycleEmails } from '@/lib/lifecycle-client'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -14,6 +15,7 @@ type AppUser = {
   email: string
   name?: string | null
   phone?: string | null
+  createdAt?: string | null
 }
 
 type AuthContextValue = {
@@ -35,6 +37,7 @@ function mapUser(user: User | null): AppUser | null {
     email: user.email,
     name: normalizedName,
     phone: meta.phone ?? null,
+    createdAt: user.created_at ?? null,
   }
 }
 
@@ -92,6 +95,16 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     })
     return () => data.subscription.unsubscribe()
   }, [])
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !user) return
+    void maybeSendLifecycleEmails({
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      createdAt: user.createdAt,
+    })
+  }, [status, user?.id, user?.email, user?.name, user?.createdAt])
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {

@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/ToastProvider'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCustomRoutinesForUser, persistCurrentWorkoutForUser } from '@/lib/user-state-store'
-import { getEntitlement, hasProAccess } from '@/lib/subscription'
+import { getEntitlement, hasProAccess, trackFreeRoutineLimitHit } from '@/lib/subscription'
 
 type RoutineExercise = {
   name: string
@@ -131,6 +131,7 @@ export default function CustomRoutines() {
 
   const handleCreate = () => {
     if (!canCreate) {
+      trackFreeRoutineLimitHit()
       push('Limite gratuite atteinte. Passe Pro pour créer plus de routines.', 'error')
       return
     }

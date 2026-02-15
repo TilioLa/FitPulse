@@ -8,7 +8,7 @@ import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { muscleLabel } from '@/lib/muscles'
 import { recommendProgram } from '@/lib/recommendation'
-import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
+import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } from '@/lib/subscription'
 
 type FeedItem = {
   id: string
@@ -19,6 +19,13 @@ type FeedItem = {
   programId?: string
   calories?: number
   volume?: number
+}
+
+type BusinessNudge = {
+  title: string
+  body: string
+  cta: string
+  href: string
 }
 
 export default function Feed() {
@@ -68,6 +75,7 @@ export default function Feed() {
     previousSessions: 0,
     deltaVolume: 0,
   })
+  const [businessNudge, setBusinessNudge] = useState<BusinessNudge | null>(null)
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
 
   useEffect(() => {
@@ -78,6 +86,76 @@ export default function Feed() {
     return () => {
       window.removeEventListener('fitpulse-plan', applyPlan)
       window.removeEventListener('storage', applyPlan)
+    }
+  }, [])
+
+  useEffect(() => {
+    const computeNudge = () => {
+      const ent = getEntitlement()
+      if (hasProAccess(ent)) {
+        setBusinessNudge(null)
+        return
+      }
+
+      const signals = readBusinessSignals()
+      const history = applyHistoryLimit(
+        JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[],
+        ent
+      )
+
+      if (ent.isTrialActive && ent.trialDaysLeft <= 3) {
+        setBusinessNudge({
+          title: `Essai premium: ${ent.trialDaysLeft} jour(s) restant(s)`,
+          body: 'Conserve les analytics avancées et les exports en passant Pro avant la fin de l’essai.',
+          cta: 'Passer Pro',
+          href: '/pricing',
+        })
+        return
+      }
+
+      if (signals.lockedProgramAttempts >= 2) {
+        setBusinessNudge({
+          title: 'Tu explores des programmes premium',
+          body: 'Débloque tous les programmes pour garder ton rythme sans friction.',
+          cta: 'Débloquer les programmes',
+          href: '/pricing',
+        })
+        return
+      }
+
+      if (signals.freeRoutineLimitHits >= 1) {
+        setBusinessNudge({
+          title: 'Limite de routines atteinte',
+          body: 'Passe en Pro pour créer des routines illimitées et les adapter à ta progression.',
+          cta: 'Débloquer les routines',
+          href: '/pricing',
+        })
+        return
+      }
+
+      if (!ent.isTrialActive && history.length >= 6) {
+        setBusinessNudge({
+          title: 'Tu es régulier, optimise ta progression',
+          body: 'Débloque la comparaison mensuelle, la charge hebdo et les exports CSV/PDF.',
+          cta: 'Voir Pro',
+          href: '/pricing',
+        })
+        return
+      }
+
+      setBusinessNudge(null)
+    }
+
+    computeNudge()
+    window.addEventListener('fitpulse-business-signals', computeNudge)
+    window.addEventListener('fitpulse-history', computeNudge)
+    window.addEventListener('fitpulse-plan', computeNudge)
+    window.addEventListener('storage', computeNudge)
+    return () => {
+      window.removeEventListener('fitpulse-business-signals', computeNudge)
+      window.removeEventListener('fitpulse-history', computeNudge)
+      window.removeEventListener('fitpulse-plan', computeNudge)
+      window.removeEventListener('storage', computeNudge)
     }
   }, [])
 
@@ -293,6 +371,16 @@ export default function Feed() {
             : 'Passe en Pro pour débloquer tous les programmes et routines.'}
           <Link href="/pricing" className="ml-2 font-semibold underline underline-offset-2">
             Voir les plans
+          </Link>
+        </div>
+      )}
+      {businessNudge && (
+        <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">Suggestion FitPulse</div>
+          <div className="mt-1 text-base font-semibold text-amber-900">{businessNudge.title}</div>
+          <div className="mt-1 text-sm text-amber-800">{businessNudge.body}</div>
+          <Link href={businessNudge.href} className="mt-3 inline-flex btn-secondary">
+            {businessNudge.cta}
           </Link>
         </div>
       )}
