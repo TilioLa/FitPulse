@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { decodeSharedSession, type SharedSessionPayload } from '@/lib/session-share'
 import { muscleLabel } from '@/lib/muscles'
+import PublicLeaderboard from '@/components/share/PublicLeaderboard'
 
 export default function ShareSessionView() {
   const params = useSearchParams()
@@ -45,18 +46,35 @@ export default function ShareSessionView() {
     }
   }, [id, fallbackSession])
 
+  const isDiscoveryMode = !id && !token
+
+  if (isDiscoveryMode) {
+    return (
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="card-soft">
+          <h1 className="section-title mb-2">Partages FitPulse</h1>
+          <p className="text-gray-600">Découvre les profils les plus actifs et leurs séances partagées.</p>
+        </div>
+        <PublicLeaderboard />
+      </div>
+    )
+  }
+
   if (loading) {
     return <div className="max-w-3xl mx-auto text-gray-600">Chargement du partage...</div>
   }
 
   if (!session) {
     return (
-      <div className="card-soft max-w-xl text-center">
-        <h1 className="section-title mb-3">Lien invalide</h1>
-        <p className="text-gray-600 mb-6">Ce partage n&apos;est pas disponible.</p>
-        <Link href="/" className="btn-primary">
-          Retour à FitPulse
-        </Link>
+      <div className="max-w-3xl mx-auto space-y-6">
+        <div className="card-soft max-w-xl text-center mx-auto">
+          <h1 className="section-title mb-3">Lien invalide</h1>
+          <p className="text-gray-600 mb-6">Ce partage n&apos;est pas disponible.</p>
+          <Link href="/" className="btn-primary">
+            Retour à FitPulse
+          </Link>
+        </div>
+        <PublicLeaderboard />
       </div>
     )
   }

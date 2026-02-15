@@ -137,6 +137,7 @@ Endpoints:
 
 Pages:
 - `/share?id=...` (séance partagée)
+- `/share` (classement public simple)
 - `/u/[slug]` (profil public léger)
 
 Table SQL requise:
