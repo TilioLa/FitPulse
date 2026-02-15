@@ -128,6 +128,34 @@ export default function PublicProfileView() {
       pr: Math.round(item.pr),
     }))
   })()
+  const monthlyObjective = (() => {
+    const first = weeklyTrend[0]
+    const last = weeklyTrend[weeklyTrend.length - 1]
+    const volumeDeltaPct =
+      first?.volume > 0 ? Math.round(((last.volume - first.volume) / first.volume) * 100) : 0
+    const activeWeeks = weeklyTrend.filter((item) => item.sessions > 0).length
+    const bestWeeklyPr = Math.max(...weeklyTrend.map((item) => item.pr), 0)
+
+    if (activeWeeks >= 3 && volumeDeltaPct >= 10) {
+      return {
+        title: 'Objectif du mois: Progression validée',
+        subtitle: `Volume +${volumeDeltaPct}% avec ${activeWeeks}/4 semaines actives.`,
+        tone: 'success' as const,
+      }
+    }
+    if (activeWeeks >= 2 || bestWeeklyPr >= 80) {
+      return {
+        title: 'Objectif du mois: En cours',
+        subtitle: `Base solide. Vise 3 semaines actives et +10% de volume.`,
+        tone: 'info' as const,
+      }
+    }
+    return {
+      title: 'Objectif du mois: À relancer',
+      subtitle: 'Lance 2 séances cette semaine pour redémarrer la progression.',
+      tone: 'warning' as const,
+    }
+  })()
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -215,6 +243,19 @@ export default function PublicProfileView() {
             </div>
           </div>
         </div>
+      </div>
+
+      <div
+        className={`card-soft ${
+          monthlyObjective.tone === 'success'
+            ? 'border border-emerald-200 bg-emerald-50'
+            : monthlyObjective.tone === 'warning'
+            ? 'border border-amber-200 bg-amber-50'
+            : 'border border-primary-200 bg-primary-50'
+        }`}
+      >
+        <h2 className="text-lg font-semibold text-gray-900">{monthlyObjective.title}</h2>
+        <p className="text-sm text-gray-700 mt-1">{monthlyObjective.subtitle}</p>
       </div>
 
       <div className="space-y-4">
