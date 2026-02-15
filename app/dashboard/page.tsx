@@ -7,6 +7,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
+import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
@@ -32,13 +33,38 @@ type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines'
 export default function DashboardPage() {
   const router = useRouter()
   const [activeSection, setActiveSection] = useState<DashboardSection>('feed')
-  const { status } = useAuth()
+  const { status, reload } = useAuth()
 
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/connexion')
+    if (status !== 'unauthenticated') return
+    let active = true
+
+    const verifyAndRedirect = async () => {
+      try {
+        if (isSupabaseConfigured()) {
+          const { data } = await getSupabaseBrowserClient().auth.getSession()
+          if (data.session) {
+            await reload()
+            return
+          }
+        }
+      } catch {
+        // ignore and fallback to redirect
+      }
+      if (active) {
+        router.replace('/connexion')
+      }
     }
-  }, [router, status])
+
+    const timer = setTimeout(() => {
+      void verifyAndRedirect()
+    }, 800)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
+    }
+  }, [router, status, reload])
 
   const scheduleSection = (section: DashboardSection) => {
     queueMicrotask(() => {
