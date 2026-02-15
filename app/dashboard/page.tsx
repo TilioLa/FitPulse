@@ -7,6 +7,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
+import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
@@ -50,8 +51,26 @@ export default function DashboardPage() {
   const effectiveStatus = forceE2EMode || (e2eBypass && status === 'unauthenticated') ? 'authenticated' : status
 
   useEffect(() => {
-    if (effectiveStatus === 'unauthenticated') {
-      router.push('/connexion')
+    if (effectiveStatus !== 'unauthenticated') return
+    let active = true
+    const timer = setTimeout(async () => {
+      if (!active) return
+      try {
+        if (isSupabaseConfigured()) {
+          const { data } = await getSupabaseBrowserClient().auth.getSession()
+          if (data.session) return
+        }
+      } catch {
+        // ignore and continue redirect
+      }
+      if (active) {
+        router.replace('/connexion')
+      }
+    }, 900)
+
+    return () => {
+      active = false
+      clearTimeout(timer)
     }
   }, [router, effectiveStatus])
 

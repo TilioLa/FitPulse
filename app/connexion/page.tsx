@@ -16,6 +16,7 @@ export default function ConnexionPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const signupStatus = searchParams.get('signup')
 
   useEffect(() => {
@@ -27,25 +28,45 @@ export default function ConnexionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail || !password) {
       setError('Email ou mot de passe incorrect')
+      setIsSubmitting(false)
       return
     }
 
-    const supabase = getSupabaseBrowserClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password,
-    })
-    if (signInError) {
-      setError('Email ou mot de passe incorrect')
-      return
-    }
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      })
+      if (signInError) {
+        setError('Email ou mot de passe incorrect')
+        return
+      }
 
-    await supabase.auth.getUser()
-    router.push('/dashboard')
+      let hasSession = false
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const { data } = await supabase.auth.getSession()
+        if (data.session) {
+          hasSession = true
+          break
+        }
+        await new Promise((resolve) => setTimeout(resolve, 150))
+      }
+
+      if (!hasSession) {
+        setError('Connexion en cours. Réessaie dans quelques secondes.')
+        return
+      }
+
+      router.replace('/dashboard')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -113,9 +134,10 @@ export default function ConnexionPage() {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full btn-primary py-3"
               >
-                Se connecter
+                {isSubmitting ? 'Connexion...' : 'Se connecter'}
               </button>
             </form>
 
