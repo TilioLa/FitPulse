@@ -48,6 +48,23 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
   const [user, setUser] = useState<AppUser | null>(null)
   const e2eBypass = process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true'
 
+  const getSessionWithRetry = async (attempts = 2, delayMs = 180) => {
+    const supabase = getSupabaseBrowserClient()
+    for (let index = 0; index < attempts; index += 1) {
+      const { data, error } = await supabase.auth.getSession()
+      if (!error && data.session) {
+        return { session: data.session, error: null as string | null }
+      }
+      if (index < attempts - 1) {
+        await new Promise((resolve) => setTimeout(resolve, delayMs))
+      }
+      if (error && index === attempts - 1) {
+        return { session: null, error: error.message || 'session_error' }
+      }
+    }
+    return { session: null, error: null as string | null }
+  }
+
   const applySession = async () => {
     if (e2eBypass) {
       setUser({
@@ -65,14 +82,13 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setUser(null)
       return
     }
-    const supabase = getSupabaseBrowserClient()
-    const { data, error } = await supabase.auth.getSession()
+    const { session, error } = await getSessionWithRetry()
     if (error) {
       setStatus('unauthenticated')
       setUser(null)
       return
     }
-    const mapped = mapUser(data.session?.user ?? null)
+    const mapped = mapUser(session?.user ?? null)
     if (mapped) {
       setStatus('loading')
       await Promise.all([syncHistoryForUser(mapped.id), syncUserStateForUser(mapped.id)])
@@ -102,8 +118,6 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       return
     }
     const supabase = getSupabaseBrowserClient()
-    void applySession()
-
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       const mapped = mapUser(session?.user ?? null)
       if (!mapped) {
@@ -118,6 +132,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         setStatus('authenticated')
       })()
     })
+    void applySession()
     return () => data.subscription.unsubscribe()
   }, [e2eBypass])
 
