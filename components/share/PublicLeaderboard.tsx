@@ -14,6 +14,7 @@ type LeaderboardItem = {
 
 export default function PublicLeaderboard() {
   const [period, setPeriod] = useState<'week' | 'month'>('week')
+  const [sort, setSort] = useState<'sessions' | 'volume' | 'pr'>('sessions')
   const [items, setItems] = useState<LeaderboardItem[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -22,7 +23,7 @@ export default function PublicLeaderboard() {
     const load = async () => {
       setLoading(true)
       try {
-        const response = await fetch(`/api/profile/public/leaderboard?period=${period}&limit=10`)
+        const response = await fetch(`/api/profile/public/leaderboard?period=${period}&sort=${sort}&limit=10`)
         if (!response.ok) {
           if (active) setItems([])
           return
@@ -41,13 +42,13 @@ export default function PublicLeaderboard() {
     return () => {
       active = false
     }
-  }, [period])
+  }, [period, sort])
 
   return (
     <div className="card-soft">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <h2 className="text-xl font-semibold text-gray-900">Top profils {period === 'week' ? 'de la semaine' : 'du mois'}</h2>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => setPeriod('week')}
@@ -65,6 +66,33 @@ export default function PublicLeaderboard() {
             }`}
           >
             30 jours
+          </button>
+          <button
+            type="button"
+            onClick={() => setSort('sessions')}
+            className={`px-3 py-1 rounded-lg text-sm font-semibold border ${
+              sort === 'sessions' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-300 text-gray-600'
+            }`}
+          >
+            Séances
+          </button>
+          <button
+            type="button"
+            onClick={() => setSort('volume')}
+            className={`px-3 py-1 rounded-lg text-sm font-semibold border ${
+              sort === 'volume' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-300 text-gray-600'
+            }`}
+          >
+            Volume
+          </button>
+          <button
+            type="button"
+            onClick={() => setSort('pr')}
+            className={`px-3 py-1 rounded-lg text-sm font-semibold border ${
+              sort === 'pr' ? 'border-primary-600 bg-primary-50 text-primary-700' : 'border-gray-300 text-gray-600'
+            }`}
+          >
+            PR
           </button>
         </div>
       </div>

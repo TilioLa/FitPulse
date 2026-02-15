@@ -28,6 +28,7 @@ export async function GET(request: Request) {
 
     const url = new URL(request.url)
     const period = (url.searchParams.get('period') || 'week').toLowerCase()
+    const sort = (url.searchParams.get('sort') || 'sessions').toLowerCase()
     const limit = Math.max(1, Math.min(50, Number(url.searchParams.get('limit') || 10)))
 
     const since = new Date()
@@ -72,6 +73,16 @@ export async function GET(request: Request) {
 
     const leaderboard = Array.from(map.values())
       .sort((a, b) => {
+        if (sort === 'volume') {
+          if (b.volume !== a.volume) return b.volume - a.volume
+          if (b.sessions !== a.sessions) return b.sessions - a.sessions
+          return b.bestPrKg - a.bestPrKg
+        }
+        if (sort === 'pr') {
+          if (b.bestPrKg !== a.bestPrKg) return b.bestPrKg - a.bestPrKg
+          if (b.sessions !== a.sessions) return b.sessions - a.sessions
+          return b.volume - a.volume
+        }
         if (b.sessions !== a.sessions) return b.sessions - a.sessions
         if (b.volume !== a.volume) return b.volume - a.volume
         return b.bestPrKg - a.bestPrKg
@@ -87,6 +98,7 @@ export async function GET(request: Request) {
     return NextResponse.json({
       ok: true,
       period,
+      sort,
       since: since.toISOString(),
       leaderboard,
     })

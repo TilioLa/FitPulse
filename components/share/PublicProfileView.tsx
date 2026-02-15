@@ -76,11 +76,26 @@ export default function PublicProfileView() {
     )
   }
 
+  const badges = [
+    profile.totalShares >= 12 ? 'Régulier' : null,
+    profile.totalVolume >= 10000 ? 'Machine à volume' : null,
+    profile.bestPrKg >= 120 ? 'PR Elite' : profile.bestPrKg >= 80 ? 'PR Solide' : null,
+  ].filter(Boolean) as string[]
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card-soft">
         <h1 className="section-title mb-2">{profile.author}</h1>
         <p className="text-gray-600">Profil public FitPulse</p>
+        {badges.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {badges.map((badge) => (
+              <span key={badge} className="px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-semibold">
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

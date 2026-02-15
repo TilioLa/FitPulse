@@ -134,6 +134,7 @@ Endpoints:
 - `POST /api/share/create`
 - `GET /api/share/[id]`
 - `GET /api/profile/public/[slug]`
+- `GET /api/profile/public/leaderboard?period=week|month&sort=sessions|volume|pr`
 
 Pages:
 - `/share?id=...` (séance partagée)
