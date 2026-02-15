@@ -20,7 +20,19 @@ test('dashboard workout flow persists draft and completes session', async ({ pag
     })
     .toBeTruthy()
 
-  await page.getByTestId('complete-workout').click()
+  const completeWorkoutButton = page.getByTestId('complete-workout')
+  for (let index = 0; index < 12; index += 1) {
+    if (await completeWorkoutButton.isVisible()) break
+    const nextButton = page.getByRole('button', { name: /Suivant/i })
+    if (await nextButton.isVisible()) {
+      await nextButton.click()
+      continue
+    }
+    await page.waitForTimeout(150)
+  }
+
+  await expect(completeWorkoutButton).toBeVisible({ timeout: 15_000 })
+  await completeWorkoutButton.click()
   await expect(page).toHaveURL(/dashboard\?view=feed/, { timeout: 15_000 })
 
   await expect
