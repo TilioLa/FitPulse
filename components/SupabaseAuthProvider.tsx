@@ -46,7 +46,9 @@ function mapUser(user: User | null): AppUser | null {
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
   const [status, setStatus] = useState<AuthStatus>('loading')
   const [user, setUser] = useState<AppUser | null>(null)
-  const e2eBypass = process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true'
+  const e2eBypass =
+    process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'e2e-anon-key'
 
   const applySession = async () => {
     if (e2eBypass) {

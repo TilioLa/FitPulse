@@ -2,13 +2,18 @@
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
+    const isProd = process.env.NODE_ENV === 'production'
+    const scriptSrc = isProd
+      ? "script-src 'self'"
+      : "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+
     const csp = [
       "default-src 'self'",
       "base-uri 'self'",
       "form-action 'self'",
       "frame-ancestors 'none'",
       "object-src 'none'",
-      "script-src 'self'",
+      scriptSrc,
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://*.supabase.co",
       "font-src 'self' data:",
