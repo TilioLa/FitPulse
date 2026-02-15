@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { muscleLabel } from '@/lib/muscles'
 import { isProfileFollowed, toggleFollowProfile } from '@/lib/public-profile-follow'
+import { readPublicGoal, writePublicGoal, type PublicGoalMetric } from '@/lib/public-goal'
 
 type PublicSession = {
   id: string
@@ -33,6 +34,8 @@ export default function PublicProfileView() {
   const [profile, setProfile] = useState<PublicProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [isFollowed, setIsFollowed] = useState(false)
+  const [goalMetric, setGoalMetric] = useState<PublicGoalMetric>('volume')
+  const [goalTargetInput, setGoalTargetInput] = useState('')
 
   useEffect(() => {
     if (!slug) {
@@ -68,6 +71,18 @@ export default function PublicProfileView() {
     const onFollowChange = () => setIsFollowed(isProfileFollowed(slug))
     window.addEventListener('fitpulse-followed-profiles', onFollowChange)
     return () => window.removeEventListener('fitpulse-followed-profiles', onFollowChange)
+  }, [slug])
+
+  useEffect(() => {
+    if (!slug) return
+    const stored = readPublicGoal(slug)
+    if (stored) {
+      setGoalMetric(stored.metric)
+      setGoalTargetInput(String(stored.target))
+      return
+    }
+    setGoalMetric('volume')
+    setGoalTargetInput('')
   }, [slug])
 
   if (loading) {
@@ -156,6 +171,10 @@ export default function PublicProfileView() {
       tone: 'warning' as const,
     }
   })()
+  const currentWeeklyValue = goalMetric === 'pr' ? weeklyTrend[weeklyTrend.length - 1]?.pr || 0 : weeklyTrend[weeklyTrend.length - 1]?.volume || 0
+  const goalTarget = Number(goalTargetInput)
+  const hasGoal = Number.isFinite(goalTarget) && goalTarget > 0
+  const goalProgressPct = hasGoal ? Math.min(100, Math.max(0, Math.round((currentWeeklyValue / goalTarget) * 100))) : 0
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -256,6 +275,55 @@ export default function PublicProfileView() {
       >
         <h2 className="text-lg font-semibold text-gray-900">{monthlyObjective.title}</h2>
         <p className="text-sm text-gray-700 mt-1">{monthlyObjective.subtitle}</p>
+      </div>
+
+      <div className="card-soft">
+        <h2 className="text-lg font-semibold text-gray-900">Objectif personnalisé</h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Configure ton objectif local pour ce profil public.
+        </p>
+        <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <select
+            value={goalMetric}
+            onChange={(event) => setGoalMetric(event.target.value === 'pr' ? 'pr' : 'volume')}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          >
+            <option value="volume">Volume hebdo (kg)</option>
+            <option value="pr">PR hebdo (kg)</option>
+          </select>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={goalTargetInput}
+            onChange={(event) => setGoalTargetInput(event.target.value)}
+            placeholder={goalMetric === 'pr' ? 'Ex: 100' : 'Ex: 3000'}
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const nextTarget = Number(goalTargetInput)
+              if (!Number.isFinite(nextTarget) || nextTarget <= 0) return
+              writePublicGoal(profile.slug, { metric: goalMetric, target: nextTarget })
+            }}
+            className="btn-secondary"
+          >
+            Enregistrer
+          </button>
+        </div>
+        {hasGoal && (
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs text-gray-600">
+              <span>Actuel: {currentWeeklyValue} {goalMetric === 'pr' ? 'kg (PR)' : 'kg'}</span>
+              <span>Cible: {goalTarget} kg</span>
+            </div>
+            <div className="mt-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-full bg-primary-600" style={{ width: `${goalProgressPct}%` }} />
+            </div>
+            <div className="mt-1 text-xs font-semibold text-primary-700">{goalProgressPct}% atteint</div>
+          </div>
+        )}
       </div>
 
       <div className="space-y-4">
