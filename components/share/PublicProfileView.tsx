@@ -36,6 +36,8 @@ export default function PublicProfileView() {
   const [isFollowed, setIsFollowed] = useState(false)
   const [goalMetric, setGoalMetric] = useState<PublicGoalMetric>('volume')
   const [goalTargetInput, setGoalTargetInput] = useState('')
+  const [exportFormat, setExportFormat] = useState<'post' | 'story'>('post')
+  const [exportTheme, setExportTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
     if (!slug) {
@@ -178,30 +180,42 @@ export default function PublicProfileView() {
 
   const handleDownloadShareCard = () => {
     const width = 1080
-    const height = 1350
+    const height = exportFormat === 'story' ? 1920 : 1350
     const canvas = document.createElement('canvas')
     canvas.width = width
     canvas.height = height
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
+    const isDark = exportTheme === 'dark'
+    const bgGradient = ctx.createLinearGradient(0, 0, width, height)
+    if (isDark) {
+      bgGradient.addColorStop(0, '#0b1220')
+      bgGradient.addColorStop(1, '#111827')
+    } else {
+      bgGradient.addColorStop(0, '#eff6ff')
+      bgGradient.addColorStop(1, '#ffffff')
+    }
+    const textPrimary = isDark ? '#f8fafc' : '#111827'
+    const textSecondary = isDark ? '#cbd5e1' : '#334155'
+    const cardBg = isDark ? '#1f2937' : '#ffffff'
+    const cardStroke = isDark ? '#334155' : '#dbeafe'
+    const accent = isDark ? '#60a5fa' : '#1d4ed8'
+
     // Background
-    const gradient = ctx.createLinearGradient(0, 0, width, height)
-    gradient.addColorStop(0, '#eff6ff')
-    gradient.addColorStop(1, '#ffffff')
-    ctx.fillStyle = gradient
+    ctx.fillStyle = bgGradient
     ctx.fillRect(0, 0, width, height)
 
     // Header
-    ctx.fillStyle = '#0f172a'
+    ctx.fillStyle = textPrimary
     ctx.font = 'bold 64px Arial'
     ctx.fillText('FitPulse', 72, 110)
-    ctx.fillStyle = '#334155'
+    ctx.fillStyle = textSecondary
     ctx.font = '40px Arial'
     ctx.fillText('Profil public', 72, 160)
 
     // Profile name
-    ctx.fillStyle = '#111827'
+    ctx.fillStyle = textPrimary
     ctx.font = 'bold 58px Arial'
     ctx.fillText(profile.author, 72, 250)
 
@@ -216,52 +230,52 @@ export default function PublicProfileView() {
     cards.forEach((text, index) => {
       const x = 72 + (index % 2) * 470
       const y = 320 + Math.floor(index / 2) * 120
-      ctx.fillStyle = '#ffffff'
+      ctx.fillStyle = cardBg
       ctx.fillRect(x, y, 430, 90)
-      ctx.strokeStyle = '#dbeafe'
+      ctx.strokeStyle = cardStroke
       ctx.lineWidth = 2
       ctx.strokeRect(x, y, 430, 90)
-      ctx.fillStyle = '#1f2937'
+      ctx.fillStyle = textPrimary
       ctx.fillText(text, x + 20, y + 56)
     })
 
     // Badges
     if (badges.length > 0) {
-      ctx.fillStyle = '#334155'
+      ctx.fillStyle = textSecondary
       ctx.font = 'bold 30px Arial'
       ctx.fillText('Badges', 72, 610)
       ctx.font = 'bold 28px Arial'
       badges.forEach((badge, index) => {
         const x = 72 + (index % 2) * 350
         const y = 650 + Math.floor(index / 2) * 70
-        ctx.fillStyle = '#dbeafe'
+        ctx.fillStyle = isDark ? '#1e3a8a' : '#dbeafe'
         ctx.fillRect(x, y, 300, 50)
-        ctx.fillStyle = '#1d4ed8'
+        ctx.fillStyle = isDark ? '#bfdbfe' : accent
         ctx.fillText(badge, x + 14, y + 34)
       })
     }
 
     // Objective
-    ctx.fillStyle = '#334155'
+    ctx.fillStyle = textSecondary
     ctx.font = 'bold 30px Arial'
     ctx.fillText('Objectif du mois', 72, 860)
-    ctx.fillStyle = '#111827'
+    ctx.fillStyle = textPrimary
     ctx.font = '32px Arial'
     ctx.fillText(monthlyObjective.title, 72, 910)
-    ctx.fillStyle = '#475569'
+    ctx.fillStyle = textSecondary
     ctx.font = '24px Arial'
     ctx.fillText(monthlyObjective.subtitle.slice(0, 64), 72, 950)
 
     // Footer
-    ctx.fillStyle = '#64748b'
+    ctx.fillStyle = textSecondary
     ctx.font = '24px Arial'
-    ctx.fillText('fitpulse', 72, 1250)
-    ctx.fillText(new Date().toLocaleDateString('fr-FR'), 860, 1250)
+    ctx.fillText('fitpulse', 72, height - 70)
+    ctx.fillText(new Date().toLocaleDateString('fr-FR'), 860, height - 70)
 
     const dataUrl = canvas.toDataURL('image/png')
     const link = document.createElement('a')
     link.href = dataUrl
-    link.download = `fitpulse-profile-${profile.slug}.png`
+    link.download = `fitpulse-profile-${profile.slug}-${exportFormat}-${exportTheme}.png`
     link.click()
   }
 
@@ -274,6 +288,22 @@ export default function PublicProfileView() {
             <p className="text-gray-600">Profil public FitPulse</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={exportFormat}
+              onChange={(event) => setExportFormat(event.target.value === 'story' ? 'story' : 'post')}
+              className="px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white text-gray-700"
+            >
+              <option value="post">Format Post (4:5)</option>
+              <option value="story">Format Story (9:16)</option>
+            </select>
+            <select
+              value={exportTheme}
+              onChange={(event) => setExportTheme(event.target.value === 'dark' ? 'dark' : 'light')}
+              className="px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white text-gray-700"
+            >
+              <option value="light">Thème Clair</option>
+              <option value="dark">Thème Sombre</option>
+            </select>
             <button
               type="button"
               onClick={handleDownloadShareCard}
