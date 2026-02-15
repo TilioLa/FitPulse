@@ -1,80 +1,39 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
-import { useAuth } from '@/components/SupabaseAuthProvider'
-import { useEffect } from 'react'
 
 export default function ConnexionPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const { status } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const signupStatus = searchParams.get('signup')
-
-  useEffect(() => {
-    if (status === 'authenticated') {
-      router.replace('/dashboard')
-    }
-  }, [status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
-    setIsSubmitting(true)
 
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail || !password) {
       setError('Email ou mot de passe incorrect')
-      setIsSubmitting(false)
       return
     }
 
-    try {
-      const supabase = getSupabaseBrowserClient()
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      })
-      if (signInError) {
-        const message = (signInError.message || '').toLowerCase()
-        if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-          setError('Email non confirmé. Vérifie ta boîte mail puis clique sur le lien de confirmation.')
-          return
-        }
-        setError('Email ou mot de passe incorrect')
-        return
-      }
-
-      let hasSession = false
-      for (let attempt = 0; attempt < 8; attempt += 1) {
-        const { data } = await supabase.auth.getSession()
-        if (data.session) {
-          hasSession = true
-          break
-        }
-        await new Promise((resolve) => setTimeout(resolve, 150))
-      }
-
-      if (!hasSession) {
-        setError('Connexion en cours. Réessaie dans quelques secondes.')
-        return
-      }
-
-      localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
-      router.replace('/dashboard')
-    } catch {
-      setError('Impossible de se connecter pour le moment. Réessaie dans quelques secondes.')
-    } finally {
-      setIsSubmitting(false)
+    const supabase = getSupabaseBrowserClient()
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    })
+    if (signInError) {
+      setError('Email ou mot de passe incorrect')
+      return
     }
+
+    router.push('/dashboard')
   }
 
   return (
@@ -93,11 +52,6 @@ export default function ConnexionPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {signupStatus === 'check-email' && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg">
-                  Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
-                </div>
-              )}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
                   {error}
@@ -142,10 +96,9 @@ export default function ConnexionPage() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
                 className="w-full btn-primary py-3"
               >
-                {isSubmitting ? 'Connexion...' : 'Se connecter'}
+                Se connecter
               </button>
             </form>
 
