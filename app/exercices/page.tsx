@@ -8,6 +8,7 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import { Search, Plus, Dumbbell, ImageIcon } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
 import { inferVideoUrl } from '@/lib/videos'
+import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/lib/exercise-insights'
 
 type HistoryExercise = {
   id?: string
@@ -28,6 +29,8 @@ export default function ExercicesPage() {
   const [query, setQuery] = useState('')
   const [equipment, setEquipment] = useState('all')
   const [muscle, setMuscle] = useState('all')
+  const [level, setLevel] = useState<'all' | ExerciseLevel>('all')
+  const [goal, setGoal] = useState<'all' | ExerciseGoal>('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
 
@@ -69,9 +72,20 @@ export default function ExercicesPage() {
       const matchQuery = !term || ex.name.toLowerCase().includes(term)
       const matchEquip = equipment === 'all' || ex.equipment.includes(equipment)
       const matchMuscle = muscle === 'all' || ex.tags.includes(muscle)
-      return matchQuery && matchEquip && matchMuscle
+      const insights = getExerciseInsights(ex)
+      const matchLevel = level === 'all' || insights.level === level
+      const matchGoal = goal === 'all' || insights.goals.includes(goal)
+      return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal
     })
-  }, [allExercises, query, equipment, muscle])
+  }, [allExercises, query, equipment, muscle, level, goal])
+
+  const goalOptions = useMemo(() => {
+    const set = new Set<ExerciseGoal>()
+    allExercises.forEach((item) => {
+      getExerciseInsights(item).goals.forEach((itemGoal) => set.add(itemGoal))
+    })
+    return ['all', ...Array.from(set)] as Array<'all' | ExerciseGoal>
+  }, [allExercises])
 
   const history = useMemo(() => {
     try {
@@ -124,6 +138,25 @@ export default function ExercicesPage() {
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     return points.slice(-6)
   }, [selected, history])
+
+  const selectedInsights = useMemo(
+    () => (selected ? getExerciseInsights(selected) : null),
+    [selected]
+  )
+
+  const relatedExercises = useMemo(() => {
+    if (!selected) return []
+    return allExercises
+      .filter((item) => item.id !== selected.id)
+      .map((item) => {
+        const overlap = item.tags.filter((tag) => selected.tags.includes(tag)).length
+        return { item, overlap }
+      })
+      .filter((row) => row.overlap > 0)
+      .sort((a, b) => b.overlap - a.overlap)
+      .slice(0, 3)
+      .map((row) => row.item)
+  }, [allExercises, selected])
 
   const getThumbnail = (name: string) => {
     const url = inferVideoUrl(name)
@@ -215,6 +248,26 @@ export default function ExercicesPage() {
                         <p className="text-sm text-gray-500 mt-1">
                           {selected.tags.join(', ')} · {selected.equipment.join(', ')}
                         </p>
+                        {selectedInsights && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <span className="rounded-full bg-primary-50 text-primary-700 text-xs px-2.5 py-1 font-semibold">
+                              Niveau {selectedInsights.level === 'beginner' ? 'débutant' : selectedInsights.level === 'advanced' ? 'avancé' : 'intermédiaire'}
+                            </span>
+                            {selectedInsights.goals.map((itemGoal) => (
+                              <span key={itemGoal} className="rounded-full bg-gray-100 text-gray-700 text-xs px-2.5 py-1 font-medium">
+                                {itemGoal === 'strength'
+                                  ? 'Force'
+                                  : itemGoal === 'hypertrophy'
+                                    ? 'Prise de masse'
+                                    : itemGoal === 'cardio'
+                                      ? 'Cardio'
+                                      : itemGoal === 'mobility'
+                                        ? 'Mobilité'
+                                        : 'Core'}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
@@ -272,6 +325,52 @@ export default function ExercicesPage() {
                   <div className="mt-6 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
                     Astuce : clique sur un exercice pour voir ton historique, tes PR et ton volume.
                   </div>
+
+                  {selectedInsights && (
+                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                      <div className="rounded-lg border border-gray-200 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Sécurité</div>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {selectedInsights.safetyTips.map((tip, index) => (
+                            <li key={index}>• {tip}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Erreurs fréquentes</div>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {selectedInsights.commonMistakes.map((mistake, index) => (
+                            <li key={index}>• {mistake}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="rounded-lg border border-gray-200 p-4">
+                        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Variantes utiles</div>
+                        <ul className="space-y-2 text-sm text-gray-700">
+                          {selectedInsights.variations.map((variation, index) => (
+                            <li key={index}>• {variation}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+
+                  {relatedExercises.length > 0 && (
+                    <div className="mt-4 rounded-lg border border-gray-200 p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Exercices proches</div>
+                      <div className="flex flex-wrap gap-2">
+                        {relatedExercises.map((item) => (
+                          <button
+                            key={item.id}
+                            onClick={() => setSelected(item)}
+                            className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                          >
+                            {item.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center py-12">
@@ -316,6 +415,37 @@ export default function ExercicesPage() {
                     {muscleOptions.map((opt) => (
                       <option key={opt} value={opt}>
                         {opt === 'all' ? 'Tous les muscles' : opt}
+                      </option>
+                    ))}
+                    </select>
+                  <select
+                    value={level}
+                    onChange={(e) => setLevel(e.target.value as 'all' | ExerciseLevel)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    <option value="all">Tous niveaux</option>
+                    <option value="beginner">Débutant</option>
+                    <option value="intermediate">Intermédiaire</option>
+                    <option value="advanced">Avancé</option>
+                  </select>
+                  <select
+                    value={goal}
+                    onChange={(e) => setGoal(e.target.value as 'all' | ExerciseGoal)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    {goalOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt === 'all'
+                          ? 'Tous objectifs'
+                          : opt === 'strength'
+                            ? 'Force'
+                            : opt === 'hypertrophy'
+                              ? 'Prise de masse'
+                              : opt === 'cardio'
+                                ? 'Cardio'
+                                : opt === 'mobility'
+                                  ? 'Mobilité'
+                                  : 'Core'}
                       </option>
                     ))}
                   </select>

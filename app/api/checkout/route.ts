@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { stripe, stripeBillingEnabled } from '@/lib/stripe'
 
 const PRICE_MAP: Record<string, string | undefined> = {
   pro: process.env.STRIPE_PRICE_ID_PRO,
@@ -8,7 +8,7 @@ const PRICE_MAP: Record<string, string | undefined> = {
 
 export async function POST(request: Request) {
   try {
-    if (!stripe || !process.env.STRIPE_SECRET_KEY) {
+    if (!stripe || !stripeBillingEnabled) {
       return NextResponse.json(
         { error: 'Paiement temporairement indisponible' },
         { status: 503 }
