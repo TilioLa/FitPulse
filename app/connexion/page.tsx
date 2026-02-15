@@ -33,14 +33,7 @@ export default function ConnexionPage() {
       return
     }
 
-    // Small retry loop to avoid session race on first navigation.
-    for (let index = 0; index < 3; index += 1) {
-      const { data } = await supabase.auth.getSession()
-      if (data.session) break
-      await new Promise((resolve) => setTimeout(resolve, 120))
-    }
-
-    router.replace('/dashboard')
+    router.push('/dashboard')
   }
 
   return (
