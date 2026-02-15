@@ -176,6 +176,95 @@ export default function PublicProfileView() {
   const hasGoal = Number.isFinite(goalTarget) && goalTarget > 0
   const goalProgressPct = hasGoal ? Math.min(100, Math.max(0, Math.round((currentWeeklyValue / goalTarget) * 100))) : 0
 
+  const handleDownloadShareCard = () => {
+    const width = 1080
+    const height = 1350
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // Background
+    const gradient = ctx.createLinearGradient(0, 0, width, height)
+    gradient.addColorStop(0, '#eff6ff')
+    gradient.addColorStop(1, '#ffffff')
+    ctx.fillStyle = gradient
+    ctx.fillRect(0, 0, width, height)
+
+    // Header
+    ctx.fillStyle = '#0f172a'
+    ctx.font = 'bold 64px Arial'
+    ctx.fillText('FitPulse', 72, 110)
+    ctx.fillStyle = '#334155'
+    ctx.font = '40px Arial'
+    ctx.fillText('Profil public', 72, 160)
+
+    // Profile name
+    ctx.fillStyle = '#111827'
+    ctx.font = 'bold 58px Arial'
+    ctx.fillText(profile.author, 72, 250)
+
+    // Stats cards
+    const cards = [
+      `Séances: ${profile.totalShares}`,
+      `Volume: ${profile.totalVolume} kg`,
+      `Durée: ${profile.totalDuration} min`,
+      `PR: ${profile.bestPrKg} kg`,
+    ]
+    ctx.font = 'bold 32px Arial'
+    cards.forEach((text, index) => {
+      const x = 72 + (index % 2) * 470
+      const y = 320 + Math.floor(index / 2) * 120
+      ctx.fillStyle = '#ffffff'
+      ctx.fillRect(x, y, 430, 90)
+      ctx.strokeStyle = '#dbeafe'
+      ctx.lineWidth = 2
+      ctx.strokeRect(x, y, 430, 90)
+      ctx.fillStyle = '#1f2937'
+      ctx.fillText(text, x + 20, y + 56)
+    })
+
+    // Badges
+    if (badges.length > 0) {
+      ctx.fillStyle = '#334155'
+      ctx.font = 'bold 30px Arial'
+      ctx.fillText('Badges', 72, 610)
+      ctx.font = 'bold 28px Arial'
+      badges.forEach((badge, index) => {
+        const x = 72 + (index % 2) * 350
+        const y = 650 + Math.floor(index / 2) * 70
+        ctx.fillStyle = '#dbeafe'
+        ctx.fillRect(x, y, 300, 50)
+        ctx.fillStyle = '#1d4ed8'
+        ctx.fillText(badge, x + 14, y + 34)
+      })
+    }
+
+    // Objective
+    ctx.fillStyle = '#334155'
+    ctx.font = 'bold 30px Arial'
+    ctx.fillText('Objectif du mois', 72, 860)
+    ctx.fillStyle = '#111827'
+    ctx.font = '32px Arial'
+    ctx.fillText(monthlyObjective.title, 72, 910)
+    ctx.fillStyle = '#475569'
+    ctx.font = '24px Arial'
+    ctx.fillText(monthlyObjective.subtitle.slice(0, 64), 72, 950)
+
+    // Footer
+    ctx.fillStyle = '#64748b'
+    ctx.font = '24px Arial'
+    ctx.fillText('fitpulse', 72, 1250)
+    ctx.fillText(new Date().toLocaleDateString('fr-FR'), 860, 1250)
+
+    const dataUrl = canvas.toDataURL('image/png')
+    const link = document.createElement('a')
+    link.href = dataUrl
+    link.download = `fitpulse-profile-${profile.slug}.png`
+    link.click()
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="card-soft">
@@ -184,17 +273,26 @@ export default function PublicProfileView() {
             <h1 className="section-title mb-2">{profile.author}</h1>
             <p className="text-gray-600">Profil public FitPulse</p>
           </div>
-          <button
-            type="button"
-            onClick={() => setIsFollowed(toggleFollowProfile(profile.slug))}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold border ${
-              isFollowed
-                ? 'border-primary-600 bg-primary-50 text-primary-700'
-                : 'border-gray-300 bg-white text-gray-700'
-            }`}
-          >
-            {isFollowed ? 'Suivi' : 'Suivre'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadShareCard}
+              className="px-3 py-2 rounded-lg text-sm font-semibold border border-gray-300 bg-white text-gray-700"
+            >
+              Télécharger carte
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsFollowed(toggleFollowProfile(profile.slug))}
+              className={`px-3 py-2 rounded-lg text-sm font-semibold border ${
+                isFollowed
+                  ? 'border-primary-600 bg-primary-50 text-primary-700'
+                  : 'border-gray-300 bg-white text-gray-700'
+              }`}
+            >
+              {isFollowed ? 'Suivi' : 'Suivre'}
+            </button>
+          </div>
         </div>
         {badges.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
