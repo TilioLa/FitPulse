@@ -9,6 +9,8 @@ import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { muscleLabel } from '@/lib/muscles'
 import { recommendProgram } from '@/lib/recommendation'
 import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } from '@/lib/subscription'
+import { readLocalHistory } from '@/lib/history-store'
+import { readLocalSettings } from '@/lib/user-state-store'
 
 type FeedItem = {
   id: string
@@ -98,10 +100,7 @@ export default function Feed() {
       }
 
       const signals = readBusinessSignals()
-      const history = applyHistoryLimit(
-        JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[],
-        ent
-      )
+      const history = applyHistoryLimit(readLocalHistory() as WorkoutHistoryItem[], ent)
 
       if (ent.isTrialActive && ent.trialDaysLeft <= 3) {
         setBusinessNudge({
@@ -160,188 +159,202 @@ export default function Feed() {
   }, [])
 
   useEffect(() => {
-    try {
-      const rawHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
-      const stored = applyHistoryLimit(rawHistory, getEntitlement())
-      const list = stored
-        .slice()
-        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 5)
-        .map((item) => ({
-          id: `${item.workoutId || item.programId || item.date}`,
-          workoutName: item.workoutName,
-          date: item.date,
-          duration: item.duration,
-          workoutId: (item as any).workoutId,
-          programId: (item as any).programId,
-          calories: (item as any).calories,
-          volume: (item as any).volume,
+    const computeFeed = () => {
+      try {
+        const rawHistory = readLocalHistory() as WorkoutHistoryItem[]
+        const stored = applyHistoryLimit(rawHistory, getEntitlement())
+        const list = stored
+          .slice()
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+          .slice(0, 5)
+          .map((item) => ({
+            id: `${item.workoutId || item.programId || item.date}`,
+            workoutName: item.workoutName,
+            date: item.date,
+            duration: item.duration,
+            workoutId: (item as any).workoutId,
+            programId: (item as any).programId,
+            calories: (item as any).calories,
+            volume: (item as any).volume,
+          }))
+        setItems(list)
+
+        const now = new Date()
+        const month = now.getMonth()
+        const year = now.getFullYear()
+        const monthlyItems = stored.filter((item) => {
+          const d = new Date(item.date)
+          return d.getMonth() === month && d.getFullYear() === year
+        })
+        const sessions = monthlyItems.length
+        const minutes = monthlyItems.reduce((sum, item) => sum + (Number(item.duration) || 0), 0)
+        const volume = monthlyItems.reduce((sum, item) => sum + (Number((item as any).volume) || 0), 0)
+        const calories = monthlyItems.reduce((sum, item) => sum + (Number((item as any).calories) || 0), 0)
+        const monthLabel = now.toLocaleDateString(navigator.language || 'fr-FR', {
+          month: 'long',
+          year: 'numeric',
+        })
+        setMonthly({
+          monthLabel,
+          sessions,
+          minutes,
+          volume,
+          calories,
+        })
+        const previousMonthStart = new Date(year, month - 1, 1)
+        const previousMonthEnd = new Date(year, month, 1)
+        const previousMonthItems = stored.filter((item) => {
+          const d = new Date(item.date)
+          return d >= previousMonthStart && d < previousMonthEnd
+        })
+        const previousMonthVolume = previousMonthItems.reduce(
+          (sum, item) => sum + (Number((item as any).volume) || 0),
+          0
+        )
+        const deltaVolume =
+          previousMonthVolume > 0
+            ? Math.round(((volume - previousMonthVolume) / previousMonthVolume) * 100)
+            : 0
+        setMonthlyCompare({
+          currentVolume: Math.round(volume),
+          previousVolume: Math.round(previousMonthVolume),
+          currentSessions: monthlyItems.length,
+          previousSessions: previousMonthItems.length,
+          deltaVolume,
+        })
+
+        const muscleTotals = monthlyItems.reduce((acc: Record<string, number>, item: any) => {
+          const muscles = item.muscleUsage || []
+          muscles.forEach((muscle: any) => {
+            acc[muscle.id] = (acc[muscle.id] || 0) + (Number(muscle.percent) || 0)
+          })
+          return acc
+        }, {})
+        const muscleTotalValue = Object.values(muscleTotals).reduce((sum, value) => sum + value, 0) || 1
+        const muscleUsage = Object.entries(muscleTotals).map(([id, value]) => ({
+          id,
+          percent: Math.round((value / muscleTotalValue) * 100),
         }))
-      setItems(list)
+        setMonthlyMuscles(muscleUsage.sort((a, b) => b.percent - a.percent).slice(0, 3))
 
-      const now = new Date()
-      const month = now.getMonth()
-      const year = now.getFullYear()
-      const monthlyItems = stored.filter((item) => {
-        const d = new Date(item.date)
-        return d.getMonth() === month && d.getFullYear() === year
-      })
-      const sessions = monthlyItems.length
-      const minutes = monthlyItems.reduce((sum, item) => sum + (Number(item.duration) || 0), 0)
-      const volume = monthlyItems.reduce((sum, item) => sum + (Number((item as any).volume) || 0), 0)
-      const calories = monthlyItems.reduce((sum, item) => sum + (Number((item as any).calories) || 0), 0)
-      const monthLabel = now.toLocaleDateString(navigator.language || 'fr-FR', {
-        month: 'long',
-        year: 'numeric',
-      })
-      setMonthly({
-        monthLabel,
-        sessions,
-        minutes,
-        volume,
-        calories,
-      })
-      const previousMonthStart = new Date(year, month - 1, 1)
-      const previousMonthEnd = new Date(year, month, 1)
-      const previousMonthItems = stored.filter((item) => {
-        const d = new Date(item.date)
-        return d >= previousMonthStart && d < previousMonthEnd
-      })
-      const previousMonthVolume = previousMonthItems.reduce(
-        (sum, item) => sum + (Number((item as any).volume) || 0),
-        0
-      )
-      const deltaVolume =
-        previousMonthVolume > 0
-          ? Math.round(((volume - previousMonthVolume) / previousMonthVolume) * 100)
-          : 0
-      setMonthlyCompare({
-        currentVolume: Math.round(volume),
-        previousVolume: Math.round(previousMonthVolume),
-        currentSessions: monthlyItems.length,
-        previousSessions: previousMonthItems.length,
-        deltaVolume,
-      })
+        const allRecords = monthlyItems.flatMap((item: any) => item.records || [])
+        const bestRecord = allRecords.reduce((max: any, record: any) => {
+          if (!record?.bestOneRm) return max
+          if (!max || record.bestOneRm > max.value) {
+            return { value: record.bestOneRm, label: record.name }
+          }
+          return max
+        }, null)
+        setMonthlyPr(bestRecord)
 
-      const muscleTotals = monthlyItems.reduce((acc: Record<string, number>, item: any) => {
-        const muscles = item.muscleUsage || []
-        muscles.forEach((muscle: any) => {
-          acc[muscle.id] = (acc[muscle.id] || 0) + (Number(muscle.percent) || 0)
+        const nowTs = Date.now()
+        const dayMs = 24 * 60 * 60 * 1000
+        const currentWindowStart = nowTs - 7 * dayMs
+        const previousWindowStart = nowTs - 14 * dayMs
+        const previousWindowEnd = currentWindowStart
+
+        const currentLoad = stored
+          .filter((item: any) => {
+            const ts = new Date(item.date).getTime()
+            return ts >= currentWindowStart && ts <= nowTs
+          })
+          .reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
+
+        const previousLoad = stored
+          .filter((item: any) => {
+            const ts = new Date(item.date).getTime()
+            return ts >= previousWindowStart && ts < previousWindowEnd
+          })
+          .reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
+
+        const delta =
+          previousLoad > 0 ? Math.round(((currentLoad - previousLoad) / previousLoad) * 100) : 0
+        const suggestion =
+          delta >= 20
+            ? 'Charge en hausse forte: prévois une semaine allégée (deload) si fatigue élevée.'
+            : delta <= -20
+            ? 'Charge en baisse: remonte progressivement de 5 à 10% cette semaine.'
+            : 'Progression stable: garde la qualité des exécutions et le tempo.'
+        setWeeklyLoad({
+          current: Math.round(currentLoad),
+          previous: Math.round(previousLoad),
+          delta,
+          suggestion,
         })
-        return acc
-      }, {})
-      const muscleTotalValue = Object.values(muscleTotals).reduce((sum, value) => sum + value, 0) || 1
-      const muscleUsage = Object.entries(muscleTotals).map(([id, value]) => ({
-        id,
-        percent: Math.round((value / muscleTotalValue) * 100),
-      }))
-      setMonthlyMuscles(muscleUsage.sort((a, b) => b.percent - a.percent).slice(0, 3))
+        const monthlySessionRate = sessions
+        const highVolumeSpike = delta >= 20 && currentLoad > 0
+        const highFrequency = monthlySessionRate >= 12
+        const needsDeload = highVolumeSpike || (delta >= 12 && highFrequency)
+        setDeloadAlert(
+          needsDeload
+            ? {
+                active: true,
+                reason:
+                  delta >= 20
+                    ? `Charge +${delta}% vs semaine précédente`
+                    : `Fréquence élevée (${monthlySessionRate} séances ce mois-ci)`,
+                action:
+                  'Semaine prochaine: -30% de volume, garde la technique, puis reprise progressive.',
+              }
+            : { active: false }
+        )
 
-      const allRecords = monthlyItems.flatMap((item: any) => item.records || [])
-      const bestRecord = allRecords.reduce((max: any, record: any) => {
-        if (!record?.bestOneRm) return max
-        if (!max || record.bestOneRm > max.value) {
-          return { value: record.bestOneRm, label: record.name }
-        }
-        return max
-      }, null)
-      setMonthlyPr(bestRecord)
+        const lastProgramEntry = stored.find((item) => (item as any).programId)
+        if (lastProgramEntry) {
+          const programId = (lastProgramEntry as any).programId as string
+          const program = programsById[programId]
+          if (program) {
+            const completedIds = new Set(
+              stored.filter((item) => (item as any).programId === programId).map((item) => (item as any).workoutId)
+            )
+            const nextSession = program.sessions.find((session) => !completedIds.has(session.id)) || program.sessions[0]
+            setFocus({
+              programId,
+              sessionId: nextSession?.id,
+              title: program.name,
+              subtitle: nextSession?.name || 'Séance du jour',
+              duration: nextSession?.duration,
+            })
+          }
+        } else if (programs.length > 0) {
+          const settings = readLocalSettings() as {
+            level?: string
+            goals?: string[]
+            equipment?: string[]
+            sessionsPerWeek?: number
+          }
+          const pick = recommendProgram(programs, {
+            level: settings.level,
+            goals: settings.goals,
+            equipment: settings.equipment,
+            sessionsPerWeek: settings.sessionsPerWeek,
+          })?.program
 
-      const nowTs = Date.now()
-      const dayMs = 24 * 60 * 60 * 1000
-      const currentWindowStart = nowTs - 7 * dayMs
-      const previousWindowStart = nowTs - 14 * dayMs
-      const previousWindowEnd = currentWindowStart
-
-      const currentLoad = stored
-        .filter((item: any) => {
-          const ts = new Date(item.date).getTime()
-          return ts >= currentWindowStart && ts <= nowTs
-        })
-        .reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
-
-      const previousLoad = stored
-        .filter((item: any) => {
-          const ts = new Date(item.date).getTime()
-          return ts >= previousWindowStart && ts < previousWindowEnd
-        })
-        .reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
-
-      const delta =
-        previousLoad > 0 ? Math.round(((currentLoad - previousLoad) / previousLoad) * 100) : 0
-      const suggestion =
-        delta >= 20
-          ? 'Charge en hausse forte: prévois une semaine allégée (deload) si fatigue élevée.'
-          : delta <= -20
-          ? 'Charge en baisse: remonte progressivement de 5 à 10% cette semaine.'
-          : 'Progression stable: garde la qualité des exécutions et le tempo.'
-      setWeeklyLoad({
-        current: Math.round(currentLoad),
-        previous: Math.round(previousLoad),
-        delta,
-        suggestion,
-      })
-      const monthlySessionRate = sessions
-      const highVolumeSpike = delta >= 20 && currentLoad > 0
-      const highFrequency = monthlySessionRate >= 12
-      const needsDeload = highVolumeSpike || (delta >= 12 && highFrequency)
-      setDeloadAlert(
-        needsDeload
-          ? {
-              active: true,
-              reason:
-                delta >= 20
-                  ? `Charge +${delta}% vs semaine précédente`
-                  : `Fréquence élevée (${monthlySessionRate} séances ce mois-ci)`,
-              action:
-                'Semaine prochaine: -30% de volume, garde la technique, puis reprise progressive.',
-            }
-          : { active: false }
-      )
-
-      const lastProgramEntry = stored.find((item) => (item as any).programId)
-      if (lastProgramEntry) {
-        const programId = (lastProgramEntry as any).programId as string
-        const program = programsById[programId]
-        if (program) {
-          const completedIds = new Set(
-            stored.filter((item) => (item as any).programId === programId).map((item) => (item as any).workoutId)
-          )
-          const nextSession = program.sessions.find((session) => !completedIds.has(session.id)) || program.sessions[0]
           setFocus({
-            programId,
-            sessionId: nextSession?.id,
-            title: program.name,
-            subtitle: nextSession?.name || 'Séance du jour',
-            duration: nextSession?.duration,
+            programId: pick?.id,
+            sessionId: pick?.sessions[0]?.id,
+            title: pick?.name || 'Commencer un programme',
+            subtitle: pick ? `Recommandé selon ton profil: ${pick.sessions[0]?.name || 'Séance 1'}` : 'Choisis un programme pour démarrer.',
+            duration: pick?.sessions[0]?.duration,
           })
         }
-      } else if (programs.length > 0) {
-        const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}') as {
-          level?: string
-          goals?: string[]
-          equipment?: string[]
-          sessionsPerWeek?: number
-        }
-        const pick = recommendProgram(programs, {
-          level: settings.level,
-          goals: settings.goals,
-          equipment: settings.equipment,
-          sessionsPerWeek: settings.sessionsPerWeek,
-        })?.program
-
-        setFocus({
-          programId: pick?.id,
-          sessionId: pick?.sessions[0]?.id,
-          title: pick?.name || 'Commencer un programme',
-          subtitle: pick ? `Recommandé selon ton profil: ${pick.sessions[0]?.name || 'Séance 1'}` : 'Choisis un programme pour démarrer.',
-          duration: pick?.sessions[0]?.duration,
-        })
+      } catch {
+        setItems([])
       }
-    } catch {
-      setItems([])
     }
-  }, [])
+
+    computeFeed()
+    window.addEventListener('fitpulse-history', computeFeed)
+    window.addEventListener('fitpulse-settings', computeFeed)
+    window.addEventListener('fitpulse-plan', computeFeed)
+    window.addEventListener('storage', computeFeed)
+    return () => {
+      window.removeEventListener('fitpulse-history', computeFeed)
+      window.removeEventListener('fitpulse-settings', computeFeed)
+      window.removeEventListener('fitpulse-plan', computeFeed)
+      window.removeEventListener('storage', computeFeed)
+    }
+  }, [entitlement.plan, entitlement.effectivePlan, entitlement.trialDaysLeft, entitlement.isTrialActive])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -589,7 +602,7 @@ export default function Feed() {
               ? `/programmes/${program.slug}/seances/${item.workoutId}`
               : '/dashboard?view=session'
             const history = applyHistoryLimit(
-              JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as any[],
+              readLocalHistory() as any[],
               getEntitlement()
             )
             const current = history.find((entry) => entry.id === item.id)
