@@ -31,7 +31,13 @@ type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeSection, setActiveSection] = useState<DashboardSection>('feed')
+  const [activeSection, setActiveSection] = useState<DashboardSection>(() => {
+    if (typeof window !== 'undefined') {
+      const view = new URLSearchParams(window.location.search).get('view')
+      if (view === 'session') return 'session'
+    }
+    return 'feed'
+  })
   const { status } = useAuth()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
