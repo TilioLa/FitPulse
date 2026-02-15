@@ -94,22 +94,20 @@ export function hasAtLeastPlan(plan: PlanId, minimum: PlanId) {
 }
 
 export function hasProAccess(entitlement: Entitlement) {
-  return hasAtLeastPlan(entitlement.effectivePlan, 'pro')
+  // Product mode: full app access for everyone (no paywall).
+  return true
 }
 
 export function isProgramPremium(programId: string) {
-  // Free plan keeps one complete program unlocked.
-  return programId !== '1'
+  return false
 }
 
 export function canAccessProgram(programId: string, entitlement: Entitlement) {
-  if (!isProgramPremium(programId)) return true
-  return hasProAccess(entitlement)
+  return true
 }
 
 export function getHistoryLimit(entitlement: Entitlement): number | null {
-  if (hasProAccess(entitlement)) return null
-  return FREE_HISTORY_LIMIT
+  return null
 }
 
 export function applyHistoryLimit<T extends { date?: string }>(items: T[], entitlement: Entitlement): T[] {
