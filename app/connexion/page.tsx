@@ -70,6 +70,8 @@ export default function ConnexionPage() {
 
       localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
       router.replace('/dashboard')
+    } catch {
+      setError('Impossible de se connecter pour le moment. Réessaie dans quelques secondes.')
     } finally {
       setIsSubmitting(false)
     }
