@@ -33,7 +33,7 @@ test('dashboard workout flow persists draft and completes session', async ({ pag
 
   await expect(completeWorkoutButton).toBeVisible({ timeout: 15_000 })
   await completeWorkoutButton.click()
-  await expect(page).toHaveURL(/dashboard\?view=feed/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /Résumé de la séance/i })).toBeVisible({ timeout: 15_000 })
 
   await expect
     .poll(async () => {
