@@ -9,6 +9,8 @@ import { Search, Plus, Dumbbell, ImageIcon } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
 import { inferVideoUrl } from '@/lib/videos'
 import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/lib/exercise-insights'
+import { readLocalHistory } from '@/lib/history-store'
+import { readLocalCustomExercises, saveLocalCustomExercises } from '@/lib/exercise-preferences-store'
 
 type HistoryExercise = {
   id?: string
@@ -21,11 +23,9 @@ type HistoryItem = {
   exercises?: HistoryExercise[]
 }
 
-const CUSTOM_KEY = 'fitpulse_custom_exercises'
-
 export default function ExercicesPage() {
   const router = useRouter()
-  const { status } = useAuth()
+  const { status, user } = useAuth()
   const [query, setQuery] = useState('')
   const [equipment, setEquipment] = useState('all')
   const [muscle, setMuscle] = useState('all')
@@ -44,11 +44,13 @@ export default function ExercicesPage() {
     const applyStored = (value: ExerciseCatalogItem[]) => {
       queueMicrotask(() => setCustomExercises(value))
     }
-    try {
-      const stored = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '[]') as ExerciseCatalogItem[]
-      applyStored(stored)
-    } catch {
-      applyStored([])
+    const load = () => applyStored(readLocalCustomExercises())
+    load()
+    window.addEventListener('fitpulse-custom-exercises', load)
+    window.addEventListener('fitpulse-settings', load)
+    return () => {
+      window.removeEventListener('fitpulse-custom-exercises', load)
+      window.removeEventListener('fitpulse-settings', load)
     }
   }, [])
 
@@ -88,11 +90,7 @@ export default function ExercicesPage() {
   }, [allExercises])
 
   const history = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as HistoryItem[]
-    } catch {
-      return []
-    }
+    return readLocalHistory() as HistoryItem[]
   }, [])
 
   const stats = useMemo(() => {
@@ -177,7 +175,7 @@ export default function ExercicesPage() {
     }
     const next = [item, ...customExercises]
     setCustomExercises(next)
-    localStorage.setItem(CUSTOM_KEY, JSON.stringify(next))
+    void saveLocalCustomExercises(next, user?.id)
   }
 
   if (status === 'loading') {

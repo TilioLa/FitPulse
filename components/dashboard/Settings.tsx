@@ -114,8 +114,10 @@ export default function Settings() {
     try {
       await updateProfile({ name: settings.name, phone: settings.phone })
 
+      const previousSettings = readLocalSettings()
       const weeklyPlan = generateWeeklyPlan(settings.sessionsPerWeek ?? 3)
-      writeLocalSettings({
+      const nextSettings = {
+        ...previousSettings,
         name: settings.name,
         email: settings.email,
         phone: settings.phone,
@@ -136,30 +138,10 @@ export default function Settings() {
         focusZones: settings.focusZones,
         avoidZones: settings.avoidZones,
         weeklyPlan,
-      })
+      }
+      writeLocalSettings(nextSettings)
       if (user?.id) {
-        void persistSettingsForUser(user.id, {
-          name: settings.name,
-          email: settings.email,
-          phone: settings.phone,
-          level: settings.level,
-          goals: settings.goals,
-          equipment: settings.equipment,
-          restTime: settings.restTime,
-          restBetweenExercises: settings.restBetweenExercises,
-          soundEnabled: settings.soundEnabled,
-          voiceEnabled: settings.voiceEnabled,
-          reminderEmailsEnabled: settings.reminderEmailsEnabled,
-          pushRemindersEnabled: settings.pushRemindersEnabled,
-          weightUnit: settings.weightUnit,
-          weight: settings.weight,
-          height: settings.height,
-          goal: settings.goal,
-          sessionsPerWeek: settings.sessionsPerWeek,
-          focusZones: settings.focusZones,
-          avoidZones: settings.avoidZones,
-          weeklyPlan,
-        })
+        void persistSettingsForUser(user.id, nextSettings)
       }
 
       setSaved(true)

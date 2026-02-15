@@ -1,28 +1,33 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Search, Star, ImageIcon } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
 import { inferVideoUrl } from '@/lib/videos'
-
-const FAVORITES_KEY = 'fitpulse_exercise_favorites'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { readLocalExerciseFavorites, saveLocalExerciseFavorites } from '@/lib/exercise-preferences-store'
 
 export default function ExerciseCatalog({
   onSelect,
 }: {
   onSelect?: (exercise: ExerciseCatalogItem) => void
 }) {
+  const { user } = useAuth()
   const [query, setQuery] = useState('')
   const [tag, setTag] = useState('all')
   const [equipment, setEquipment] = useState('all')
   const [onlyFavorites, setOnlyFavorites] = useState(false)
-  const [favorites, setFavorites] = useState<string[]>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]')
-    } catch {
-      return []
+  const [favorites, setFavorites] = useState<string[]>(() => readLocalExerciseFavorites())
+
+  useEffect(() => {
+    const apply = () => setFavorites(readLocalExerciseFavorites())
+    window.addEventListener('fitpulse-exercise-favorites', apply)
+    window.addEventListener('fitpulse-settings', apply)
+    return () => {
+      window.removeEventListener('fitpulse-exercise-favorites', apply)
+      window.removeEventListener('fitpulse-settings', apply)
     }
-  })
+  }, [])
 
   const tags = useMemo(() => {
     const set = new Set<string>()
@@ -52,7 +57,7 @@ export default function ExerciseCatalog({
       ? favorites.filter((fav) => fav !== id)
       : [...favorites, id]
     setFavorites(next)
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(next))
+    void saveLocalExerciseFavorites(next, user?.id)
   }
 
   const getThumbnail = (name: string) => {
