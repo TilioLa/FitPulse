@@ -6,12 +6,21 @@ import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { useEffect } from 'react'
 
 export default function ConnexionPage() {
   const router = useRouter()
+  const { status } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard')
+    }
+  }, [status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -33,6 +42,7 @@ export default function ConnexionPage() {
       return
     }
 
+    await supabase.auth.getUser()
     router.push('/dashboard')
   }
 

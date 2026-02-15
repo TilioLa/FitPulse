@@ -72,7 +72,14 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setUser(null)
       return
     }
-    const mapped = mapUser(data.session?.user ?? null)
+    let sessionUser = data.session?.user ?? null
+    if (!sessionUser) {
+      const { data: userData, error: userError } = await supabase.auth.getUser()
+      if (!userError && userData?.user) {
+        sessionUser = userData.user
+      }
+    }
+    const mapped = mapUser(sessionUser)
     if (mapped) {
       setStatus('loading')
       await Promise.all([syncHistoryForUser(mapped.id), syncUserStateForUser(mapped.id)])
