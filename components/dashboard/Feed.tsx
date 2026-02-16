@@ -31,6 +31,13 @@ type BusinessNudge = {
   href: string
 }
 
+type NextAction = {
+  title: string
+  body: string
+  cta: string
+  href: string
+}
+
 type OnboardingStep = {
   id: 'profile' | 'first_session_started' | 'first_session_done'
   label: string
@@ -89,6 +96,7 @@ export default function Feed() {
     deltaVolume: 0,
   })
   const [businessNudge, setBusinessNudge] = useState<BusinessNudge | null>(null)
+  const [nextAction, setNextAction] = useState<NextAction | null>(null)
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
 
@@ -229,6 +237,42 @@ export default function Feed() {
             cta: 'Continuer',
           },
         ])
+
+        const lastSessionDate = stored.length > 0 ? new Date(stored[0].date).getTime() : null
+        const daysSinceLastSession =
+          lastSessionDate != null
+            ? Math.floor((Date.now() - lastSessionDate) / (24 * 60 * 60 * 1000))
+            : null
+
+        if (!hasProfile) {
+          setNextAction({
+            title: 'Complète ton profil',
+            body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
+            cta: 'Ouvrir les paramètres',
+            href: '/dashboard?view=settings',
+          })
+        } else if (currentWorkout?.status === 'in_progress') {
+          setNextAction({
+            title: 'Séance en cours détectée',
+            body: 'Reprends là où tu t’es arrêté pour garder ton rythme.',
+            cta: 'Reprendre la séance',
+            href: '/dashboard?view=session',
+          })
+        } else if (daysSinceLastSession != null && daysSinceLastSession >= 4) {
+          setNextAction({
+            title: 'Reprendre l’entraînement',
+            body: `Dernière séance il y a ${daysSinceLastSession} jour(s). Relance un bloc court aujourd’hui.`,
+            cta: 'Lancer une séance',
+            href: '/dashboard?view=session',
+          })
+        } else {
+          setNextAction({
+            title: 'Planifier la prochaine séance',
+            body: 'Choisis ton prochain entraînement pour rester régulier cette semaine.',
+            cta: 'Voir les programmes',
+            href: '/dashboard?view=programs',
+          })
+        }
 
         const now = new Date()
         const recapWindowDays = 5
@@ -463,6 +507,17 @@ export default function Feed() {
           <div className="mt-1 text-sm text-amber-800">{businessNudge.body}</div>
           <Link href={businessNudge.href} className="mt-3 inline-flex btn-secondary">
             {businessNudge.cta}
+          </Link>
+        </div>
+      )}
+
+      {nextAction && (
+        <div className="mb-8 rounded-2xl border border-primary-200 bg-primary-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Prochaine action</div>
+          <div className="mt-1 text-base font-semibold text-primary-900">{nextAction.title}</div>
+          <div className="mt-1 text-sm text-primary-800">{nextAction.body}</div>
+          <Link href={nextAction.href} className="mt-3 inline-flex btn-secondary">
+            {nextAction.cta}
           </Link>
         </div>
       )}
