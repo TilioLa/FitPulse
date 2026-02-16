@@ -128,6 +128,7 @@ export default function MySessions() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
+  const [showSyncNow, setShowSyncNow] = useState(false)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -169,6 +170,13 @@ export default function MySessions() {
     setSaveState('saved')
     setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
     setTimeout(() => setSaveState((prev) => (prev === 'saved' ? 'idle' : prev)), 1200)
+  }
+
+  const syncNow = () => {
+    if (!isOnline) return
+    saveSnapshotNow()
+    setShowSyncNow(false)
+    push('Synchronisation lancée.', 'success')
   }
 
   useEffect(() => {
@@ -345,6 +353,13 @@ export default function MySessions() {
       window.removeEventListener('offline', syncOnlineStatus)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isOnline) return
+    if (!workout) return
+    if (!user?.id) return
+    setShowSyncNow(true)
+  }, [isOnline, workout?.id, user?.id])
 
   useEffect(() => {
     const settings = readLocalSettings()
@@ -1091,6 +1106,14 @@ export default function MySessions() {
               <div className="text-[11px] font-semibold text-amber-700">
                 Hors ligne: les changements seront synchronisés au retour du réseau.
               </div>
+            )}
+            {isOnline && showSyncNow && user?.id && (
+              <button
+                onClick={syncNow}
+                className="text-[11px] font-semibold text-primary-700 underline underline-offset-2"
+              >
+                Synchroniser maintenant
+              </button>
             )}
           </div>
         </div>
