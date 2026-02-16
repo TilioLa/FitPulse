@@ -99,8 +99,6 @@ export default function Settings() {
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      await updateProfile({ name: settings.name, phone: settings.phone })
-
       const previousSettings = readLocalSettings()
       const weeklyPlan = generateWeeklyPlan(settings.sessionsPerWeek ?? 3)
       const nextSettings = {
@@ -126,13 +124,23 @@ export default function Settings() {
         avoidZones: settings.avoidZones,
         weeklyPlan,
       }
+
+      // Always persist local settings first so user changes are not lost.
       writeLocalSettings(nextSettings)
       if (user?.id) {
-        void persistSettingsForUser(user.id, nextSettings)
+        await persistSettingsForUser(user.id, nextSettings)
+      }
+
+      try {
+        await updateProfile({ name: settings.name, phone: settings.phone })
+      } catch {
+        // Keep settings saved even if profile metadata update fails.
+        push('Paramètres enregistrés, mais le profil Supabase n’a pas pu être mis à jour.', 'info')
       }
 
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
+      push('Paramètres enregistrés.', 'success')
     } catch (error) {
       push("Impossible d'enregistrer les paramètres", 'error')
     } finally {
