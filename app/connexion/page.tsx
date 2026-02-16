@@ -1,39 +1,63 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 
 export default function ConnexionPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const { status } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const signupStatus = searchParams.get('signup')
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard')
+    }
+  }, [status, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
     const normalizedEmail = email.trim().toLowerCase()
     if (!normalizedEmail || !password) {
       setError('Email ou mot de passe incorrect')
+      setIsSubmitting(false)
       return
     }
 
-    const supabase = getSupabaseBrowserClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: normalizedEmail,
-      password,
-    })
-    if (signInError) {
-      setError('Email ou mot de passe incorrect')
-      return
-    }
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      })
+      if (signInError) {
+        const message = (signInError.message || '').toLowerCase()
+        if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+          setError('Email non confirmé. Vérifie ton email puis reconnecte-toi.')
+          return
+        }
+        setError('Email ou mot de passe incorrect')
+        return
+      }
 
-    router.push('/dashboard')
+      router.replace('/dashboard')
+    } catch {
+      setError('Impossible de se connecter pour le moment. Réessaie dans quelques secondes.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -52,6 +76,11 @@ export default function ConnexionPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
+              {signupStatus === 'check-email' && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg">
+                  Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
+                </div>
+              )}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
                   {error}
@@ -96,9 +125,10 @@ export default function ConnexionPage() {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full btn-primary py-3"
               >
-                Se connecter
+                {isSubmitting ? 'Connexion...' : 'Se connecter'}
               </button>
             </form>
 

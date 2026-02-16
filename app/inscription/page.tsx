@@ -28,6 +28,7 @@ export default function InscriptionPage() {
   const [level, setLevel] = useState('debutant')
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
   const recommended = useMemo(
     () =>
@@ -43,79 +44,26 @@ export default function InscriptionPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas')
+      setIsSubmitting(false)
       return
     }
 
     if (password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères')
+      setIsSubmitting(false)
       return
     }
 
     const normalizedEmail = email.trim().toLowerCase()
 
     const safeName = name || normalizedEmail.split('@')[0]
-
-    try {
-      const supabase = getSupabaseBrowserClient()
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: normalizedEmail,
-        password,
-        options: {
-          data: {
-            full_name: safeName,
-            phone: phone || null,
-            fitpulse_plan: 'free',
-            fitpulse_trial_started_at: new Date().toISOString(),
-          },
-        },
-      })
-      if (signUpError) {
-        throw signUpError
-      }
-
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: normalizedEmail,
-        password,
-      })
-      if (signInError) {
-        throw new Error("Compte créé. Vérifiez vos emails si la confirmation est activée, puis connectez-vous.")
-      }
-
-      const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
-      const weeklyPlan = generateWeeklyPlan(sessionsPerWeek)
-      const initialSettings = {
-        level,
-        goals: normalizedGoals,
-        goal: normalizedGoals[0],
-        equipment,
-        recommendedProgramId: recommended?.program.id,
-        recommendedProgramSlug: recommended?.program.slug,
-        weeklyPlan,
-        reminderEmailsEnabled: true,
-        pushRemindersEnabled: true,
-        restTime: 60,
-        weightUnit: 'kg',
-        sessionsPerWeek,
-        focusZones,
-        avoidZones,
-        weight: weight ? Number(weight) : undefined,
-        height: height ? Number(height) : undefined,
-      }
-      if (signInData.user?.id) {
-        void persistSettingsForUser(signInData.user.id, initialSettings)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
-      return
-    }
-
-    // Initialiser les paramètres par défaut
     const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
     const weeklyPlan = generateWeeklyPlan(sessionsPerWeek)
-    localStorage.setItem('fitpulse_settings', JSON.stringify({
+    const initialSettings = {
       level,
       goals: normalizedGoals,
       goal: normalizedGoals[0],
@@ -132,9 +80,53 @@ export default function InscriptionPage() {
       avoidZones,
       weight: weight ? Number(weight) : undefined,
       height: height ? Number(height) : undefined,
-    }))
-    setStoredPlan('free')
-    ensureTrialStarted()
+    }
+
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          data: {
+            full_name: safeName,
+            phone: phone || null,
+            fitpulse_plan: 'free',
+            fitpulse_trial_started_at: new Date().toISOString(),
+          },
+        },
+      })
+      if (signUpError) {
+        throw signUpError
+      }
+
+      localStorage.setItem('fitpulse_settings', JSON.stringify(initialSettings))
+      setStoredPlan('free')
+      ensureTrialStarted()
+      if (signUpData.user?.id) {
+        void persistSettingsForUser(signUpData.user.id, initialSettings)
+      }
+
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      })
+      if (signInError) {
+        const message = (signInError.message || '').toLowerCase()
+        if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+          router.replace('/connexion?signup=check-email')
+          return
+        }
+        throw signInError
+      }
+      if (signInData.user?.id) {
+        void persistSettingsForUser(signInData.user.id, initialSettings)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
+      setIsSubmitting(false)
+      return
+    }
 
     router.push('/dashboard')
   }
@@ -422,9 +414,10 @@ export default function InscriptionPage() {
 
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full btn-primary py-3"
               >
-                Créer mon compte
+                {isSubmitting ? 'Création du compte...' : 'Créer mon compte'}
               </button>
             </form>
 
