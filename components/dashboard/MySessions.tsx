@@ -127,6 +127,7 @@ export default function MySessions() {
   const [savedNoteExerciseId, setSavedNoteExerciseId] = useState<string | null>(null)
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
+  const [isOnline, setIsOnline] = useState(true)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -333,6 +334,17 @@ export default function MySessions() {
     }
   }, [pickerOpen])
 
+
+  useEffect(() => {
+    const syncOnlineStatus = () => setIsOnline(navigator.onLine)
+    syncOnlineStatus()
+    window.addEventListener('online', syncOnlineStatus)
+    window.addEventListener('offline', syncOnlineStatus)
+    return () => {
+      window.removeEventListener('online', syncOnlineStatus)
+      window.removeEventListener('offline', syncOnlineStatus)
+    }
+  }, [])
 
   useEffect(() => {
     const settings = readLocalSettings()
@@ -1066,13 +1078,18 @@ export default function MySessions() {
               )}
               {saveState === 'saved' && (
                 <div className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
-                  Sauvegardé
+                  {isOnline ? 'Sauvegardé' : 'Sauvegardé localement'}
                 </div>
               )}
             </div>
             {lastSavedAt && (
               <div className="text-[11px] text-gray-500">
                 Dernière sauvegarde: {lastSavedAt}
+              </div>
+            )}
+            {!isOnline && (
+              <div className="text-[11px] font-semibold text-amber-700">
+                Hors ligne: les changements seront synchronisés au retour du réseau.
               </div>
             )}
           </div>
