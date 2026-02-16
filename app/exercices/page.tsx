@@ -11,6 +11,7 @@ import { inferVideoUrl } from '@/lib/videos'
 import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/lib/exercise-insights'
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCustomExercises, saveLocalCustomExercises } from '@/lib/exercise-preferences-store'
+import { hrefForDashboardSection } from '@/lib/dashboard-navigation'
 
 type HistoryExercise = {
   id?: string
@@ -200,12 +201,7 @@ export default function ExercicesPage() {
         <Sidebar
           activeSection="exercises"
           setActiveSection={(section) => {
-            if (section === 'feed') router.push('/dashboard')
-            if (section === 'history') router.push('/dashboard?view=history')
-            if (section === 'session') router.push('/dashboard?view=session')
-            if (section === 'programs') router.push('/dashboard?view=programs')
-            if (section === 'routines') router.push('/dashboard?view=routines')
-            if (section === 'settings') router.push('/dashboard?view=settings')
+            router.push(hrefForDashboardSection(section))
           }}
         />
         <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">

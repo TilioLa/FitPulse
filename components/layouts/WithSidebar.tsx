@@ -3,8 +3,10 @@
 import { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import Sidebar from '@/components/dashboard/Sidebar'
-
-type Section = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
+import {
+  DashboardSection as Section,
+  hrefForDashboardSection,
+} from '@/lib/dashboard-navigation'
 
 export default function WithSidebar({
   active,
@@ -20,13 +22,7 @@ export default function WithSidebar({
       <Sidebar
         activeSection={active}
         setActiveSection={(section) => {
-          if (section === 'feed') router.push('/dashboard')
-          if (section === 'history') router.push('/dashboard?view=history')
-          if (section === 'session') router.push('/dashboard?view=session')
-          if (section === 'programs') router.push('/programmes')
-          if (section === 'routines') router.push('/dashboard?view=routines')
-          if (section === 'settings') router.push('/dashboard?view=settings')
-          if (section === 'exercises') router.push('/exercices')
+          router.push(hrefForDashboardSection(section))
         }}
       />
       <div className="flex-grow min-w-0 pb-24 lg:pb-0">{children}</div>

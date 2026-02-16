@@ -8,6 +8,11 @@ import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
+import {
+  DashboardSection,
+  sectionToView,
+  viewToSection,
+} from '@/lib/dashboard-navigation'
 
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
@@ -27,33 +32,6 @@ const CustomRoutines = dynamic(() => import('@/components/dashboard/CustomRoutin
 const Settings = dynamic(() => import('@/components/dashboard/Settings'), {
   loading: () => <SectionSkeleton />,
 })
-
-type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines' | 'settings' | 'exercises'
-
-function viewToSection(view: string | null): DashboardSection | null {
-  switch (view) {
-    case 'feed':
-      return 'feed'
-    case 'history':
-      return 'history'
-    case 'session':
-      return 'session'
-    case 'programs':
-      return 'programs'
-    case 'routines':
-      return 'routines'
-    case 'settings':
-      return 'settings'
-    case 'exercises':
-      return 'exercises'
-    default:
-      return null
-  }
-}
-
-function sectionToView(section: DashboardSection): string {
-  return section
-}
 
 export default function DashboardPage() {
   const router = useRouter()
