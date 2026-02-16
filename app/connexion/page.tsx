@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
@@ -10,19 +10,24 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 
 export default function ConnexionPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const { status } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const signupStatus = searchParams.get('signup')
+  const [signupStatus, setSignupStatus] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'authenticated') {
       router.replace('/dashboard')
     }
   }, [status, router])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    setSignupStatus(params.get('signup'))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
