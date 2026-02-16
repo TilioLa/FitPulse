@@ -1003,6 +1003,21 @@ export default function MySessions() {
 
   return (
     <div className="page-wrap panel-stack" data-testid="session-root">
+      {!showSummary && !trainingMode && (
+        <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-gray-50/95 backdrop-blur border-b border-gray-200 lg:hidden">
+          <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
+            <span className="truncate pr-2">{currentExercise.name}</span>
+            <span>{currentExerciseIndex + 1}/{workout.exercises.length}</span>
+          </div>
+          <div className="mt-2 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary-600 transition-all"
+              style={{ width: `${((currentExerciseIndex + 1) / workout.exercises.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       <div className="mb-8 reveal">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">{workout.name}</h1>
