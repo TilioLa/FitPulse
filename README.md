@@ -1,4 +1,4 @@
-# FitPulse - SaaS de Sport
+# FitPulse - SaaS de sport
 
 Ébauche complète d'un SaaS de sport avec toutes les fonctionnalités de base.
 
@@ -10,11 +10,11 @@
 - Footer avec mentions légales, contact et réseaux sociaux
 
 ### Pages disponibles
-- **Page d'accueil** : Hero section, avantages, témoignages, aperçu des programmes, FAQ
+- **Page d'accueil** : section Hero, avantages, témoignages, aperçu des programmes, FAQ
 - **Dashboard** : Mes séances, Historique, Programmes recommandés, Paramètres
 - **Programmes** : Liste complète avec filtres (niveau, matériel, zone du corps)
 - **Profil** : Informations personnelles, statistiques, historique
-- **Pricing** : Plans Freemium / Pro / Pro+ avec switch interactif
+- **Tarifs** : plans Freemium / Pro / Pro+ avec sélecteur interactif
 - **Connexion / Inscription** : Authentification simulée
 - **Contact** : Formulaire et coordonnées
 - **Mentions légales / Confidentialité / CGV** : Pages légales statiques
@@ -22,9 +22,9 @@
 ### Fonctionnalités techniques
 - Navigation complète fonctionnelle
 - Authentification Supabase Auth (email + mot de passe)
-- Dashboard dynamique avec séances, timer, historique
-- Données d'entraînement en localStorage
-- Design responsive et moderne
+- Dashboard dynamique avec séances, minuteur, historique
+- Données d'entraînement stockées en `localStorage`
+- Design responsive moderne
 - Palette de couleurs dynamiques
 
 ## 🛠️ Installation
@@ -46,16 +46,16 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-Le mode e2e active un bypass auth dédié (`NEXT_PUBLIC_E2E_BYPASS_AUTH=true`) pour tester le flux workout sans dépendre de Supabase en direct.
+Le mode e2e active un bypass d'authentification dédié (`NEXT_PUBLIC_E2E_BYPASS_AUTH=true`) pour tester le flux d'entraînement sans dépendre de Supabase en direct.
 
-Commandes utiles:
+Commandes utiles :
 
 ```bash
 npm run test:e2e:standard   # pages publiques + workout + recovery
-npm run test:e2e:auth-real  # login réel Supabase (nécessite secrets)
+npm run test:e2e:auth-real  # connexion Supabase réelle (nécessite des secrets)
 ```
 
-Pour `test:e2e:auth-real`, définir:
+Pour `test:e2e:auth-real`, définir :
 - `PLAYWRIGHT_E2E_BYPASS_AUTH=false`
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
@@ -97,18 +97,18 @@ Les boutons Pro/Pro+ redirigent vers Stripe Checkout.
 
 ## 🔁 Mot de passe oublié (Supabase)
 
-Les pages de reset sont :
+Les pages de réinitialisation sont :
 - `/reset` (demande de lien)
 - `/reset/update` (nouveau mot de passe)
 
-## ⏰ Emails lifecycle + reminders (Vercel Cron)
+## ⏰ E-mails lifecycle + reminders (Vercel Cron)
 
-Le projet inclut:
+Le projet inclut :
 - `POST /api/lifecycle/send` (emails J+1, J+7, fin d'essai)
 - `POST /api/reminders/send` (rappel séance du jour)
 - `POST/GET /api/cron/engagement` (orchestrateur serveur)
 
-Variables nécessaires:
+Variables nécessaires :
 
 ```env
 SUPABASE_SERVICE_ROLE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
@@ -126,11 +126,11 @@ EMAIL_FROM="FitPulse <your-email@gmail.com>"
 ```
 
 Le cron Vercel est défini dans `vercel.json` et appelle `/api/cron/engagement` chaque jour.
-Les notifications navigateur locales (non-email) sont activées via `NEXT_PUBLIC_ENABLE_WEB_NOTIFICATIONS`.
+Les notifications navigateur locales (sans e-mail) sont activées via `NEXT_PUBLIC_ENABLE_WEB_NOTIFICATIONS`.
 
 ## 🔗 Partage public de séance (persistant Supabase)
 
-Endpoints:
+Endpoints :
 - `POST /api/share/create`
 - `GET /api/share/[id]`
 - `GET /api/profile/public/[slug]`
@@ -141,9 +141,9 @@ Pages:
 - `/share` (classement public simple)
 - `/u/[slug]` (profil public léger)
 
-Note: le suivi de profils (`Suivre`) est local au navigateur (localStorage), sans compte social.
+Note : le suivi de profils (`Suivre`) est local au navigateur (`localStorage`), sans compte social.
 
-Table SQL requise:
+Table SQL requise :
 
 ```sql
 create table if not exists public.workout_shares (
@@ -157,15 +157,15 @@ Le client essaie d’abord le lien court persistant (`/share?id=...`) et garde u
 
 ## 📦 Technologies utilisées
 
-- **Next.js 14** : Framework React avec App Router
+- **Next.js 14** : framework React avec App Router
 - **TypeScript** : Typage statique
-- **Tailwind CSS** : Styling moderne et responsive
-- **Lucide React** : Icônes modernes
+- **Tailwind CSS** : style moderne et responsive
+- **Lucide React** : icônes modernes
 - **localStorage** : Stockage local pour simulation de base de données
 - **SEO Next.js** : `sitemap.xml` et `robots.txt` générés via l'App Router
-- **API Next.js** : Endpoint Stripe checkout
-- **Toasts** : Notifications locales pour feedback utilisateur
-- **Supabase Auth** : Authentification et reset password
+- **API Next.js** : endpoint Stripe checkout
+- **Toasts** : notifications locales pour le feedback utilisateur
+- **Supabase Auth** : authentification et réinitialisation du mot de passe
 
 ## 📁 Structure du projet
 
@@ -188,19 +188,19 @@ FitPulse/
 
 ## 🎨 Design
 
-- Palette de couleurs : Bleu primary, accent violet/rose
+- Palette de couleurs : bleu principal, accent violet/rose
 - Typographie : Inter (Google Fonts)
-- Style : Moderne, épuré, mobile-friendly
-- Icônes : Lucide React pour cohérence visuelle
+- Style : moderne, épuré, mobile-friendly
+- Icônes : Lucide React pour la cohérence visuelle
 
 ## 📝 Notes
 
 - L'authentification utilise Supabase Auth
 - Les paiements sont simulés (pas de transaction réelle)
 - Les données d'entraînement (séances, stats, préférences) restent en local via `localStorage`
-- Parfait pour prototyper et tester l'expérience utilisateur
+- Projet idéal pour prototyper et tester l'expérience utilisateur
 - Les pages légales et la page contact sont statiques dans cette version
-- Le sitemap et le robots.txt utilisent `https://fitpulse.fr` comme URL de base (à adapter pour la prod)
+- Le sitemap et `robots.txt` utilisent `https://fitpulse.fr` comme URL de base (à adapter pour la prod)
 - Un champ `phone` est disponible pour le profil utilisateur
 
 ## 🚧 Prochaines étapes
