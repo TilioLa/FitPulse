@@ -174,9 +174,9 @@ FitPulse/
 ├── app/                    # Pages Next.js
 │   ├── dashboard/         # Dashboard avec menu latéral
 │   ├── pricing/           # Page tarifs
-│   ├── connexion/         # Page connexion
-│   ├── inscription/       # Page inscription
-│   ├── profil/            # Page profil
+│   ├── connexion/         # Page de connexion
+│   ├── inscription/       # Page d'inscription
+│   ├── profil/            # Page de profil
 │   └── programmes/        # Liste des programmes
 ├── components/            # Composants React
 │   ├── home/             # Composants page d'accueil

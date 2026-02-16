@@ -606,7 +606,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
         exercises: [
           { name: 'Chat-vache', sets: 2, reps: 10, rest: 20 },
           { name: 'Rotation thoracique', sets: 2, reps: 12, rest: 20 },
-          { name: 'Etirement lombaire', sets: 2, reps: 40, rest: 20 },
+          { name: 'Étirement lombaire', sets: 2, reps: 40, rest: 20 },
           { name: 'Ouverture poitrine', sets: 2, reps: 12, rest: 20 },
           { name: 'Respiration diaphragme', sets: 2, reps: 40, rest: 20 },
         ],
