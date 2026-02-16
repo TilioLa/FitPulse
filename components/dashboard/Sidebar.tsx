@@ -108,16 +108,11 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
       </div>
 
       <div className="hidden lg:block mt-6 pt-4 border-t">
-        <div className="rounded-2xl bg-gray-100 px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-bold text-gray-900">FitPulse</span>
-            <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-yellow-300 text-gray-900">
-              PRO
-            </span>
+        <div className="rounded-2xl bg-primary-50 border border-primary-200 px-4 py-3">
+          <div className="text-sm font-bold text-gray-900">FitPulse</div>
+          <div className="text-xs text-primary-800 mt-1">
+            Accès complet gratuit.
           </div>
-          <span className="text-xs font-semibold text-primary-700 bg-white px-3 py-1.5 rounded-lg border border-primary-200">
-            Bientôt
-          </span>
         </div>
 
         <div className="mt-4 flex items-center justify-between px-2">
