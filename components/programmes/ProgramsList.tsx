@@ -1,16 +1,21 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Dumbbell, Timer, Target, Filter, ArrowRight } from 'lucide-react'
 import { programs as allPrograms } from '@/data/programs'
 import { labelize } from '@/lib/labels'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
+import { readLocalSettings } from '@/lib/user-state-store'
+import { readLocalHistory } from '@/lib/history-store'
+import { recommendProgram } from '@/lib/recommendation'
 
 export default function ProgramsList() {
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
+  const [recommendedProgramId, setRecommendedProgramId] = useState<string | null>(null)
+  const [showQuickStart, setShowQuickStart] = useState(false)
 
   const levels = ['all', 'Debutant', 'Intermediaire', 'Avance', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Elastiques', 'Machines', 'Halteres', 'Aucun materiel']
@@ -23,8 +28,59 @@ export default function ProgramsList() {
     return levelMatch && equipmentMatch && bodyPartMatch
   })
 
+  useEffect(() => {
+    try {
+      const settings = readLocalSettings() as {
+        level?: string
+        goals?: string[]
+        equipment?: string[]
+        sessionsPerWeek?: number
+      }
+      const recommendation = recommendProgram(allPrograms, {
+        level: settings.level,
+        goals: settings.goals,
+        equipment: settings.equipment,
+        sessionsPerWeek: settings.sessionsPerWeek,
+      })
+      setRecommendedProgramId(recommendation?.program.id || null)
+
+      const history = readLocalHistory() as unknown[]
+      setShowQuickStart(!Array.isArray(history) || history.length === 0)
+    } catch {
+      setRecommendedProgramId(null)
+      setShowQuickStart(false)
+    }
+  }, [])
+
+  const recommendedProgram = useMemo(
+    () => allPrograms.find((program) => program.id === recommendedProgramId) || null,
+    [recommendedProgramId]
+  )
+
   return (
     <div>
+      {showQuickStart && recommendedProgram && (
+        <div className="card-soft mb-8 border border-primary-200 bg-primary-50/40">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">
+            Démarrage rapide
+          </div>
+          <div className="mt-1 text-xl font-semibold text-gray-900">{recommendedProgram.name}</div>
+          <div className="mt-1 text-sm text-gray-700">
+            Programme recommandé selon ton profil actuel.
+          </div>
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
+            <StartProgramButton
+              program={recommendedProgram}
+              label="Commencer ma 1ère séance"
+              className="btn-primary w-full sm:w-auto"
+            />
+            <Link href={`/programmes/${recommendedProgram.slug}`} className="btn-secondary w-full sm:w-auto text-center">
+              Voir le détail
+            </Link>
+          </div>
+        </div>
+      )}
+
       {/* Filtres */}
       <div className="card-soft mb-8">
         <div className="flex items-center space-x-2 mb-6">
