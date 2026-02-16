@@ -124,6 +124,7 @@ export default function MySessions() {
   const [exerciseInputs, setExerciseInputs] = useState<ExerciseInputs>({})
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({})
+  const [savedNoteExerciseId, setSavedNoteExerciseId] = useState<string | null>(null)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -152,6 +153,16 @@ export default function MySessions() {
       savedAt: new Date().toISOString(),
     },
   })
+
+  const saveSnapshotNow = (base?: Workout | null) => {
+    const source = base || workout
+    if (!source) return
+    const snapshot = buildWorkoutSnapshot(source)
+    writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
+    if (user?.id) {
+      void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
+    }
+  }
 
   useEffect(() => {
     // Charger la séance du jour
@@ -429,12 +440,7 @@ export default function MySessions() {
 
   useEffect(() => {
     const saveNow = () => {
-      if (!workout) return
-      const snapshot = buildWorkoutSnapshot(workout)
-      writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
-      if (user?.id) {
-        void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
-      }
+      saveSnapshotNow(workout)
     }
 
     const onBeforeUnload = () => saveNow()
@@ -1345,12 +1351,24 @@ export default function MySessions() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+            <div className="mb-2 flex items-center justify-between">
+              <label className="block text-sm font-semibold text-gray-700">Notes</label>
+              {savedNoteExerciseId === currentExercise.id && (
+                <span className="text-xs font-semibold text-emerald-700">Enregistré</span>
+              )}
+            </div>
             <textarea
               value={exerciseNotes[currentExercise.id] || ''}
               onChange={(event) =>
                 setExerciseNotes((prev) => ({ ...prev, [currentExercise.id]: event.target.value }))
               }
+              onBlur={() => {
+                saveSnapshotNow()
+                setSavedNoteExerciseId(currentExercise.id)
+                setTimeout(() => {
+                  setSavedNoteExerciseId((prev) => (prev === currentExercise.id ? null : prev))
+                }, 2000)
+              }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               rows={3}
               placeholder="Sensations, conseils..."
