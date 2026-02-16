@@ -123,6 +123,7 @@ export default function MySessions() {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({})
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
+  const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [lastSummary, setLastSummary] = useState<{
     calories: number
@@ -814,6 +815,9 @@ export default function MySessions() {
       return
     }
     toggleSetCompleted(nextIndex, true)
+    setSetPulse(true)
+    setTimeout(() => setSetPulse(false), 180)
+    push(`Série ${nextIndex + 1} validée`, 'success')
   }
 
   useEffect(() => {
@@ -1169,7 +1173,7 @@ export default function MySessions() {
         <div className="fixed bottom-20 inset-x-0 z-30 px-4 lg:hidden">
           <button
             onClick={markNextSetCompleted}
-            className="w-full btn-primary min-h-12 shadow-lg"
+            className={`w-full btn-primary min-h-12 shadow-lg transition-transform ${setPulse ? 'scale-[1.02]' : ''}`}
             data-testid="mobile-mark-next-set-sticky"
           >
             Set suivant
@@ -1285,7 +1289,9 @@ export default function MySessions() {
                 type="button"
                 onClick={markNextSetCompleted}
                 data-testid="mark-next-set"
-                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300"
+                className={`min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300 transition-transform ${
+                  setPulse ? 'scale-[1.02]' : ''
+                }`}
               >
                 Valider la prochaine série (Entrée)
               </button>
