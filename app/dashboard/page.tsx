@@ -121,6 +121,33 @@ export default function DashboardPage() {
     }
   }, [effectiveStatus])
 
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    const view = new URLSearchParams(window.location.search).get('view')
+    if (view) return
+
+    try {
+      const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
+      if (currentWorkoutRaw) {
+        const parsedWorkout = JSON.parse(currentWorkoutRaw)
+        if (parsedWorkout?.status === 'in_progress') return
+      }
+
+      const historyRaw = localStorage.getItem('fitpulse_history')
+      const history = historyRaw ? JSON.parse(historyRaw) : []
+      const isNewUser = !Array.isArray(history) || history.length === 0
+      if (!isNewUser) return
+
+      const alreadyGuided = localStorage.getItem('fitpulse_smart_start_seen_v1') === 'true'
+      if (alreadyGuided) return
+
+      scheduleSection('programs')
+      localStorage.setItem('fitpulse_smart_start_seen_v1', 'true')
+    } catch {
+      // ignore smart-start errors
+    }
+  }, [effectiveStatus])
+
   if (effectiveStatus === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
