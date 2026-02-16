@@ -21,6 +21,7 @@ interface UserSettings {
   equipment: string[]
   restTime: number
   restBetweenExercises: number
+  autoRestAfterSet: boolean
   soundEnabled: boolean
   voiceEnabled: boolean
   reminderEmailsEnabled: boolean
@@ -47,6 +48,7 @@ export default function Settings() {
     equipment: [],
     restTime: 60,
     restBetweenExercises: 180,
+    autoRestAfterSet: true,
     soundEnabled: true,
     voiceEnabled: false,
     reminderEmailsEnabled: true,
@@ -77,6 +79,8 @@ export default function Settings() {
       equipment: Array.isArray(userSettings.equipment) ? userSettings.equipment : [],
       restTime: Number.isFinite(userSettings.restTime) ? Number(userSettings.restTime) : 60,
       restBetweenExercises: Number.isFinite(userSettings.restBetweenExercises) ? Number(userSettings.restBetweenExercises) : 180,
+      autoRestAfterSet:
+        typeof userSettings.autoRestAfterSet === 'boolean' ? userSettings.autoRestAfterSet : true,
       soundEnabled: typeof userSettings.soundEnabled === 'boolean' ? userSettings.soundEnabled : true,
       voiceEnabled: typeof userSettings.voiceEnabled === 'boolean' ? userSettings.voiceEnabled : false,
       reminderEmailsEnabled:
@@ -111,6 +115,7 @@ export default function Settings() {
         equipment: settings.equipment,
         restTime: settings.restTime,
         restBetweenExercises: settings.restBetweenExercises,
+        autoRestAfterSet: settings.autoRestAfterSet,
         soundEnabled: settings.soundEnabled,
         voiceEnabled: settings.voiceEnabled,
         reminderEmailsEnabled: settings.reminderEmailsEnabled,
@@ -216,6 +221,20 @@ export default function Settings() {
               type="checkbox"
               checked={settings.pushRemindersEnabled}
               onChange={(e) => setSettings({ ...settings, pushRemindersEnabled: e.target.checked })}
+              className="h-5 w-5 accent-primary-600"
+            />
+          </label>
+          <label className="mt-3 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+            <div>
+              <div className="text-sm font-semibold text-gray-900">Auto repos après série</div>
+              <div className="text-xs text-gray-500">
+                Lance automatiquement le timer de repos après validation d&apos;une série
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={settings.autoRestAfterSet}
+              onChange={(e) => setSettings({ ...settings, autoRestAfterSet: e.target.checked })}
               className="h-5 w-5 accent-primary-600"
             />
           </label>

@@ -114,6 +114,7 @@ export default function MySessions() {
   const [programCompletedSessions, setProgramCompletedSessions] = useState<number | null>(null)
   const [restOverride, setRestOverride] = useState<number | null>(null)
   const [exerciseRestOverride, setExerciseRestOverride] = useState<number | null>(null)
+  const [autoRestAfterSet, setAutoRestAfterSet] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [timerKind, setTimerKind] = useState<'set' | 'exercise' | null>(null)
@@ -317,6 +318,7 @@ export default function MySessions() {
     if (Number.isFinite(between) && between > 0) {
       setExerciseRestOverride(between)
     }
+    setAutoRestAfterSet(settings?.autoRestAfterSet !== false)
     setSoundEnabled(settings?.soundEnabled !== false)
     setVoiceEnabled(settings?.voiceEnabled === true)
     setWeightUnit(settings?.weightUnit === 'lbs' ? 'lbs' : 'kg')
@@ -336,6 +338,7 @@ export default function MySessions() {
       if (Number.isFinite(between) && between > 0) {
         setExerciseRestOverride(between)
       }
+      setAutoRestAfterSet(settings?.autoRestAfterSet !== false)
       setSoundEnabled(settings?.soundEnabled !== false)
       setVoiceEnabled(settings?.voiceEnabled === true)
       if (nextUnit === weightUnit) return
@@ -786,14 +789,14 @@ export default function MySessions() {
       if (!checked) return updated
       const allDone = (updated[currentExercise.id] || []).every((row) => row.completed)
       if (allDone) {
-        if (effectiveExerciseRest > 0) {
+        if (autoRestAfterSet && effectiveExerciseRest > 0) {
           handleStartTimer(effectiveExerciseRest, 'exercise')
-        } else {
+        } else if (autoRestAfterSet) {
           setTimeout(() => {
             handleNextExercise()
           }, 100)
         }
-      } else if (effectiveRest > 0) {
+      } else if (autoRestAfterSet && effectiveRest > 0) {
         handleStartTimer(effectiveRest, 'set')
       }
       return updated
@@ -803,9 +806,9 @@ export default function MySessions() {
   const markNextSetCompleted = () => {
     const nextIndex = currentInputs.findIndex((set) => !set.completed)
     if (nextIndex === -1) {
-      if (effectiveExerciseRest > 0) {
+      if (autoRestAfterSet && effectiveExerciseRest > 0) {
         handleStartTimer(effectiveExerciseRest, 'exercise')
-      } else {
+      } else if (autoRestAfterSet) {
         handleNextExercise()
       }
       return
