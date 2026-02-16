@@ -51,6 +51,10 @@ function viewToSection(view: string | null): DashboardSection | null {
   }
 }
 
+function sectionToView(section: DashboardSection): string {
+  return section
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -118,6 +122,17 @@ export default function DashboardPage() {
       setActiveSection((prev) => (prev !== section ? section : prev))
     })
   }
+
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    const currentView = searchParams.get('view')
+    const targetView = sectionToView(activeSection)
+    if (currentView === targetView) return
+
+    const nextParams = new URLSearchParams(searchParams.toString())
+    nextParams.set('view', targetView)
+    router.replace(`/dashboard?${nextParams.toString()}`, { scroll: false })
+  }, [activeSection, effectiveStatus, router, searchParams])
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
