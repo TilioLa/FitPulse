@@ -37,7 +37,9 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <span className="text-gray-500">Pricing</span>
+                <Link href="/exercices" className="hover:text-primary-400 transition-colors">
+                  Exercices
+                </Link>
               </li>
             </ul>
           </div>

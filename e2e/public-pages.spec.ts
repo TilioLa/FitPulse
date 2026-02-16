@@ -7,7 +7,8 @@ test('home page loads and has CTA', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Commencez gratuitement/i })).toBeVisible({ timeout: 15_000 })
 })
 
-test('pricing page is reachable', async ({ page }) => {
+test('pricing page redirects to programs', async ({ page }) => {
   await page.goto('/pricing')
-  await expect(page.getByRole('heading', { name: /FitPulse est gratuit/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page).toHaveURL(/\/programmes$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /Tous nos programmes/i })).toBeVisible({ timeout: 15_000 })
 })
