@@ -125,6 +125,7 @@ export default function MySessions() {
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
   const [exerciseNotes, setExerciseNotes] = useState<Record<string, string>>({})
   const [savedNoteExerciseId, setSavedNoteExerciseId] = useState<string | null>(null)
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -157,11 +158,14 @@ export default function MySessions() {
   const saveSnapshotNow = (base?: Workout | null) => {
     const source = base || workout
     if (!source) return
+    setSaveState('saving')
     const snapshot = buildWorkoutSnapshot(source)
     writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
     if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
     }
+    setSaveState('saved')
+    setTimeout(() => setSaveState((prev) => (prev === 'saved' ? 'idle' : prev)), 1200)
   }
 
   useEffect(() => {
@@ -421,6 +425,7 @@ export default function MySessions() {
     if (!workout) return
 
     const timeout = setTimeout(() => {
+      setSaveState('saving')
       const snapshot = buildWorkoutSnapshot(workout)
       writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
       const now = Date.now()
@@ -428,6 +433,8 @@ export default function MySessions() {
         lastCloudPersistRef.current = now
         void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
       }
+      setSaveState('saved')
+      setTimeout(() => setSaveState((prev) => (prev === 'saved' ? 'idle' : prev)), 1200)
     }, 500)
 
     return () => clearTimeout(timeout)
@@ -1044,8 +1051,20 @@ export default function MySessions() {
       <div className="mb-8 reveal">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">{workout.name}</h1>
-          <div className="text-xs font-semibold text-primary-700 bg-primary-100 px-3 py-1 rounded-full">
-            {currentExerciseIndex + 1}/{workout.exercises.length} exercices
+          <div className="flex items-center gap-2">
+            <div className="text-xs font-semibold text-primary-700 bg-primary-100 px-3 py-1 rounded-full">
+              {currentExerciseIndex + 1}/{workout.exercises.length} exercices
+            </div>
+            {saveState === 'saving' && (
+              <div className="text-xs font-semibold text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+                Sauvegarde...
+              </div>
+            )}
+            {saveState === 'saved' && (
+              <div className="text-xs font-semibold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+                Sauvegardé
+              </div>
+            )}
           </div>
         </div>
         <div className="flex items-center space-x-6">
