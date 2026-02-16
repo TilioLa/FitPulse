@@ -30,6 +30,7 @@ export default function InscriptionPage() {
   const [equipment, setEquipment] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
+  const weeklyPlanPreview = useMemo(() => generateWeeklyPlan(sessionsPerWeek), [sessionsPerWeek])
   const recommended = useMemo(
     () =>
       recommendProgram(programs, {
@@ -54,6 +55,12 @@ export default function InscriptionPage() {
 
     if (password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères')
+      setIsSubmitting(false)
+      return
+    }
+
+    if (goals.length === 0) {
+      setError('Sélectionne au moins un objectif pour personnaliser ton plan')
       setIsSubmitting(false)
       return
     }
@@ -410,6 +417,21 @@ export default function InscriptionPage() {
                     </div>
                   </div>
                 )}
+
+                <div className="rounded-xl border border-gray-200 bg-white p-4">
+                  <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
+                    Aperçu de ta semaine
+                  </div>
+                  <div className="mt-2 text-sm text-gray-700">
+                    {weeklyPlanPreview
+                      .filter((day) => day.type === 'training')
+                      .map((day) => day.label)
+                      .join(' • ')}
+                  </div>
+                  <div className="mt-2 text-xs text-gray-500">
+                    {sessionsPerWeek} séance(s) répartie(s) automatiquement.
+                  </div>
+                </div>
               </div>
 
               <button
