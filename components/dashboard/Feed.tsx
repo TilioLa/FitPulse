@@ -11,6 +11,7 @@ import { recommendProgram } from '@/lib/recommendation'
 import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } from '@/lib/subscription'
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalSettings } from '@/lib/user-state-store'
+import { useToast } from '@/components/ui/ToastProvider'
 
 type FeedItem = {
   id: string
@@ -39,6 +40,7 @@ type OnboardingStep = {
 }
 
 export default function Feed() {
+  const { push } = useToast()
   const [items, setItems] = useState<FeedItem[]>([])
   const [monthly, setMonthly] = useState({
     headline: 'Mois en cours',
@@ -412,6 +414,16 @@ export default function Feed() {
       window.removeEventListener('storage', computeFeed)
     }
   }, [entitlement.plan, entitlement.effectivePlan, entitlement.trialDaysLeft, entitlement.isTrialActive])
+
+  useEffect(() => {
+    if (onboardingSteps.length === 0) return
+    const allDone = onboardingSteps.every((step) => step.done)
+    if (!allDone) return
+    const key = 'fitpulse_onboarding_complete_toast_v1'
+    if (localStorage.getItem(key) === 'true') return
+    push('Bravo, onboarding terminé. Tu es prêt pour progresser.', 'success')
+    localStorage.setItem(key, 'true')
+  }, [onboardingSteps, push])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
