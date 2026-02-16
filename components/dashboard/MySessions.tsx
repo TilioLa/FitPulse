@@ -1372,7 +1372,7 @@ export default function MySessions() {
             </div>
 
             {/* Navigation */}
-            <div className="flex flex-col sm:flex-row justify-between gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-between">
               <button
                 onClick={() => {
                   if (currentExerciseIndex > 0) {
@@ -1382,16 +1382,20 @@ export default function MySessions() {
                   }
                 }}
                 disabled={currentExerciseIndex === 0}
-                className="min-h-11 px-4 py-2 rounded-lg border border-gray-200 text-gray-600 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="min-h-14 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-base font-semibold hover:text-primary-700 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed w-full"
               >
                 ← Précédent
               </button>
               {isLastExercise ? (
-                <button onClick={handleCompleteWorkout} data-testid="complete-workout" className="btn-primary min-h-11">
+                <button
+                  onClick={handleCompleteWorkout}
+                  data-testid="complete-workout"
+                  className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full"
+                >
                   Terminer la séance
                 </button>
               ) : (
-                <button onClick={handleNextExercise} className="btn-primary min-h-11">
+                <button onClick={handleNextExercise} className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full">
                   Suivant →
                 </button>
               )}
