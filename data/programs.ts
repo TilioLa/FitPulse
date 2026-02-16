@@ -102,7 +102,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       {
         id: '2-a',
         name: 'Jour 1 - Dos + Biceps',
-        focus: 'Tirage elastiques',
+        focus: 'Tirage élastiques',
         duration: 40,
         exercises: [
           { name: 'Rowing élastique', sets: 4, reps: 12, rest: 60 },
