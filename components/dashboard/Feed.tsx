@@ -203,9 +203,16 @@ export default function Feed() {
           level?: string
           goals?: string[]
           equipment?: string[]
+          sessionsPerWeek?: number
         }
         const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
         const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
+        const recommendedPick = recommendProgram(programs, {
+          level: settings.level,
+          goals: settings.goals,
+          equipment: settings.equipment,
+          sessionsPerWeek: settings.sessionsPerWeek,
+        })?.program
         const hasProfile =
           Boolean(settings.level) &&
           Array.isArray(settings.goals) &&
@@ -252,11 +259,17 @@ export default function Feed() {
             href: '/dashboard?view=settings',
           })
         } else if (currentWorkout?.status === 'in_progress') {
+          const workoutProgram = currentWorkout?.programId ? programsById[currentWorkout.programId] : null
+          const workoutSessionId = typeof currentWorkout?.id === 'string' ? currentWorkout.id : null
+          const resumeHref =
+            workoutProgram && workoutSessionId
+              ? `/programmes/${workoutProgram.slug}/seances/${workoutSessionId}`
+              : '/dashboard?view=session'
           setNextAction({
             title: 'Séance en cours détectée',
             body: 'Reprends là où tu t’es arrêté pour garder ton rythme.',
             cta: 'Reprendre la séance',
-            href: '/dashboard?view=session',
+            href: resumeHref,
           })
         } else if (daysSinceLastSession != null && daysSinceLastSession >= 4) {
           setNextAction({
@@ -266,11 +279,15 @@ export default function Feed() {
             href: '/dashboard?view=session',
           })
         } else {
+          const recommendedHref =
+            recommendedPick?.slug && recommendedPick.sessions?.[0]?.id
+              ? `/programmes/${recommendedPick.slug}/seances/${recommendedPick.sessions[0].id}`
+              : '/dashboard?view=programs'
           setNextAction({
             title: 'Planifier la prochaine séance',
             body: 'Choisis ton prochain entraînement pour rester régulier cette semaine.',
-            cta: 'Voir les programmes',
-            href: '/dashboard?view=programs',
+            cta: recommendedPick ? 'Lancer la séance recommandée' : 'Voir les programmes',
+            href: recommendedHref,
           })
         }
 
@@ -420,18 +437,7 @@ export default function Feed() {
             })
           }
         } else if (programs.length > 0) {
-          const settings = readLocalSettings() as {
-            level?: string
-            goals?: string[]
-            equipment?: string[]
-            sessionsPerWeek?: number
-          }
-          const pick = recommendProgram(programs, {
-            level: settings.level,
-            goals: settings.goals,
-            equipment: settings.equipment,
-            sessionsPerWeek: settings.sessionsPerWeek,
-          })?.program
+          const pick = recommendedPick
 
           setFocus({
             programId: pick?.id,
