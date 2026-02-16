@@ -27,6 +27,33 @@ export default function ConnexionPage() {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     setSignupStatus(params.get('signup'))
+    const errorCode = params.get('error_code') || params.get('error')
+    const errorDescription = params.get('error_description')
+
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const hashErrorCode = hashParams.get('error_code') || hashParams.get('error')
+    const hashErrorDescription = hashParams.get('error_description')
+
+    const normalizedErrorCode = (hashErrorCode || errorCode || '').toLowerCase()
+    const normalizedErrorDescription = decodeURIComponent(hashErrorDescription || errorDescription || '').toLowerCase()
+
+    if (normalizedErrorCode || normalizedErrorDescription) {
+      if (
+        normalizedErrorCode.includes('otp_expired') ||
+        normalizedErrorDescription.includes('expired') ||
+        normalizedErrorDescription.includes('has expired')
+      ) {
+        setError('Lien expiré. Demande un nouvel email de confirmation puis réessaie.')
+      } else if (
+        normalizedErrorCode.includes('access_denied') ||
+        normalizedErrorDescription.includes('invalid') ||
+        normalizedErrorDescription.includes('already used')
+      ) {
+        setError('Lien de connexion invalide ou déjà utilisé.')
+      } else {
+        setError('Impossible de finaliser la connexion depuis le lien email. Réessaie depuis cette page.')
+      }
+    }
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,6 +84,9 @@ export default function ConnexionPage() {
         return
       }
 
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
+      }
       router.replace('/dashboard')
     } catch {
       setError('Impossible de se connecter pour le moment. Réessaie dans quelques secondes.')

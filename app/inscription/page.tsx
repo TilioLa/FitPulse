@@ -91,10 +91,15 @@ export default function InscriptionPage() {
 
     try {
       const supabase = getSupabaseBrowserClient()
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (typeof window !== 'undefined' ? window.location.origin : '')
+      const emailRedirectTo = appUrl ? `${appUrl.replace(/\/$/, '')}/connexion` : undefined
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
+          emailRedirectTo,
           data: {
             full_name: safeName,
             phone: phone || null,
@@ -128,6 +133,9 @@ export default function InscriptionPage() {
       }
       if (signInData.user?.id) {
         void persistSettingsForUser(signInData.user.id, initialSettings)
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
