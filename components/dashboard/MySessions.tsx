@@ -1150,6 +1150,18 @@ export default function MySessions() {
         )}
       </div>
 
+      {!autoRestAfterSet && !showSummary && !trainingMode && (
+        <div className="fixed bottom-20 inset-x-0 z-30 px-4 lg:hidden">
+          <button
+            onClick={markNextSetCompleted}
+            className="w-full btn-primary min-h-12 shadow-lg"
+            data-testid="mobile-mark-next-set-sticky"
+          >
+            Set suivant
+          </button>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 reveal reveal-2">
         {/* Exercice actuel */}
         <div className="lg:col-span-2">
