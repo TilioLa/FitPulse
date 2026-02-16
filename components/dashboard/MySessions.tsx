@@ -128,7 +128,7 @@ export default function MySessions() {
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
-  const [showSyncNow, setShowSyncNow] = useState(false)
+  const [hasPendingCloudSync, setHasPendingCloudSync] = useState(false)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -145,6 +145,8 @@ export default function MySessions() {
   const [trainingMode, setTrainingMode] = useState(false)
   const [sessionHint, setSessionHint] = useState<SessionHint | null>(null)
   const lastCloudPersistRef = useRef(0)
+  const wasOnlineRef = useRef(true)
+  const reconnectSyncInFlightRef = useRef(false)
 
   const buildWorkoutSnapshot = (base: Workout) => ({
     ...base,
@@ -164,8 +166,11 @@ export default function MySessions() {
     setSaveState('saving')
     const snapshot = buildWorkoutSnapshot(source)
     writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
-    if (user?.id) {
+    if (!isOnline) {
+      setHasPendingCloudSync(true)
+    } else if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
+      setHasPendingCloudSync(false)
     }
     setSaveState('saved')
     setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
@@ -175,7 +180,7 @@ export default function MySessions() {
   const syncNow = () => {
     if (!isOnline) return
     saveSnapshotNow()
-    setShowSyncNow(false)
+    setHasPendingCloudSync(false)
     push('Synchronisation lancée.', 'success')
   }
 
@@ -355,11 +360,20 @@ export default function MySessions() {
   }, [])
 
   useEffect(() => {
-    if (!isOnline) return
+    const justReconnected = wasOnlineRef.current === false && isOnline
+    wasOnlineRef.current = isOnline
+    if (!justReconnected) return
+    if (!hasPendingCloudSync) return
     if (!workout) return
     if (!user?.id) return
-    setShowSyncNow(true)
-  }, [isOnline, workout?.id, user?.id])
+    if (reconnectSyncInFlightRef.current) return
+    reconnectSyncInFlightRef.current = true
+    saveSnapshotNow(workout)
+    setHasPendingCloudSync(false)
+    setTimeout(() => {
+      reconnectSyncInFlightRef.current = false
+    }, 500)
+  }, [isOnline, hasPendingCloudSync, workout, user?.id])
 
   useEffect(() => {
     const settings = readLocalSettings()
@@ -458,9 +472,12 @@ export default function MySessions() {
       const snapshot = buildWorkoutSnapshot(workout)
       writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
       const now = Date.now()
-      if (user?.id && now - lastCloudPersistRef.current > 10_000) {
+      if (!isOnline) {
+        setHasPendingCloudSync(true)
+      } else if (user?.id && now - lastCloudPersistRef.current > 10_000) {
         lastCloudPersistRef.current = now
         void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
+        setHasPendingCloudSync(false)
       }
       setSaveState('saved')
       setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
@@ -468,7 +485,7 @@ export default function MySessions() {
     }, 500)
 
     return () => clearTimeout(timeout)
-  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id])
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id, isOnline])
 
   useEffect(() => {
     if (!workout?.id) return
@@ -1107,7 +1124,7 @@ export default function MySessions() {
                 Hors ligne: les changements seront synchronisés au retour du réseau.
               </div>
             )}
-            {isOnline && showSyncNow && user?.id && (
+            {isOnline && hasPendingCloudSync && user?.id && (
               <button
                 onClick={syncNow}
                 className="text-[11px] font-semibold text-primary-700 underline underline-offset-2"
