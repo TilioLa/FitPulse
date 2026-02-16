@@ -30,6 +30,14 @@ type BusinessNudge = {
   href: string
 }
 
+type OnboardingStep = {
+  id: 'profile' | 'first_session_started' | 'first_session_done'
+  label: string
+  done: boolean
+  href: string
+  cta: string
+}
+
 export default function Feed() {
   const [items, setItems] = useState<FeedItem[]>([])
   const [monthly, setMonthly] = useState({
@@ -80,6 +88,7 @@ export default function Feed() {
   })
   const [businessNudge, setBusinessNudge] = useState<BusinessNudge | null>(null)
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
+  const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -179,6 +188,45 @@ export default function Feed() {
             volume: (item as any).volume,
           }))
         setItems(list)
+
+        const settings = readLocalSettings() as {
+          level?: string
+          goals?: string[]
+          equipment?: string[]
+        }
+        const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
+        const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
+        const hasProfile =
+          Boolean(settings.level) &&
+          Array.isArray(settings.goals) &&
+          settings.goals.length > 0 &&
+          Array.isArray(settings.equipment) &&
+          settings.equipment.length > 0
+        const hasStartedWorkout = Boolean(currentWorkout?.status === 'in_progress' || stored.length > 0)
+        const hasCompletedWorkout = stored.length > 0
+        setOnboardingSteps([
+          {
+            id: 'profile',
+            label: 'Compléter ton profil fitness',
+            done: hasProfile,
+            href: '/dashboard?view=settings',
+            cta: 'Configurer',
+          },
+          {
+            id: 'first_session_started',
+            label: 'Lancer ta première séance',
+            done: hasStartedWorkout,
+            href: '/dashboard?view=session',
+            cta: 'Démarrer',
+          },
+          {
+            id: 'first_session_done',
+            label: 'Terminer ta première séance',
+            done: hasCompletedWorkout,
+            href: '/dashboard?view=session',
+            cta: 'Continuer',
+          },
+        ])
 
         const now = new Date()
         const recapWindowDays = 5
@@ -404,6 +452,29 @@ export default function Feed() {
           <Link href={businessNudge.href} className="mt-3 inline-flex btn-secondary">
             {businessNudge.cta}
           </Link>
+        </div>
+      )}
+
+      {onboardingSteps.some((step) => !step.done) && (
+        <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Onboarding</div>
+          <div className="mt-1 text-base font-semibold text-emerald-900">
+            Progression: {onboardingSteps.filter((step) => step.done).length}/{onboardingSteps.length}
+          </div>
+          <div className="mt-3 space-y-2">
+            {onboardingSteps.map((step) => (
+              <div key={step.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2 border border-emerald-100">
+                <div className={`text-sm ${step.done ? 'text-emerald-800' : 'text-gray-700'}`}>
+                  {step.done ? '✓ ' : ''}{step.label}
+                </div>
+                {!step.done && (
+                  <Link href={step.href} className="text-xs font-semibold text-emerald-700 underline underline-offset-2">
+                    {step.cta}
+                  </Link>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
