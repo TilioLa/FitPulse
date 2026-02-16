@@ -22,7 +22,7 @@ const regionLabels: Record<string, string> = {
   biceps: 'Biceps',
   triceps: 'Triceps',
   back: 'Dos',
-  core: 'Abdos',
+  core: 'Abdominaux',
   glutes: 'Fessiers',
   quads: 'Quadriceps',
   hamstrings: 'Ischios',

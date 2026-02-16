@@ -140,7 +140,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       },
       {
         id: '2-d',
-        name: 'Jour 4 - Core',
+        name: 'Jour 4 - Abdominaux',
         focus: 'Stabilite et gainage',
         duration: 30,
         exercises: [
@@ -250,7 +250,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       },
       {
         id: '4-b',
-        name: 'Jour 2 - Cardio core',
+        name: 'Jour 2 - Cardio abdominaux',
         focus: 'Gainage cardio',
         duration: 25,
         exercises: [
@@ -317,7 +317,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       },
       {
         id: '5-c',
-        name: 'Jour 3 - Bras & core',
+        name: 'Jour 3 - Bras & abdominaux',
         focus: 'Bras et stabilite',
         duration: 30,
         exercises: [
@@ -386,15 +386,15 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
   },
   {
     id: '7',
-    name: 'Gainage & Core',
+    name: 'Gainage & Abdominaux',
     duration: '4 semaines',
     level: 'Tous niveaux',
     equipment: 'Poids du corps',
-    bodyParts: ['Abdos', 'Core'],
+    bodyParts: ['Abdos', 'Abdominaux'],
     description: 'Seances courtes et efficaces pour renforcer la sangle abdominale.',
     exercises: 14,
     color: 'from-amber-500 to-amber-600',
-    goals: ['Core', 'Stabilite'],
+    goals: ['Abdominaux', 'Stabilite'],
     sessionsPerWeek: 3,
     sessions: [
       {
@@ -412,7 +412,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       },
       {
         id: '7-b',
-        name: 'Jour 2 - Core dynamique',
+        name: 'Jour 2 - Abdominaux dynamiques',
         focus: 'Rotation et controle',
         duration: 25,
         exercises: [
@@ -425,7 +425,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       },
       {
         id: '7-c',
-        name: 'Jour 3 - Endurance core',
+        name: 'Jour 3 - Endurance abdominaux',
         focus: 'Volume',
         duration: 25,
         exercises: [
@@ -479,7 +479,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       },
       {
         id: '8-c',
-        name: 'Jour 3 - Core HIIT',
+        name: 'Jour 3 - Abdominaux HIIT',
         focus: 'Cardio + abdos',
         duration: 25,
         exercises: [

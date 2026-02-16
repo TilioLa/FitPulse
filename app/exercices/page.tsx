@@ -261,7 +261,7 @@ export default function ExercicesPage() {
                                       ? 'Cardio'
                                       : itemGoal === 'mobility'
                                         ? 'Mobilité'
-                                        : 'Core'}
+                                        : 'Abdominaux'}
                               </span>
                             ))}
                           </div>
@@ -443,7 +443,7 @@ export default function ExercicesPage() {
                                 ? 'Cardio'
                                 : opt === 'mobility'
                                   ? 'Mobilité'
-                                  : 'Core'}
+                                  : 'Abdominaux'}
                       </option>
                     ))}
                   </select>

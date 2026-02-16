@@ -85,7 +85,7 @@ export default function History() {
       biceps: { fr: 'Biceps', en: 'Biceps' },
       triceps: { fr: 'Triceps', en: 'Triceps' },
       back: { fr: 'Dos', en: 'Back' },
-      core: { fr: 'Abdos', en: 'Core' },
+      core: { fr: 'Abdominaux', en: 'Abdominals' },
       glutes: { fr: 'Fessiers', en: 'Glutes' },
       quads: { fr: 'Quadriceps', en: 'Quads' },
       hamstrings: { fr: 'Ischios', en: 'Hamstrings' },

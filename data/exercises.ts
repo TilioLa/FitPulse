@@ -429,7 +429,7 @@ export const exerciseCatalog: ExerciseCatalogItem[] = [
   },
   {
     "id": "cable-core-palloff-press",
-    "name": "Cable Core Palloff Press",
+    "name": "Cable Abdominaux Palloff Press",
     "equipment": [
       "Cable"
     ],

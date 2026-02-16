@@ -19,7 +19,7 @@ export default function ProgramsList() {
 
   const levels = ['all', 'Debutant', 'Intermediaire', 'Avance', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Elastiques', 'Machines', 'Halteres', 'Aucun materiel']
-  const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Core', 'Mobilite']
+  const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilite']
 
   const filteredPrograms = allPrograms.filter(program => {
     const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
