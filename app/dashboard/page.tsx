@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, Suspense } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Footer from '@/components/Footer'
@@ -30,17 +30,34 @@ const Settings = dynamic(() => import('@/components/dashboard/Settings'), {
 
 type DashboardSection = 'feed' | 'history' | 'session' | 'programs' | 'routines' | 'settings' | 'exercises'
 
+function viewToSection(view: string | null): DashboardSection | null {
+  switch (view) {
+    case 'feed':
+      return 'feed'
+    case 'history':
+      return 'history'
+    case 'session':
+      return 'session'
+    case 'programs':
+      return 'programs'
+    case 'routines':
+      return 'routines'
+    case 'settings':
+      return 'settings'
+    case 'exercises':
+      return 'exercises'
+    default:
+      return null
+  }
+}
+
 export default function DashboardPage() {
   const router = useRouter()
-  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
-  const forceE2EMode = searchParams?.get('e2e') === '1'
-  const [activeSection, setActiveSection] = useState<DashboardSection>(() => {
-    if (typeof window !== 'undefined') {
-      const view = new URLSearchParams(window.location.search).get('view')
-      if (view === 'session') return 'session'
-    }
-    return 'feed'
-  })
+  const searchParams = useSearchParams()
+  const forceE2EMode = searchParams.get('e2e') === '1'
+  const [activeSection, setActiveSection] = useState<DashboardSection>(
+    () => viewToSection(searchParams.get('view')) || 'feed'
+  )
   const { status, reload } = useAuth()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
@@ -104,9 +121,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
-    const view = new URLSearchParams(window.location.search).get('view')
-    if (view === 'session') {
-      scheduleSection('session')
+    const directSection = viewToSection(searchParams.get('view'))
+    if (directSection) {
+      scheduleSection(directSection)
       return
     }
     try {
@@ -119,11 +136,11 @@ export default function DashboardPage() {
     } catch {
       // ignore
     }
-  }, [effectiveStatus])
+  }, [effectiveStatus, searchParams])
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
-    const view = new URLSearchParams(window.location.search).get('view')
+    const view = searchParams.get('view')
     if (view) return
 
     try {
@@ -146,7 +163,7 @@ export default function DashboardPage() {
     } catch {
       // ignore smart-start errors
     }
-  }, [effectiveStatus])
+  }, [effectiveStatus, searchParams])
 
   if (effectiveStatus === 'loading') {
     return (
