@@ -98,6 +98,8 @@ type SessionHint = {
   body: string
 }
 
+const lastExerciseKey = (workoutId: string) => `fitpulse_last_exercise_index_${workoutId}`
+
 export default function MySessions() {
   const { push } = useToast()
   const { user } = useAuth()
@@ -175,6 +177,12 @@ export default function MySessions() {
       if (Number.isInteger(draftIndex)) {
         const nextIndex = Math.max(0, Math.min(draftIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
         setCurrentExerciseIndex(nextIndex)
+      } else if (parsed?.id) {
+        const savedIndex = Number(localStorage.getItem(lastExerciseKey(parsed.id)) || 0)
+        if (Number.isInteger(savedIndex)) {
+          const nextIndex = Math.max(0, Math.min(savedIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
+          setCurrentExerciseIndex(nextIndex)
+        }
       }
       const draftTimeRemaining = Number(parsedDraft?.timeRemaining)
       if (Number.isFinite(draftTimeRemaining) && draftTimeRemaining > 0) {
@@ -413,6 +421,11 @@ export default function MySessions() {
 
     return () => clearTimeout(timeout)
   }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id])
+
+  useEffect(() => {
+    if (!workout?.id) return
+    localStorage.setItem(lastExerciseKey(workout.id), String(currentExerciseIndex))
+  }, [workout?.id, currentExerciseIndex])
 
   useEffect(() => {
     const saveNow = () => {
