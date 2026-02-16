@@ -17,9 +17,9 @@ export default function ProgramsList() {
   const [recommendedProgramId, setRecommendedProgramId] = useState<string | null>(null)
   const [showQuickStart, setShowQuickStart] = useState(false)
 
-  const levels = ['all', 'Debutant', 'Intermediaire', 'Avance', 'Tous niveaux']
-  const equipments = ['all', 'Poids du corps', 'Elastiques', 'Machines', 'Halteres', 'Aucun materiel']
-  const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilite']
+  const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
+  const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
+  const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilité']
 
   const filteredPrograms = allPrograms.filter(program => {
     const levelMatch = selectedLevel === 'all' || program.level === selectedLevel

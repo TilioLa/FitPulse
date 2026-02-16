@@ -26,7 +26,7 @@ export default function ExerciseMedia({
           </div>
         ) : (
           <div className="flex items-center justify-center h-44 rounded-lg bg-gray-100 text-sm text-gray-500">
-            Video a ajouter pour cet exercice
+            Vidéo à ajouter pour cet exercice
           </div>
         )}
       </div>

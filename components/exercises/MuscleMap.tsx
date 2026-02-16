@@ -205,7 +205,7 @@ export default function MuscleMap({
         </div>
       </div>
       {targets.length === 0 && (
-        <p className="text-xs text-gray-500 mt-3">Muscles principaux a preciser.</p>
+        <p className="text-xs text-gray-500 mt-3">Muscles principaux à préciser.</p>
       )}
     </div>
   )
