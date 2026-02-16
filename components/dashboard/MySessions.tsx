@@ -92,6 +92,12 @@ interface Workout {
   }
 }
 
+type SessionHint = {
+  tone: 'amber' | 'blue' | 'emerald'
+  title: string
+  body: string
+}
+
 export default function MySessions() {
   const { push } = useToast()
   const { user } = useAuth()
@@ -128,6 +134,7 @@ export default function MySessions() {
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
   const [trainingMode, setTrainingMode] = useState(false)
+  const [sessionHint, setSessionHint] = useState<SessionHint | null>(null)
   const lastCloudPersistRef = useRef(0)
 
   const buildWorkoutSnapshot = (base: Workout) => ({
@@ -225,6 +232,59 @@ export default function MySessions() {
     const { streak, totalWorkouts } = computeHistoryStats(history as WorkoutHistoryItem[])
     setStreak(streak)
     setCompletedWorkouts(totalWorkouts)
+    try {
+      const sortedHistory = [...(history as WorkoutHistoryItem[])].sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      )
+      const lastSessionTs = sortedHistory[0] ? new Date(sortedHistory[0].date).getTime() : null
+      const daysSinceLast =
+        lastSessionTs != null
+          ? Math.floor((Date.now() - lastSessionTs) / (24 * 60 * 60 * 1000))
+          : null
+
+      const nowTs = Date.now()
+      const dayMs = 24 * 60 * 60 * 1000
+      const currentWindowStart = nowTs - 7 * dayMs
+      const previousWindowStart = nowTs - 14 * dayMs
+      const previousWindowEnd = currentWindowStart
+      const currentLoad = (history as any[])
+        .filter((item) => {
+          const ts = new Date(item.date).getTime()
+          return ts >= currentWindowStart && ts <= nowTs
+        })
+        .reduce((sum, item) => sum + (Number(item.volume) || 0), 0)
+      const previousLoad = (history as any[])
+        .filter((item) => {
+          const ts = new Date(item.date).getTime()
+          return ts >= previousWindowStart && ts < previousWindowEnd
+        })
+        .reduce((sum, item) => sum + (Number(item.volume) || 0), 0)
+      const loadDelta = previousLoad > 0 ? Math.round(((currentLoad - previousLoad) / previousLoad) * 100) : 0
+
+      if (daysSinceLast != null && daysSinceLast >= 5) {
+        setSessionHint({
+          tone: 'amber',
+          title: 'Reprise progressive recommandée',
+          body: `Dernière séance il y a ${daysSinceLast} jour(s). Commence à 70-80% de ton intensité habituelle.`,
+        })
+      } else if (loadDelta >= 20) {
+        setSessionHint({
+          tone: 'blue',
+          title: 'Charge en forte hausse',
+          body: `+${loadDelta}% cette semaine. Réduis le volume de 20-30% aujourd’hui pour mieux récupérer.`,
+        })
+      } else if (streak >= 3) {
+        setSessionHint({
+          tone: 'emerald',
+          title: 'Rythme solide',
+          body: 'Tu es régulier. Garde la technique propre et monte la charge progressivement.',
+        })
+      } else {
+        setSessionHint(null)
+      }
+    } catch {
+      setSessionHint(null)
+    }
     if (storedWorkout) {
       const parsed = storedWorkout as unknown as Workout
       if (parsed?.programId) {
@@ -957,6 +1017,20 @@ export default function MySessions() {
           <div className="mt-4 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-800">
             Matériel requis : <span className="font-semibold">{equipment}</span>
           </div>
+        {sessionHint && (
+          <div
+            className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+              sessionHint.tone === 'amber'
+                ? 'border border-amber-200 bg-amber-50 text-amber-900'
+                : sessionHint.tone === 'blue'
+                ? 'border border-blue-200 bg-blue-50 text-blue-900'
+                : 'border border-emerald-200 bg-emerald-50 text-emerald-900'
+            }`}
+          >
+            <div className="font-semibold">{sessionHint.title}</div>
+            <div className="mt-1">{sessionHint.body}</div>
+          </div>
+        )}
         <div className="mt-4">
           <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
             <div
