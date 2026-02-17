@@ -39,6 +39,7 @@ export default function MobileBottomNav({
             <button
               key={item.id}
               onClick={() => {
+                if (isActive) return
                 if (item.id === 'exercises') {
                   router.push('/exercices')
                   return
