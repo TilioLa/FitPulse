@@ -62,6 +62,29 @@ Pour `test:e2e:auth-real`, définir :
 - `E2E_USER_EMAIL`
 - `E2E_USER_PASSWORD`
 
+## 📱 Version application (PWA + Capacitor)
+
+Le projet est prêt pour une version app :
+- **PWA installable** via `manifest.webmanifest` + service worker (`public/sw.js`)
+- **Capacitor** configuré pour iOS/Android (`capacitor.config.ts`)
+
+Commandes utiles :
+
+```bash
+# Synchroniser les assets/capacitor config
+npm run mobile:sync
+
+# Ajouter les plateformes une seule fois
+npm run mobile:add:ios
+npm run mobile:add:android
+
+# Ouvrir les projets natifs
+npm run mobile:ios
+npm run mobile:android
+```
+
+Si besoin, modifiez `server.url` dans `capacitor.config.ts` vers votre domaine de production final.
+
 ## 🔐 Authentification (Supabase Auth)
 
 1. Créez un projet Supabase et récupérez :
