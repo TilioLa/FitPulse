@@ -88,6 +88,7 @@ interface Workout {
     currentExerciseIndex?: number
     timeRemaining?: number
     timerKind?: 'set' | 'exercise' | null
+    sessionPaused?: boolean
     savedAt?: string
   }
 }
@@ -120,6 +121,7 @@ export default function MySessions() {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
   const [timerKind, setTimerKind] = useState<'set' | 'exercise' | null>(null)
+  const [sessionPaused, setSessionPaused] = useState(false)
   const [supersetMap, setSupersetMap] = useState<Record<string, string>>({})
   const [exerciseInputs, setExerciseInputs] = useState<ExerciseInputs>({})
   const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null)
@@ -156,6 +158,7 @@ export default function MySessions() {
       currentExerciseIndex,
       timeRemaining,
       timerKind,
+      sessionPaused,
       savedAt: new Date().toISOString(),
     },
   })
@@ -222,6 +225,7 @@ export default function MySessions() {
       if (parsedDraft?.timerKind === 'set' || parsedDraft?.timerKind === 'exercise') {
         setTimerKind(parsedDraft.timerKind)
       }
+      setSessionPaused(!!parsedDraft?.sessionPaused)
       if (parsed?.equipment) setEquipment(parsed.equipment)
       if (parsed?.programId) {
         const program = allPrograms.find((item) => item.id === parsed.programId)
@@ -485,7 +489,7 @@ export default function MySessions() {
     }, 500)
 
     return () => clearTimeout(timeout)
-  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id, isOnline])
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, user?.id, isOnline])
 
   useEffect(() => {
     if (!workout?.id) return
@@ -508,9 +512,10 @@ export default function MySessions() {
       window.removeEventListener('beforeunload', onBeforeUnload)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, user?.id])
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, user?.id])
 
   const handleStartTimer = (restTime: number, kind: 'set' | 'exercise') => {
+    if (sessionPaused) return
     setTimerKind(kind)
     setTimeRemaining(restTime)
     setIsRunning(true)
@@ -527,6 +532,7 @@ export default function MySessions() {
   }
 
   const handleNextExercise = () => {
+    if (sessionPaused) return
     if (workout && currentExerciseIndex < workout.exercises.length - 1) {
       setCurrentExerciseIndex(currentExerciseIndex + 1)
       setTimeRemaining(0)
@@ -537,6 +543,10 @@ export default function MySessions() {
 
   const handleCompleteWorkout = () => {
     if (!workout) return
+    if (sessionPaused) {
+      push('Reprenez la séance avant de la terminer.', 'info')
+      return
+    }
 
     // Ajouter à l'historique (éviter doublons même jour + même séance)
     const history = readLocalHistory()
@@ -638,6 +648,7 @@ export default function MySessions() {
     setCurrentExerciseIndex(0)
     setTimeRemaining(0)
     setIsRunning(false)
+    setSessionPaused(false)
     if (workout) {
       writeLocalCurrentWorkout(null)
       if (user?.id) {
@@ -653,6 +664,37 @@ export default function MySessions() {
     })
     setShowSummary(true)
     push(`Séance terminée !`, 'success')
+  }
+
+  const handlePauseSession = () => {
+    if (sessionPaused) return
+    setSessionPaused(true)
+    setIsRunning(false)
+    saveSnapshotNow()
+    push('Séance mise en pause.', 'info')
+  }
+
+  const handleResumeSession = () => {
+    if (!sessionPaused) return
+    setSessionPaused(false)
+    push('Séance reprise.', 'success')
+  }
+
+  const handleCancelWorkout = () => {
+    if (!workout) return
+    const confirmed = window.confirm('Annuler la séance en cours ? La progression non terminée sera perdue.')
+    if (!confirmed) return
+    setIsRunning(false)
+    setTimeRemaining(0)
+    setTimerKind(null)
+    setSessionPaused(false)
+    setCurrentExerciseIndex(0)
+    writeLocalCurrentWorkout(null)
+    if (user?.id) {
+      void persistCurrentWorkoutForUser(user.id, null)
+    }
+    push('Séance annulée.', 'info')
+    router.push('/dashboard?view=feed')
   }
 
   const updateWorkoutExercises = (nextExercises: Exercise[]) => {
@@ -853,6 +895,7 @@ export default function MySessions() {
 
   const toggleSetCompleted = (setIndex: number, checked: boolean) => {
     if (!currentExercise) return
+    if (sessionPaused) return
     setExerciseInputs((prev) => {
       const updated = {
         ...prev,
@@ -878,6 +921,7 @@ export default function MySessions() {
   }
 
   const markNextSetCompleted = () => {
+    if (sessionPaused) return
     const nextIndex = currentInputs.findIndex((set) => !set.completed)
     if (nextIndex === -1) {
       if (autoRestAfterSet && effectiveExerciseRest > 0) {
@@ -910,6 +954,7 @@ export default function MySessions() {
         }
       } else if (event.code === 'Space') {
         event.preventDefault()
+        if (sessionPaused) return
         if (isRunning) handlePauseTimer()
         else handleStartTimer(effectiveRest, timerKind ?? 'set')
       }
@@ -917,7 +962,7 @@ export default function MySessions() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [workout, currentExercise, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest])
+  }, [workout, currentExercise, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest, sessionPaused])
 
   if (!workout || !currentExercise) {
     return <div className="text-center text-gray-600">Chargement de la séance...</div>
@@ -1278,6 +1323,7 @@ export default function MySessions() {
         <div className="fixed bottom-20 inset-x-0 z-30 px-4 lg:hidden">
           <button
             onClick={markNextSetCompleted}
+            disabled={sessionPaused}
             className={`w-full btn-primary min-h-12 shadow-lg transition-transform ${setPulse ? 'scale-[1.02]' : ''}`}
             data-testid="mobile-mark-next-set-sticky"
           >
@@ -1344,6 +1390,7 @@ export default function MySessions() {
                     <input
                       type="checkbox"
                       checked={set.completed || false}
+                      disabled={sessionPaused}
                       onChange={(event) => {
                         const checked = event.target.checked
                         toggleSetCompleted(index, checked)
@@ -1357,6 +1404,7 @@ export default function MySessions() {
                     min={0}
                     step={0.5}
                     value={set.weight}
+                    disabled={sessionPaused}
                     onChange={(event) => {
                       const value = Number(event.target.value)
                       setExerciseInputs((prev) => ({
@@ -1374,6 +1422,7 @@ export default function MySessions() {
                     min={1}
                     step={1}
                     value={set.reps}
+                    disabled={sessionPaused}
                     onChange={(event) => {
                       const value = Number(event.target.value)
                       setExerciseInputs((prev) => ({
@@ -1394,9 +1443,10 @@ export default function MySessions() {
                 type="button"
                 onClick={markNextSetCompleted}
                 data-testid="mark-next-set"
+                disabled={sessionPaused}
                 className={`min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-primary-200 text-primary-700 hover:border-primary-300 transition-transform ${
                   setPulse ? 'scale-[1.02]' : ''
-                }`}
+                } disabled:opacity-50 disabled:cursor-not-allowed`}
               >
                 Valider la prochaine série (Entrée)
               </button>
@@ -1411,7 +1461,8 @@ export default function MySessions() {
                     ],
                   }))
                 }
-                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300"
+                disabled={sessionPaused}
+                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 + Ajouter une série
               </button>
@@ -1423,7 +1474,7 @@ export default function MySessions() {
                     [currentExercise.id]: (prev[currentExercise.id] || []).slice(0, -1),
                   }))
                 }
-                disabled={(currentInputs?.length || 0) <= 1}
+                disabled={sessionPaused || (currentInputs?.length || 0) <= 1}
                 className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 − Supprimer une série
@@ -1457,9 +1508,16 @@ export default function MySessions() {
               }}
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               rows={3}
+              disabled={sessionPaused}
               placeholder="Sensations, conseils..."
             />
           </div>
+
+            {sessionPaused && (
+              <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
+                Séance en pause. Reprenez pour continuer.
+              </div>
+            )}
 
             {/* Timer */}
             <div className="mb-6">
@@ -1473,20 +1531,29 @@ export default function MySessions() {
                 {!isRunning && timeRemaining === 0 && (
                   <button
                     onClick={() => handleStartTimer(effectiveRest, 'set')}
-                    className="btn-primary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2"
+                    disabled={sessionPaused}
+                    className="btn-primary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Play className="h-5 w-5" />
                     <span>{effectiveRest === 0 ? 'Passer au superset' : 'Démarrer le repos'}</span>
                   </button>
                 )}
                 {isRunning && (
-                  <button onClick={handlePauseTimer} className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2">
+                  <button
+                    onClick={handlePauseTimer}
+                    disabled={sessionPaused}
+                    className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <Pause className="h-5 w-5" />
                     <span>Pause</span>
                   </button>
                 )}
                 {timeRemaining > 0 && (
-                  <button onClick={handleResetTimer} className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2">
+                  <button
+                    onClick={handleResetTimer}
+                    disabled={sessionPaused}
+                    className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
                     <RotateCcw className="h-5 w-5" />
                     <span>Reset</span>
                   </button>
@@ -1494,17 +1561,44 @@ export default function MySessions() {
               </div>
             </div>
 
+            <div className="mb-6 flex flex-col sm:flex-row gap-3">
+              {!sessionPaused ? (
+                <button
+                  onClick={handlePauseSession}
+                  className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2"
+                >
+                  <Pause className="h-5 w-5" />
+                  <span>Mettre la séance en pause</span>
+                </button>
+              ) : (
+                <button
+                  onClick={handleResumeSession}
+                  className="btn-primary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2"
+                >
+                  <Play className="h-5 w-5" />
+                  <span>Reprendre la séance</span>
+                </button>
+              )}
+              <button
+                onClick={handleCancelWorkout}
+                className="min-h-11 w-full sm:w-auto rounded-lg border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-50"
+              >
+                Annuler la séance
+              </button>
+            </div>
+
             {/* Navigation */}
             <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row sm:justify-between">
               <button
                 onClick={() => {
+                  if (sessionPaused) return
                   if (currentExerciseIndex > 0) {
                     setCurrentExerciseIndex(currentExerciseIndex - 1)
                     setTimeRemaining(0)
                     setIsRunning(false)
                   }
                 }}
-                disabled={currentExerciseIndex === 0}
+                disabled={sessionPaused || currentExerciseIndex === 0}
                 className="min-h-14 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-base font-semibold hover:text-primary-700 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed w-full"
               >
                 ← Précédent
@@ -1513,12 +1607,17 @@ export default function MySessions() {
                 <button
                   onClick={handleCompleteWorkout}
                   data-testid="complete-workout"
-                  className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full"
+                  disabled={sessionPaused}
+                  className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Terminer la séance
                 </button>
               ) : (
-                <button onClick={handleNextExercise} className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full">
+                <button
+                  onClick={handleNextExercise}
+                  disabled={sessionPaused}
+                  className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                >
                   Suivant →
                 </button>
               )}
@@ -1541,6 +1640,7 @@ export default function MySessions() {
                     : ''
                 }`}
                 onClick={() => {
+                  if (sessionPaused) return
                   setCurrentExerciseIndex(index)
                   setTimeRemaining(0)
                   setIsRunning(false)
@@ -1714,6 +1814,7 @@ export default function MySessions() {
           isResting={timerKind === 'exercise'}
           onExit={() => setTrainingMode(false)}
           onToggleTimer={() => {
+            if (sessionPaused) return
             if (isRunning) handlePauseTimer()
             else handleStartTimer(effectiveRest, timerKind ?? 'set')
           }}
