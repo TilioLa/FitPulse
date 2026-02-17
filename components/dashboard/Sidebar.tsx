@@ -24,7 +24,7 @@ interface SidebarProps {
 
 const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
-  { id: 'session', labelKey: 'session', icon: Activity, href: '/dashboard?view=session' },
+  { id: 'session', labelKey: 'session', icon: Activity },
   { id: 'history', labelKey: 'history', icon: History },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },
   { id: 'routines', labelKey: 'routines', icon: FolderPlus },
@@ -60,7 +60,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
                 key={item.id}
                 href={item.href}
                 className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
-                  item.href === '/dashboard?view=session' && activeSection === 'session'
+                  isActive
                     ? 'bg-primary-600 text-white'
                     : 'text-gray-700 hover:bg-primary-50 hover:text-primary-600'
                 }`}

@@ -113,6 +113,11 @@ function DashboardPageContent() {
     if (effectiveStatus !== 'authenticated') return
     const currentView = searchParams.get('view')
     const targetView = sectionToView(activeSection)
+    const urlSection = viewToSection(currentView)
+
+    // If URL already points to another valid section, wait for state sync
+    // instead of forcing a replace and creating a navigation bounce.
+    if (urlSection && urlSection !== activeSection) return
     if (currentView === targetView) return
 
     const nextParams = new URLSearchParams(searchParams.toString())
