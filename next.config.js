@@ -2,10 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   async headers() {
-    const isProd = process.env.NODE_ENV === 'production'
-    const scriptSrc = isProd
-      ? "script-src 'self' 'unsafe-inline' https://js.stripe.com"
-      : "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
+    const scriptSrc = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
 
     const csp = [
       "default-src 'self'",
