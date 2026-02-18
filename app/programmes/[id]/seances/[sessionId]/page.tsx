@@ -72,7 +72,7 @@ export default function SessionDetailPage() {
     } catch {
       setCustomExercises(session.exercises)
     }
-  }, [program?.id, session?.id])
+  }, [program, session])
 
   useEffect(() => {
     if (pickerOpen) {

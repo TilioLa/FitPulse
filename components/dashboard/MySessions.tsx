@@ -259,9 +259,6 @@ export default function MySessions() {
       }
       setWorkout(defaultWorkout)
       writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
-      if (user?.id) {
-        void persistCurrentWorkoutForUser(user.id, defaultWorkout as unknown as Record<string, unknown>)
-      }
       const inputs: ExerciseInputs = {}
       defaultWorkout.exercises.forEach((exercise) => {
         inputs[exercise.id] = Array.from({ length: exercise.sets }).map(() => ({
@@ -377,6 +374,7 @@ export default function MySessions() {
     setTimeout(() => {
       reconnectSyncInFlightRef.current = false
     }, 500)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOnline, hasPendingCloudSync, workout, user?.id])
 
   useEffect(() => {
@@ -434,11 +432,12 @@ export default function MySessions() {
     }
   }, [weightUnit])
 
+  const workoutId = workout?.id
   useEffect(() => {
-    if (!workout) return
-    const stored = JSON.parse(localStorage.getItem(`fitpulse_superset_${workout.id}`) || '{}')
+    if (!workoutId) return
+    const stored = JSON.parse(localStorage.getItem(`fitpulse_superset_${workoutId}`) || '{}')
     setSupersetMap(stored)
-  }, [workout?.id])
+  }, [workoutId])
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -466,6 +465,7 @@ export default function MySessions() {
     return () => {
       if (interval) clearInterval(interval)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeRemaining, timerKind, soundEnabled, voiceEnabled])
 
   useEffect(() => {
@@ -489,6 +489,7 @@ export default function MySessions() {
     }, 500)
 
     return () => clearTimeout(timeout)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, user?.id, isOnline])
 
   useEffect(() => {
@@ -512,26 +513,27 @@ export default function MySessions() {
       window.removeEventListener('beforeunload', onBeforeUnload)
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, user?.id])
 
-  const handleStartTimer = (restTime: number, kind: 'set' | 'exercise') => {
+  function handleStartTimer(restTime: number, kind: 'set' | 'exercise') {
     if (sessionPaused) return
     setTimerKind(kind)
     setTimeRemaining(restTime)
     setIsRunning(true)
   }
 
-  const handlePauseTimer = () => {
+  function handlePauseTimer() {
     setIsRunning(false)
   }
 
-  const handleResetTimer = () => {
+  function handleResetTimer() {
     setTimeRemaining(0)
     setIsRunning(false)
     setTimerKind(null)
   }
 
-  const handleNextExercise = () => {
+  function handleNextExercise() {
     if (sessionPaused) return
     if (workout && currentExerciseIndex < workout.exercises.length - 1) {
       setCurrentExerciseIndex(currentExerciseIndex + 1)
@@ -541,7 +543,7 @@ export default function MySessions() {
     }
   }
 
-  const handleCompleteWorkout = () => {
+  function handleCompleteWorkout() {
     if (!workout) return
     if (sessionPaused) {
       push('Reprenez la séance avant de la terminer.', 'info')
@@ -879,7 +881,7 @@ export default function MySessions() {
     !!currentSupersetGroup && nextExerciseId && supersetMap[nextExerciseId] === currentSupersetGroup
 
   const effectiveRest = useMemo(() => {
-    if (!workout || !currentExercise) return 0
+    if (!currentExercise) return 0
     const base = restOverride && restOverride > 0 ? restOverride : currentExercise.rest
     return isSupersetWithNext ? 0 : base
   }, [currentExercise, isSupersetWithNext, restOverride])
@@ -894,7 +896,7 @@ export default function MySessions() {
   const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
   const isLastExercise = workout ? currentExerciseIndex === workout.exercises.length - 1 : false
 
-  const toggleSetCompleted = (setIndex: number, checked: boolean) => {
+  function toggleSetCompleted(setIndex: number, checked: boolean) {
     if (!currentExercise) return
     if (sessionPaused) return
     setExerciseInputs((prev) => {
@@ -921,7 +923,7 @@ export default function MySessions() {
     })
   }
 
-  const markNextSetCompleted = () => {
+  function markNextSetCompleted() {
     if (sessionPaused) return
     const nextIndex = currentInputs.findIndex((set) => !set.completed)
     if (nextIndex === -1) {
@@ -963,6 +965,7 @@ export default function MySessions() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workout, currentExercise, currentInputs, isLastExercise, isRunning, effectiveRest, timerKind, effectiveExerciseRest, sessionPaused])
 
   if (!workout || !currentExercise) {

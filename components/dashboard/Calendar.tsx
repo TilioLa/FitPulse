@@ -49,13 +49,13 @@ export default function DashboardCalendar() {
     }
   }, [])
 
-  const { completedDays } = useMemo(() => {
-    if (typeof window === 'undefined') return { completedDays: new Set<string>() }
+  const completedDays = (() => {
+    if (typeof window === 'undefined') return new Set<string>()
     const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
     const { deduped } = computeHistoryStats(history as WorkoutHistoryItem[])
     const dates = deduped.map((item) => toLocalDateKey(item.date))
-    return { completedDays: new Set(dates) }
-  }, [monthOffset, refreshKey])
+    return new Set(dates)
+  })()
 
   const cells = buildMonthGrid(baseDate)
   const locale = typeof navigator !== 'undefined' ? navigator.language || 'fr-FR' : 'fr-FR'

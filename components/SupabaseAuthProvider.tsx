@@ -150,7 +150,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       userId: user.id,
       userName: user.name,
     })
-  }, [status, user?.id, user?.email, user?.name, user?.createdAt])
+  }, [status, user])
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {

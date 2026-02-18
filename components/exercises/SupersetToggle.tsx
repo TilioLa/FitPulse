@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 
 type SupersetMap = Record<string, string>
 
@@ -30,10 +30,10 @@ export default function SupersetToggle({
   onChange?: (map: SupersetMap) => void
 }) {
   const [refreshKey, setRefreshKey] = useState(0)
-  const groupId = useMemo(() => {
+  const groupId = (() => {
     const map = readSupersetMap(storageKey)
     return map[exerciseId] || null
-  }, [storageKey, exerciseId, refreshKey])
+  })()
 
   const toggle = () => {
     if (!nextExerciseId) return
