@@ -18,6 +18,11 @@
 # misc
 .DS_Store
 *.pem
+.idea/
+android/.idea/
+ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
+test-results/
+playwright-report/
 
 # debug
 npm-debug.log*

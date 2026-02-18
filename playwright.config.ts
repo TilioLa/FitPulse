@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test'
 
+delete process.env.FORCE_COLOR
+process.env.NO_COLOR = '1'
+
 const port = Number(process.env.PORT || 3000)
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${port}`
 
@@ -13,11 +16,12 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: `npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    command: `env -u FORCE_COLOR NO_COLOR=1 npm run dev -- --hostname 127.0.0.1 --port ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
     env: {
+      NO_COLOR: '1',
       NEXT_PUBLIC_E2E_BYPASS_AUTH: process.env.PLAYWRIGHT_E2E_BYPASS_AUTH || 'true',
       NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION: 'false',
       NEXT_PUBLIC_ENABLE_WEB_NOTIFICATIONS: 'false',
