@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: ['127.0.0.1', 'localhost'],
   async headers() {
     const scriptSrc = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
 
