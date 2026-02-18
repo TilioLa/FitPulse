@@ -34,6 +34,16 @@ function markSentToday(userId: string) {
   localStorage.setItem(key, today)
 }
 
+function readJsonSafe<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
 export function maybeSendBrowserWorkoutReminder(input: {
   userId: string
   userName?: string | null
@@ -43,11 +53,11 @@ export function maybeSendBrowserWorkoutReminder(input: {
   if (Notification.permission !== 'granted') return
   if (wasSentToday(input.userId)) return
 
-  const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}') as Record<string, unknown>
+  const settings = readJsonSafe<Record<string, unknown>>('fitpulse_settings', {})
   if (settings.pushRemindersEnabled === false) return
   if (!shouldTrainToday(settings)) return
 
-  const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
+  const history = readJsonSafe<WorkoutHistoryItem[]>('fitpulse_history', [])
   if (didWorkoutToday(history)) return
 
   const name = (input.userName || '').trim()

@@ -15,17 +15,27 @@ function markReminderSentToday(userId: string) {
   localStorage.setItem(`fitpulse_reminder_last_sent_${userId}`, toLocalDateKey(new Date()))
 }
 
+function readJsonSafe<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    if (!raw) return fallback
+    return JSON.parse(raw) as T
+  } catch {
+    return fallback
+  }
+}
+
 export async function maybeSendDailyWorkoutReminder(user: ReminderUser) {
   if (typeof window === 'undefined') return
   if (process.env.NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION !== 'true') return
   if (!user?.email) return
   if (wasReminderSentToday(user.id)) return
 
-  const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}') as Record<string, unknown>
+  const settings = readJsonSafe<Record<string, unknown>>('fitpulse_settings', {})
   if (settings.reminderEmailsEnabled === false) return
   if (!shouldTrainToday(settings)) return
 
-  const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
+  const history = readJsonSafe<WorkoutHistoryItem[]>('fitpulse_history', [])
   if (didWorkoutToday(history)) return
 
   try {
