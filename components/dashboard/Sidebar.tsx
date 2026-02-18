@@ -120,7 +120,12 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
             <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center font-semibold">
               {initials}
             </div>
-            <div className="text-sm font-semibold text-gray-900">{displayName}</div>
+            <div className="flex flex-col">
+              <div className="text-sm font-semibold text-gray-900">{displayName}</div>
+              <Link href="/profil" className="text-xs font-medium text-primary-600 hover:text-primary-700">
+                Profil
+              </Link>
+            </div>
           </div>
           <button
             onClick={handleLogout}
