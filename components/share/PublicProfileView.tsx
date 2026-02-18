@@ -38,7 +38,6 @@ export default function PublicProfileView() {
   const [goalTargetInput, setGoalTargetInput] = useState('')
   const [exportFormat, setExportFormat] = useState<'post' | 'story'>('post')
   const [exportTheme, setExportTheme] = useState<'light' | 'dark'>('light')
-  const [previewDataUrl, setPreviewDataUrl] = useState<string>('')
 
   useEffect(() => {
     if (!slug) {
@@ -285,12 +284,6 @@ export default function PublicProfileView() {
     link.click()
   }
 
-  useEffect(() => {
-    const dataUrl = buildShareCardDataUrl()
-    setPreviewDataUrl(dataUrl || '')
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [exportFormat, exportTheme, profile.slug, profile.author, profile.totalShares, profile.totalVolume, profile.totalDuration, profile.bestPrKg, monthlyObjective.title, monthlyObjective.subtitle, badges.join('|')])
-
   const handleCopyCaption = async () => {
     const profileUrl = `${window.location.origin}/u/${profile.slug}`
     const caption =
@@ -306,6 +299,8 @@ export default function PublicProfileView() {
       // ignore
     }
   }
+
+  const previewDataUrl = buildShareCardDataUrl() || ''
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
