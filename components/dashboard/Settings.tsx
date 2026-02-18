@@ -283,7 +283,7 @@ export default function Settings() {
                 id="settings-name"
                 type="text"
                 value={settings.name}
-                onChange={(e) => setSettings({ ...settings, name: e.target.value })}
+                onChange={(e) => setSettings((prev) => ({ ...prev, name: e.target.value }))}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="Votre nom"
               />
@@ -297,7 +297,7 @@ export default function Settings() {
                 id="settings-email"
                 type="email"
                 value={settings.email}
-                onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                onChange={(e) => setSettings((prev) => ({ ...prev, email: e.target.value }))}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="votre.email@example.com"
               />
@@ -311,7 +311,7 @@ export default function Settings() {
                 id="settings-phone"
                 type="tel"
                 value={settings.phone}
-                onChange={(e) => setSettings({ ...settings, phone: e.target.value })}
+                onChange={(e) => setSettings((prev) => ({ ...prev, phone: e.target.value }))}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 placeholder="+33 6 12 34 56 78"
               />
