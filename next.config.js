@@ -3,7 +3,10 @@ const nextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   async headers() {
-    const scriptSrc = "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
+    const scriptSrc =
+      process.env.NODE_ENV === 'development'
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
+        : "script-src 'self' 'unsafe-inline' https://js.stripe.com"
 
     const csp = [
       "default-src 'self'",

@@ -49,13 +49,15 @@ export default function DashboardCalendar() {
     }
   }, [])
 
-  const completedDays = (() => {
+  const completedDays = useMemo(() => {
     if (typeof window === 'undefined') return new Set<string>()
     const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
     const { deduped } = computeHistoryStats(history as WorkoutHistoryItem[])
     const dates = deduped.map((item) => toLocalDateKey(item.date))
     return new Set(dates)
-  })()
+  // refreshKey intentionally invalidates localStorage-backed cache.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey])
 
   const cells = buildMonthGrid(baseDate)
   const locale = typeof navigator !== 'undefined' ? navigator.language || 'fr-FR' : 'fr-FR'
