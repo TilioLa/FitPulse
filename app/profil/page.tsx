@@ -20,13 +20,17 @@ export default function ProfilPage() {
     }
 
     queueMicrotask(() => {
-      const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-      const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
-      setStats({
-        streak,
-        completedWorkouts: totalWorkouts,
-        totalMinutes,
-      })
+      try {
+        const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+        const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
+        setStats({
+          streak,
+          completedWorkouts: totalWorkouts,
+          totalMinutes,
+        })
+      } catch {
+        setStats({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+      }
     })
   }, [router, status])
 
@@ -66,7 +70,7 @@ export default function ProfilPage() {
                   <p className="text-gray-600 mb-1">{user.phone}</p>
                 )}
                 <p className="text-sm text-gray-500">
-                  Membre depuis {new Date().toLocaleDateString('fr-FR', {
+                  Membre depuis {(user?.createdAt ? new Date(user.createdAt) : new Date()).toLocaleDateString('fr-FR', {
                     year: 'numeric',
                     month: 'long',
                   })}
@@ -161,14 +165,18 @@ function HistoryList() {
 
   useEffect(() => {
     queueMicrotask(() => {
-      const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-      const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
-      setHistory(
-        deduped
-          .slice()
-          .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-          .slice(0, 5)
-      )
+      try {
+        const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+        const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
+        setHistory(
+          deduped
+            .slice()
+            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 5)
+        )
+      } catch {
+        setHistory([])
+      }
     })
   }, [])
 
