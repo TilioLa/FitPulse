@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import { Users } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
+import Link from 'next/link'
 
 type Activity = {
   title: string
@@ -41,7 +42,9 @@ export default function RightSidebar() {
           {user?.name || 'Utilisateur FitPulse'}
         </div>
         <div className="text-sm text-gray-500 mb-4">{user?.email}</div>
-        <button className="btn-secondary w-full">Voir votre profil</button>
+        <Link href="/profil" className="btn-secondary w-full inline-flex justify-center">
+          Voir votre profil
+        </Link>
       </div>
 
       <div className="card">

@@ -27,34 +27,39 @@ export default function History() {
   const { t } = useI18n()
 
   const loadHistory = () => {
-    const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
-    const visibleHistory = applyHistoryLimit(storedHistory, getEntitlement())
-    const { streak } = computeHistoryStats(visibleHistory)
-    const totalWorkouts = visibleHistory.length
-    const totalMinutes = visibleHistory.reduce(
-      (sum, item) => sum + (Number(item.duration) || 0),
-      0
-    )
-    const totalWeight = visibleHistory.reduce((sum, workout) => {
-      const workoutWeight = (workout.exercises || []).reduce((exerciseSum, exercise) => {
-        const setsWeight = (exercise.sets || []).reduce((setSum, set) => {
-          const weight = Number(set.weight) || 0
-          const reps = Number(set.reps) || 0
-          return setSum + weight * reps
+    try {
+      const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
+      const visibleHistory = applyHistoryLimit(storedHistory, getEntitlement())
+      const { streak } = computeHistoryStats(visibleHistory)
+      const totalWorkouts = visibleHistory.length
+      const totalMinutes = visibleHistory.reduce(
+        (sum, item) => sum + (Number(item.duration) || 0),
+        0
+      )
+      const totalWeight = visibleHistory.reduce((sum, workout) => {
+        const workoutWeight = (workout.exercises || []).reduce((exerciseSum, exercise) => {
+          const setsWeight = (exercise.sets || []).reduce((setSum, set) => {
+            const weight = Number(set.weight) || 0
+            const reps = Number(set.reps) || 0
+            return setSum + weight * reps
+          }, 0)
+          return exerciseSum + setsWeight
         }, 0)
-        return exerciseSum + setsWeight
+        return sum + workoutWeight
       }, 0)
-      return sum + workoutWeight
-    }, 0)
-    setHistory(visibleHistory.sort((a: WorkoutHistory, b: WorkoutHistory) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    ))
-    setStats({
-      total: totalWorkouts,
-      streak,
-      totalMinutes,
-      totalWeight: Math.round(totalWeight),
-    })
+      setHistory(visibleHistory.sort((a: WorkoutHistory, b: WorkoutHistory) =>
+        new Date(b.date).getTime() - new Date(a.date).getTime()
+      ))
+      setStats({
+        total: totalWorkouts,
+        streak,
+        totalMinutes,
+        totalWeight: Math.round(totalWeight),
+      })
+    } catch {
+      setHistory([])
+      setStats({ total: 0, streak: 0, totalMinutes: 0, totalWeight: 0 })
+    }
   }
 
   useEffect(() => {

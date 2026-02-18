@@ -435,8 +435,12 @@ export default function MySessions() {
   const workoutId = workout?.id
   useEffect(() => {
     if (!workoutId) return
-    const stored = JSON.parse(localStorage.getItem(`fitpulse_superset_${workoutId}`) || '{}')
-    setSupersetMap(stored)
+    try {
+      const stored = JSON.parse(localStorage.getItem(`fitpulse_superset_${workoutId}`) || '{}')
+      setSupersetMap(stored)
+    } catch {
+      setSupersetMap({})
+    }
   }, [workoutId])
 
   useEffect(() => {
