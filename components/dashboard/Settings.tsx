@@ -276,10 +276,11 @@ export default function Settings() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="settings-name" className="block text-sm font-medium text-gray-700 mb-2">
                 Nom complet
               </label>
               <input
+                id="settings-name"
                 type="text"
                 value={settings.name}
                 onChange={(e) => setSettings({ ...settings, name: e.target.value })}
@@ -289,10 +290,11 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="settings-email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email
               </label>
               <input
+                id="settings-email"
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings({ ...settings, email: e.target.value })}
@@ -302,10 +304,11 @@ export default function Settings() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="settings-phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Numéro de téléphone
               </label>
               <input
+                id="settings-phone"
                 type="tel"
                 value={settings.phone}
                 onChange={(e) => setSettings({ ...settings, phone: e.target.value })}

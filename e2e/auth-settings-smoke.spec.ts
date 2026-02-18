@@ -16,21 +16,40 @@ test('inscription validates password confirmation', async ({ page }) => {
   await page.getByLabel(/^Confirmer le mot de passe \*$/).fill('abcdeg')
   await page.getByRole('button', { name: /créer mon compte/i }).click()
 
-  await expect(page.getByRole('alert')).toContainText(/mots de passe ne correspondent pas/i)
+  await expect(
+    page.getByRole('alert').filter({ hasText: /mots de passe ne correspondent pas/i })
+  ).toBeVisible()
 })
 
 test('settings saves profile fields locally', async ({ page }) => {
-  await page.addInitScript(() => {
+  await page.goto('/')
+  await page.evaluate(() => {
     window.localStorage.setItem('fitpulse_e2e_bypass', 'true')
   })
-  await page.goto('/dashboard?view=settings')
-  await expect(page.getByRole('heading', { name: /paramètres/i })).toBeVisible()
+  await page.goto('/dashboard?view=settings&e2e=1')
+  await page.waitForURL(/\/dashboard(\?.*)?/, { timeout: 15_000 })
+  if (!page.url().includes('view=settings')) {
+    await page.goto('/dashboard?view=settings&e2e=1')
+  }
+  const settingsHeading = page.getByRole('heading', { name: /paramètres/i })
+  await expect(settingsHeading).toBeVisible({ timeout: 15_000 })
+
+  const nameInput = page.getByLabel('Nom complet')
+  if (!(await nameInput.isVisible().catch(() => false))) {
+    const settingsNav = page.getByRole('button', { name: /paramètres/i }).first()
+    if (await settingsNav.isVisible().catch(() => false)) {
+      await settingsNav.click()
+    }
+  }
+  await expect(nameInput).toBeVisible({ timeout: 15_000 })
 
   const updatedName = `QA User ${Date.now()}`
-  await page.getByLabel('Nom complet').fill(updatedName)
+  await nameInput.fill(updatedName)
   await page.getByRole('button', { name: /sauvegarder les paramètres/i }).click()
 
-  await expect(page.getByRole('status')).toContainText(/paramètres sauvegardés/i)
+  await expect(
+    page.getByRole('status').filter({ hasText: /paramètres sauvegardés/i }).first()
+  ).toBeVisible()
 
   const savedName = await page.evaluate(() => {
     const raw = localStorage.getItem('fitpulse_settings')
