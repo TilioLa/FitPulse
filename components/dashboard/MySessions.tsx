@@ -606,7 +606,7 @@ export default function MySessions() {
 
     if (!existsSameSessionToday) {
       history.push({
-        id: Date.now().toString(),
+        id: `${workout.id}-${todayKey}-${history.length + 1}`,
         workoutId: workout.id,
         workoutName: workout.name,
         programId: workout.programId,
