@@ -449,6 +449,61 @@ export default function Feed() {
         }
       } catch {
         setItems([])
+        setMonthly({
+          headline: 'Mois en cours',
+          monthLabel: '',
+          sessions: 0,
+          minutes: 0,
+          volume: 0,
+          calories: 0,
+        })
+        setMonthlyMuscles([])
+        setMonthlyPr(null)
+        setFocus(null)
+        setWeeklyLoad({
+          current: 0,
+          previous: 0,
+          delta: 0,
+          suggestion: 'Commence avec une charge modérée et augmente progressivement.',
+        })
+        setDeloadAlert({ active: false })
+        setMonthlyCompare({
+          currentVolume: 0,
+          previousVolume: 0,
+          currentSessions: 0,
+          previousSessions: 0,
+          deltaVolume: 0,
+        })
+        setBusinessNudge(null)
+        setNextAction({
+          title: 'Complète ton profil',
+          body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
+          cta: 'Ouvrir les paramètres',
+          href: '/dashboard?view=settings',
+        })
+        setOnboardingSteps([
+          {
+            id: 'profile',
+            label: 'Compléter ton profil fitness',
+            done: false,
+            href: '/dashboard?view=settings',
+            cta: 'Configurer',
+          },
+          {
+            id: 'first_session_started',
+            label: 'Lancer ta première séance',
+            done: false,
+            href: '/dashboard?view=session',
+            cta: 'Démarrer',
+          },
+          {
+            id: 'first_session_done',
+            label: 'Terminer ta première séance',
+            done: false,
+            href: '/dashboard?view=session',
+            cta: 'Continuer',
+          },
+        ])
       }
     }
 
