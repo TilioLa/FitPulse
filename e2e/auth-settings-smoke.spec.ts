@@ -44,6 +44,9 @@ test('settings saves profile fields locally', async ({ page }) => {
   await expect(nameInput).toBeVisible({ timeout: 15_000 })
 
   const updatedName = `QA User ${Date.now()}`
+  await nameInput.click()
+  await nameInput.press('ControlOrMeta+A')
+  await nameInput.press('Backspace')
   await nameInput.fill(updatedName)
   await page.getByRole('button', { name: /sauvegarder les paramètres/i }).click()
 

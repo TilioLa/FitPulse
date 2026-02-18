@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
@@ -225,13 +226,14 @@ export default function ExercicesPage() {
                 <div className="max-w-2xl w-full">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden">
-                        {getThumbnail(selected.name) ? (
-                          <img
+                        <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden">
+                          {getThumbnail(selected.name) ? (
+                          <Image
                             src={getThumbnail(selected.name) as string}
                             alt={selected.name}
+                            width={56}
+                            height={56}
                             className="h-full w-full object-cover"
-                            loading="lazy"
                           />
                         ) : (
                           <Dumbbell className="h-6 w-6 text-gray-500" />
@@ -470,11 +472,12 @@ export default function ExercicesPage() {
                         <div className="flex items-center gap-3">
                           <div className="h-11 w-11 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden">
                             {getThumbnail(item.name) ? (
-                              <img
+                              <Image
                                 src={getThumbnail(item.name) as string}
                                 alt={item.name}
+                                width={44}
+                                height={44}
                                 className="h-full w-full object-cover"
-                                loading="lazy"
                               />
                             ) : (
                               <ImageIcon className="h-5 w-5 text-gray-400" />

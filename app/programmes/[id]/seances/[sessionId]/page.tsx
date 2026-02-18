@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useMemo, useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Footer from '@/components/Footer'
@@ -326,11 +327,12 @@ export default function SessionDetailPage() {
                           <div className="flex items-center gap-3">
                             <div className="h-11 w-11 rounded-full border border-gray-200 bg-white overflow-hidden flex items-center justify-center">
                               {getThumbnail(exercise.name) ? (
-                                <img
+                                <Image
                                   src={getThumbnail(exercise.name) as string}
                                   alt={exercise.name}
+                                  width={44}
+                                  height={44}
                                   className="h-full w-full object-cover"
-                                  loading="lazy"
                                 />
                               ) : (
                                 <Dumbbell className="h-5 w-5 text-gray-400" />

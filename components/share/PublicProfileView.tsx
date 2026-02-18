@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { useParams } from 'next/navigation'
 import { muscleLabel } from '@/lib/muscles'
 import { isProfileFollowed, toggleFollowProfile } from '@/lib/public-profile-follow'
@@ -350,9 +351,12 @@ export default function PublicProfileView() {
         {previewDataUrl && (
           <div className="mt-4">
             <div className="text-xs text-gray-500 mb-2">Aperçu de la carte</div>
-            <img
+            <Image
               src={previewDataUrl}
               alt="Aperçu carte profil"
+              width={400}
+              height={500}
+              unoptimized
               className="w-full max-w-xs rounded-lg border border-gray-200 shadow-sm"
             />
           </div>

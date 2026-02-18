@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { Search, Star, ImageIcon } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
 import { inferVideoUrl } from '@/lib/videos'
@@ -122,11 +123,12 @@ export default function ExerciseCatalog({
                   <div className="flex items-center gap-2">
                     <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                       {getThumbnail(item.name) ? (
-                        <img
+                        <Image
                           src={getThumbnail(item.name) as string}
                           alt={item.name}
+                          width={36}
+                          height={36}
                           className="h-full w-full object-cover"
-                          loading="lazy"
                         />
                       ) : (
                         <ImageIcon className="h-4 w-4 text-gray-400" />
