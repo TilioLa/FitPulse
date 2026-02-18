@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { Users } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 
@@ -11,13 +11,12 @@ type Activity = {
 
 export default function RightSidebar() {
   const { user } = useAuth()
-  const [latest, setLatest] = useState<Activity | null>(null)
-
-  useEffect(() => {
-    const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-    const last = history?.[history.length - 1]
-    if (last) {
-      setLatest({
+  const latest = useMemo<Activity | null>(() => {
+    try {
+      const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+      const last = history?.[history.length - 1]
+      if (!last) return null
+      return {
         title: last.workoutName,
         date: new Date(last.date).toLocaleDateString('fr-FR', {
           day: '2-digit',
@@ -26,7 +25,9 @@ export default function RightSidebar() {
           hour: '2-digit',
           minute: '2-digit',
         }),
-      })
+      }
+    } catch {
+      return null
     }
   }, [])
 

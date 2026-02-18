@@ -7,33 +7,41 @@ import StartProgramButton from '@/components/programmes/StartProgramButton'
 import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import { Program } from '@/data/programs'
 
+function readProgramProgress(program: Program) {
+  try {
+    const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as {
+      programId?: string
+      workoutId?: string
+    }[]
+    const completed = new Set(
+      history
+        .filter((item) => item.programId === program.id && item.workoutId)
+        .map((item) => item.workoutId!)
+    )
+    const next = program.sessions.find((session) => !completed.has(session.id)) || program.sessions[0]
+    return { completedIds: completed, nextSessionId: next?.id }
+  } catch {
+    return { completedIds: new Set<string>(), nextSessionId: program.sessions[0]?.id }
+  }
+}
+
 export default function ProgramSessionsList({ program }: { program: Program }) {
-  const [nextSessionId, setNextSessionId] = useState<string | undefined>(program.sessions[0]?.id)
-  const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set<string>())
+  const [progress, setProgress] = useState(() => readProgramProgress(program))
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    try {
-      const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as {
-        programId?: string
-        workoutId?: string
-      }[]
-      const completed = new Set(
-        history
-          .filter((item) => item.programId === program.id && item.workoutId)
-          .map((item) => item.workoutId!)
-      )
-      const next = program.sessions.find((session) => !completed.has(session.id)) || program.sessions[0]
-      setCompletedIds(completed)
-      setNextSessionId(next?.id)
-    } catch {
-      setNextSessionId(program.sessions[0]?.id)
-      setCompletedIds(new Set())
+    const refresh = () => setProgress(readProgramProgress(program))
+    refresh()
+    window.addEventListener('fitpulse-history', refresh as EventListener)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener('fitpulse-history', refresh as EventListener)
+      window.removeEventListener('storage', refresh)
     }
   }, [program])
 
-  const nextSession = program.sessions.find((session) => session.id === nextSessionId) || program.sessions[0]
-  const completedCount = completedIds.size
+  const nextSession = program.sessions.find((session) => session.id === progress.nextSessionId) || program.sessions[0]
+  const completedCount = progress.completedIds.size
   const totalCount = program.sessions.length
   const progressPercent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0
 
@@ -79,8 +87,8 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
       <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-3 reveal reveal-1">Séances du programme</h2>
       <div className="space-y-4">
         {program.sessions.map((session) => {
-          const isNext = session.id === nextSessionId
-          const isDone = completedIds.has(session.id)
+          const isNext = session.id === progress.nextSessionId
+          const isDone = progress.completedIds.has(session.id)
           const isLocked = !isDone && !isNext
           return (
             <div

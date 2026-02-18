@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 import { syncHistoryForUser } from '@/lib/history-store'
@@ -44,16 +44,26 @@ function mapUser(user: User | null): AppUser | null {
 }
 
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<AuthStatus>('loading')
-  const [user, setUser] = useState<AppUser | null>(null)
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
   const e2eBypass =
     process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'e2e-anon-key' ||
     localBypass
+  const [status, setStatus] = useState<AuthStatus>(e2eBypass ? 'authenticated' : 'loading')
+  const [user, setUser] = useState<AppUser | null>(
+    e2eBypass
+      ? {
+          id: 'e2e-user',
+          email: 'e2e@fitpulse.local',
+          name: 'E2E User',
+          phone: null,
+          createdAt: new Date().toISOString(),
+        }
+      : null
+  )
 
-  const applySession = async () => {
+  const applySession = useCallback(async () => {
     if (e2eBypass) {
       setUser({
         id: 'e2e-user',
@@ -94,20 +104,10 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     }
     setUser(null)
     setStatus('unauthenticated')
-  }
+  }, [e2eBypass])
 
   useEffect(() => {
-    if (e2eBypass) {
-      setUser({
-        id: 'e2e-user',
-        email: 'e2e@fitpulse.local',
-        name: 'E2E User',
-        phone: null,
-        createdAt: new Date().toISOString(),
-      })
-      setStatus('authenticated')
-      return
-    }
+    if (e2eBypass) return
     if (!isSupabaseConfigured()) {
       setStatus('unauthenticated')
       setUser(null)
@@ -131,7 +131,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       })()
     })
     return () => data.subscription.unsubscribe()
-  }, [e2eBypass])
+  }, [e2eBypass, applySession])
 
   useEffect(() => {
     if (status !== 'authenticated' || !user) return
@@ -184,42 +184,45 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     }
   }, [])
 
-  const value = useMemo<AuthContextValue>(() => ({
-    status,
-    user,
-    reload: applySession,
-    signOut: async () => {
-      if (e2eBypass) {
-        setStatus('authenticated')
-        return
-      }
-      if (!isSupabaseConfigured()) {
+  const value = useMemo<AuthContextValue>(
+    () => ({
+      status,
+      user,
+      reload: applySession,
+      signOut: async () => {
+        if (e2eBypass) {
+          setStatus('authenticated')
+          return
+        }
+        if (!isSupabaseConfigured()) {
+          setUser(null)
+          setStatus('unauthenticated')
+          return
+        }
+        const supabase = getSupabaseBrowserClient()
+        await supabase.auth.signOut()
         setUser(null)
         setStatus('unauthenticated')
-        return
-      }
-      const supabase = getSupabaseBrowserClient()
-      await supabase.auth.signOut()
-      setUser(null)
-      setStatus('unauthenticated')
-    },
-    updateProfile: async ({ name, phone }) => {
-      if (!isSupabaseConfigured()) {
-        throw new Error('Missing Supabase environment variables')
-      }
-      const supabase = getSupabaseBrowserClient()
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          full_name: name,
-          phone: phone,
-        },
-      })
-      if (error) {
-        throw error
-      }
-      await applySession()
-    },
-  }), [status, user, e2eBypass])
+      },
+      updateProfile: async ({ name, phone }) => {
+        if (!isSupabaseConfigured()) {
+          throw new Error('Missing Supabase environment variables')
+        }
+        const supabase = getSupabaseBrowserClient()
+        const { error } = await supabase.auth.updateUser({
+          data: {
+            full_name: name,
+            phone: phone,
+          },
+        })
+        if (error) {
+          throw error
+        }
+        await applySession()
+      },
+    }),
+    [status, user, e2eBypass, applySession]
+  )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

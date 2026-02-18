@@ -150,7 +150,7 @@ export default function MySessions() {
   const wasOnlineRef = useRef(true)
   const reconnectSyncInFlightRef = useRef(false)
 
-  const buildWorkoutSnapshot = (base: Workout) => ({
+  const buildWorkoutSnapshot = (base: Workout, pausedOverride?: boolean) => ({
     ...base,
     draft: {
       exerciseInputs,
@@ -158,16 +158,16 @@ export default function MySessions() {
       currentExerciseIndex,
       timeRemaining,
       timerKind,
-      sessionPaused,
+      sessionPaused: pausedOverride ?? sessionPaused,
       savedAt: new Date().toISOString(),
     },
   })
 
-  const saveSnapshotNow = (base?: Workout | null) => {
+  const saveSnapshotNow = (base?: Workout | null, pausedOverride?: boolean) => {
     const source = base || workout
     if (!source) return
     setSaveState('saving')
-    const snapshot = buildWorkoutSnapshot(source)
+    const snapshot = buildWorkoutSnapshot(source, pausedOverride)
     writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
     if (!isOnline) {
       setHasPendingCloudSync(true)
@@ -670,13 +670,14 @@ export default function MySessions() {
     if (sessionPaused) return
     setSessionPaused(true)
     setIsRunning(false)
-    saveSnapshotNow()
+    saveSnapshotNow(undefined, true)
     push('Séance mise en pause.', 'info')
   }
 
   const handleResumeSession = () => {
     if (!sessionPaused) return
     setSessionPaused(false)
+    saveSnapshotNow(undefined, false)
     push('Séance reprise.', 'success')
   }
 

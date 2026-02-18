@@ -1,17 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 
 export default function RestTimeDisplay({ defaultRest }: { defaultRest: number }) {
-  const [restTime, setRestTime] = useState<number>(defaultRest)
-
-  useEffect(() => {
-    const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}')
-    const override = Number(settings?.restTime)
-    if (Number.isFinite(override) && override > 0) {
-      setRestTime(override)
-    } else {
-      setRestTime(defaultRest)
+  const restTime = useMemo(() => {
+    try {
+      const settings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}')
+      const override = Number(settings?.restTime)
+      return Number.isFinite(override) && override > 0 ? override : defaultRest
+    } catch {
+      return defaultRest
     }
   }, [defaultRest])
 

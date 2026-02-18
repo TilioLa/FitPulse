@@ -26,15 +26,6 @@ export default function History() {
   const [locale, setLocale] = useState('fr')
   const { t } = useI18n()
 
-  useEffect(() => {
-    loadHistory()
-    if (typeof navigator !== 'undefined') {
-      setLocale(navigator.language || 'fr')
-    }
-    window.addEventListener('storage', loadHistory)
-    return () => window.removeEventListener('storage', loadHistory)
-  }, [])
-
   const loadHistory = () => {
     const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]') as WorkoutHistoryItem[]
     const visibleHistory = applyHistoryLimit(storedHistory, getEntitlement())
@@ -65,6 +56,15 @@ export default function History() {
       totalWeight: Math.round(totalWeight),
     })
   }
+
+  useEffect(() => {
+    loadHistory()
+    if (typeof navigator !== 'undefined') {
+      setLocale(navigator.language || 'fr')
+    }
+    window.addEventListener('storage', loadHistory)
+    return () => window.removeEventListener('storage', loadHistory)
+  }, [])
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)

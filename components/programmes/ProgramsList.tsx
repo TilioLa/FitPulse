@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Dumbbell, Timer, Target, Filter, ArrowRight } from 'lucide-react'
 import { programs as allPrograms } from '@/data/programs'
@@ -14,8 +14,6 @@ export default function ProgramsList() {
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
-  const [recommendedProgramId, setRecommendedProgramId] = useState<string | null>(null)
-  const [showQuickStart, setShowQuickStart] = useState(false)
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
@@ -28,7 +26,10 @@ export default function ProgramsList() {
     return levelMatch && equipmentMatch && bodyPartMatch
   })
 
-  useEffect(() => {
+  const { recommendedProgram, showQuickStart } = useMemo(() => {
+    if (typeof window === 'undefined') {
+      return { recommendedProgram: null as (typeof allPrograms)[number] | null, showQuickStart: false }
+    }
     try {
       const settings = readLocalSettings() as {
         level?: string
@@ -42,20 +43,15 @@ export default function ProgramsList() {
         equipment: settings.equipment,
         sessionsPerWeek: settings.sessionsPerWeek,
       })
-      setRecommendedProgramId(recommendation?.program.id || null)
-
       const history = readLocalHistory() as unknown[]
-      setShowQuickStart(!Array.isArray(history) || history.length === 0)
+      return {
+        recommendedProgram: recommendation?.program || null,
+        showQuickStart: !Array.isArray(history) || history.length === 0,
+      }
     } catch {
-      setRecommendedProgramId(null)
-      setShowQuickStart(false)
+      return { recommendedProgram: null as (typeof allPrograms)[number] | null, showQuickStart: false }
     }
   }, [])
-
-  const recommendedProgram = useMemo(
-    () => allPrograms.find((program) => program.id === recommendedProgramId) || null,
-    [recommendedProgramId]
-  )
 
   return (
     <div>

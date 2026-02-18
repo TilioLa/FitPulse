@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useContext, useMemo, useState } from 'react'
 import { Locale, resolveLocale, t as translate } from '@/lib/i18n'
 
 type I18nContextValue = {
@@ -20,13 +20,11 @@ export function I18nProvider({
   children: React.ReactNode
   initialLocale?: Locale
 }) {
-  const [locale, setLocale] = useState<Locale>(initialLocale || 'fr')
-
-  useEffect(() => {
-    if (typeof navigator !== 'undefined') {
-      setLocale(resolveLocale(navigator.language))
-    }
-  }, [])
+  const [locale] = useState<Locale>(() => {
+    if (initialLocale) return initialLocale
+    if (typeof navigator !== 'undefined') return resolveLocale(navigator.language)
+    return 'fr'
+  })
 
   const value = useMemo(
     () => ({

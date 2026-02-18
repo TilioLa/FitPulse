@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 type SupersetMap = Record<string, string>
 
@@ -29,12 +29,11 @@ export default function SupersetToggle({
   label?: string
   onChange?: (map: SupersetMap) => void
 }) {
-  const [groupId, setGroupId] = useState<string | null>(null)
-
-  useEffect(() => {
+  const [refreshKey, setRefreshKey] = useState(0)
+  const groupId = useMemo(() => {
     const map = readSupersetMap(storageKey)
-    setGroupId(map[exerciseId] || null)
-  }, [storageKey, exerciseId])
+    return map[exerciseId] || null
+  }, [storageKey, exerciseId, refreshKey])
 
   const toggle = () => {
     if (!nextExerciseId) return
@@ -45,7 +44,7 @@ export default function SupersetToggle({
         if (map[key] === existing) delete map[key]
       })
       writeSupersetMap(storageKey, map)
-      setGroupId(null)
+      setRefreshKey((value) => value + 1)
       onChange?.(map)
       return
     }
@@ -53,7 +52,7 @@ export default function SupersetToggle({
     map[exerciseId] = newGroupId
     map[nextExerciseId] = newGroupId
     writeSupersetMap(storageKey, map)
-    setGroupId(newGroupId)
+    setRefreshKey((value) => value + 1)
     onChange?.(map)
   }
 

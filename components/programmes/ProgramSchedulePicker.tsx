@@ -19,17 +19,13 @@ export default function ProgramSchedulePicker({
   baseSessionsPerWeek: number
 }) {
   const storageKey = `fitpulse_sessions_per_week_${programId}`
-  const [sessionsPerWeek, setSessionsPerWeek] = useState(baseSessionsPerWeek)
-  const totalSessions = baseWeeks * baseSessionsPerWeek
-
-  useEffect(() => {
-    const saved = typeof window !== 'undefined' ? window.localStorage.getItem(storageKey) : null
-    if (!saved) return
+  const [sessionsPerWeek, setSessionsPerWeek] = useState(() => {
+    if (typeof window === 'undefined') return baseSessionsPerWeek
+    const saved = window.localStorage.getItem(storageKey)
     const parsed = Number(saved)
-    if (Number.isFinite(parsed)) {
-      setSessionsPerWeek(clampSessions(parsed))
-    }
-  }, [storageKey])
+    return Number.isFinite(parsed) ? clampSessions(parsed) : baseSessionsPerWeek
+  })
+  const totalSessions = baseWeeks * baseSessionsPerWeek
 
   useEffect(() => {
     if (typeof window === 'undefined') return

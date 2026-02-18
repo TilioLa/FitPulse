@@ -40,7 +40,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
               <div className="card">
                 <h1 className="text-2xl font-semibold text-gray-900 mb-2">Programme introuvable</h1>
                 <p className="text-gray-600 mb-4">
-                  Le programme demandé n'existe pas. Choisissez un programme valide ci-dessous.
+                  Le programme demandé n&apos;existe pas. Choisissez un programme valide ci-dessous.
                 </p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {programs.map((item) => (

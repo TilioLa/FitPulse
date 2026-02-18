@@ -29,7 +29,7 @@ export default function Onboarding() {
               Un parcours simple, des résultats visibles
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl reveal reveal-1">
-              Pas de jargon, pas de confusion. Tu sais quoi faire dès aujourd'hui.
+              Pas de jargon, pas de confusion. Tu sais quoi faire dès aujourd&apos;hui.
             </p>
           </div>
           <Link href="/inscription" className="btn-primary inline-flex items-center space-x-2 reveal reveal-2">
