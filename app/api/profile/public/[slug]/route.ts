@@ -11,6 +11,30 @@ type ShareRow = {
   created_at?: string
 }
 
+async function fetchRowsForSlug(slug: string): Promise<ShareRow[]> {
+  const supabase = getSupabaseAdminClient()
+  const pageSize = 500
+  const maxPages = 12
+  const all: ShareRow[] = []
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const from = page * pageSize
+    const to = from + pageSize - 1
+    const { data, error } = await supabase
+      .from('workout_shares')
+      .select('id,payload,created_at')
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (error) throw new Error(error.message)
+    const chunk = (data || []) as ShareRow[]
+    all.push(...chunk)
+    if (chunk.length < pageSize) break
+  }
+
+  return all.filter((row) => row?.payload?.authorSlug?.toLowerCase() === slug)
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: { slug: string } | Promise<{ slug: string }> }
@@ -28,20 +52,7 @@ export async function GET(
       return NextResponse.json({ ok: false, error: 'invalid_slug' }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdminClient()
-    const { data, error } = await supabase
-      .from('workout_shares')
-      .select('id,payload,created_at')
-      .order('created_at', { ascending: false })
-      .limit(500)
-
-    if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
-    }
-
-    const rows = ((data || []) as ShareRow[]).filter(
-      (row) => row?.payload?.authorSlug?.toLowerCase() === slug
-    )
+    const rows = await fetchRowsForSlug(slug)
 
     if (rows.length === 0) {
       return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 })

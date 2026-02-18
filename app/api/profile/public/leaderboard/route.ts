@@ -20,6 +20,31 @@ type LeaderboardItem = {
   bestPrKg: number
 }
 
+async function fetchLeaderboardRowsSince(sinceIso: string): Promise<ShareRow[]> {
+  const supabase = getSupabaseAdminClient()
+  const pageSize = 1000
+  const maxPages = 8
+  const all: ShareRow[] = []
+
+  for (let page = 0; page < maxPages; page += 1) {
+    const from = page * pageSize
+    const to = from + pageSize - 1
+    const { data, error } = await supabase
+      .from('workout_shares')
+      .select('id,payload,created_at')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (error) throw new Error(error.message)
+    const chunk = (data || []) as ShareRow[]
+    all.push(...chunk)
+    if (chunk.length < pageSize) break
+  }
+
+  return all
+}
+
 export async function GET(request: Request) {
   try {
     if (!isSupabaseAdminConfigured()) {
@@ -38,19 +63,7 @@ export async function GET(request: Request) {
       since.setDate(since.getDate() - 7)
     }
 
-    const supabase = getSupabaseAdminClient()
-    const { data, error } = await supabase
-      .from('workout_shares')
-      .select('id,payload,created_at')
-      .gte('created_at', since.toISOString())
-      .order('created_at', { ascending: false })
-      .limit(1000)
-
-    if (error) {
-      return NextResponse.json({ ok: false, error: error.message }, { status: 500 })
-    }
-
-    const rows = (data || []) as ShareRow[]
+    const rows = await fetchLeaderboardRowsSince(since.toISOString())
     const map = new Map<string, LeaderboardItem>()
     for (const row of rows) {
       const slug = row?.payload?.authorSlug?.trim()
