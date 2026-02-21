@@ -24,7 +24,7 @@ function getAuthToken(request: Request) {
   if (auth.toLowerCase().startsWith('bearer ')) {
     return auth.slice(7).trim()
   }
-  return new URL(request.url).searchParams.get('secret') || ''
+  return ''
 }
 
 function daysSince(dateIso: string, now = Date.now()) {
@@ -69,8 +69,11 @@ export async function POST(request: Request) {
     }
 
     const expectedSecret = process.env.CRON_SECRET || ''
+    if (!expectedSecret) {
+      return NextResponse.json({ ok: false, error: 'missing_cron_secret' }, { status: 500 })
+    }
     const providedSecret = getAuthToken(request)
-    if (expectedSecret && providedSecret !== expectedSecret) {
+    if (providedSecret !== expectedSecret) {
       return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
     }
 
