@@ -8,11 +8,19 @@ type ReminderUser = {
 }
 
 function wasReminderSentToday(userId: string) {
-  return localStorage.getItem(`fitpulse_reminder_last_sent_${userId}`) === toLocalDateKey(new Date())
+  try {
+    return localStorage.getItem(`fitpulse_reminder_last_sent_${userId}`) === toLocalDateKey(new Date())
+  } catch {
+    return false
+  }
 }
 
 function markReminderSentToday(userId: string) {
-  localStorage.setItem(`fitpulse_reminder_last_sent_${userId}`, toLocalDateKey(new Date()))
+  try {
+    localStorage.setItem(`fitpulse_reminder_last_sent_${userId}`, toLocalDateKey(new Date()))
+  } catch {
+    // ignore storage write failures (private mode, quota, restricted webview)
+  }
 }
 
 function readJsonSafe<T>(key: string, fallback: T): T {
