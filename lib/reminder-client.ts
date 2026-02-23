@@ -1,5 +1,6 @@
 import { toLocalDateKey, type WorkoutHistoryItem } from '@/lib/history'
 import { didWorkoutToday, shouldTrainToday } from '@/lib/reminder-logic'
+import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
 
 type ReminderUser = {
   id: string
@@ -47,9 +48,10 @@ export async function maybeSendDailyWorkoutReminder(user: ReminderUser) {
   if (didWorkoutToday(history)) return
 
   try {
+    const headers = await buildAuthenticatedJsonHeaders()
     const response = await fetch('/api/reminders/send', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({
         to: user.email,
         name: user.name,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { sendLifecycleEmail, type LifecycleEmailEvent } from '@/lib/lifecycle-email'
+import { getAuthenticatedApiUser } from '@/lib/supabase-auth-server'
 
 export const runtime = 'nodejs'
 
@@ -17,13 +18,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, sent: false, reason: 'disabled' })
     }
 
+    const auth = await getAuthenticatedApiUser(request)
+    if (!auth.ok) {
+      return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status })
+    }
+
     const body = (await request.json().catch(() => ({}))) as Payload
-    const to = body?.to?.trim().toLowerCase()
+    const requestedTo = body?.to?.trim().toLowerCase()
+    const to = auth.user.email?.trim().toLowerCase() || ''
     const event = body?.event
-    const name = body?.name || null
+    const name = body?.name || (auth.user.user_metadata as { full_name?: string } | null)?.full_name || null
 
     if (!to || !to.includes('@')) {
       return NextResponse.json({ error: 'invalid_email' }, { status: 400 })
+    }
+    if (requestedTo && requestedTo !== to) {
+      return NextResponse.json({ ok: false, error: 'forbidden_recipient' }, { status: 403 })
     }
     if (!event || !allowedEvents.includes(event)) {
       return NextResponse.json({ error: 'invalid_event' }, { status: 400 })

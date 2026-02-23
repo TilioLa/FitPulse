@@ -24,6 +24,7 @@ import {
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 import { encodeSharedSession } from '@/lib/session-share'
 import { slugify } from '@/lib/slug'
+import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
 
 const playBeep = () => {
   try {
@@ -833,7 +834,7 @@ export default function MySessions() {
     try {
       const response = await fetch('/api/share/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await buildAuthenticatedJsonHeaders(),
         body: JSON.stringify({ session: payload }),
       })
       if (response.ok) {

@@ -1,4 +1,5 @@
 import { getEntitlement } from '@/lib/subscription'
+import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
 
 type LifecycleEmailEvent = 'day1' | 'day7' | 'trial_ending'
 
@@ -24,7 +25,11 @@ function readSentMap(userId: string): SentMap {
 }
 
 function writeSentMap(userId: string, value: SentMap) {
-  localStorage.setItem(getSentKey(userId), JSON.stringify(value))
+  try {
+    localStorage.setItem(getSentKey(userId), JSON.stringify(value))
+  } catch {
+    // ignore storage write failures (private mode, quota, restricted webview)
+  }
 }
 
 function getDueEvents(user: LifecycleUser): LifecycleEmailEvent[] {
@@ -64,9 +69,10 @@ export async function maybeSendLifecycleEmails(user: LifecycleUser) {
 
   for (const event of dueEvents) {
     try {
+      const headers = await buildAuthenticatedJsonHeaders()
       const response = await fetch('/api/lifecycle/send', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           to: user.email,
           name: user.name,
