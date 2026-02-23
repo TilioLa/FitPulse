@@ -1,5 +1,5 @@
 import { getEntitlement } from '@/lib/subscription'
-import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
+import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
 
 type LifecycleEmailEvent = 'day1' | 'day7' | 'trial_ending'
 
@@ -59,24 +59,6 @@ function getDueEvents(user: LifecycleUser): LifecycleEmailEvent[] {
   return due
 }
 
-async function buildAuthHeaders() {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (!isSupabaseConfigured()) return headers
-
-  try {
-    const supabase = getSupabaseBrowserClient()
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-  } catch {
-    // continue without auth header; API will reject unauthenticated requests
-  }
-
-  return headers
-}
-
 export async function maybeSendLifecycleEmails(user: LifecycleUser) {
   if (typeof window === 'undefined') return
   if (process.env.NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION !== 'true') return
@@ -87,7 +69,7 @@ export async function maybeSendLifecycleEmails(user: LifecycleUser) {
 
   for (const event of dueEvents) {
     try {
-      const headers = await buildAuthHeaders()
+      const headers = await buildAuthenticatedJsonHeaders()
       const response = await fetch('/api/lifecycle/send', {
         method: 'POST',
         headers,

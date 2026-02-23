@@ -1,6 +1,6 @@
 import { toLocalDateKey, type WorkoutHistoryItem } from '@/lib/history'
 import { didWorkoutToday, shouldTrainToday } from '@/lib/reminder-logic'
-import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
+import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
 
 type ReminderUser = {
   id: string
@@ -34,24 +34,6 @@ function readJsonSafe<T>(key: string, fallback: T): T {
   }
 }
 
-async function buildAuthHeaders() {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (!isSupabaseConfigured()) return headers
-
-  try {
-    const supabase = getSupabaseBrowserClient()
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
-    if (token) {
-      headers.Authorization = `Bearer ${token}`
-    }
-  } catch {
-    // continue without auth header; API will reject unauthenticated requests
-  }
-
-  return headers
-}
-
 export async function maybeSendDailyWorkoutReminder(user: ReminderUser) {
   if (typeof window === 'undefined') return
   if (process.env.NEXT_PUBLIC_ENABLE_CLIENT_EMAIL_AUTOMATION !== 'true') return
@@ -66,7 +48,7 @@ export async function maybeSendDailyWorkoutReminder(user: ReminderUser) {
   if (didWorkoutToday(history)) return
 
   try {
-    const headers = await buildAuthHeaders()
+    const headers = await buildAuthenticatedJsonHeaders()
     const response = await fetch('/api/reminders/send', {
       method: 'POST',
       headers,
