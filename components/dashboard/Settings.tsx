@@ -36,6 +36,15 @@ interface UserSettings {
   weeklyPlan?: WeeklyPlanDay[]
 }
 
+const normalizeForComparison = (value: UserSettings) => ({
+  ...value,
+  email: value.email.trim(),
+  goals: [...value.goals].sort(),
+  equipment: [...value.equipment].sort(),
+  focusZones: [...(value.focusZones ?? [])].sort(),
+  avoidZones: [...(value.avoidZones ?? [])].sort(),
+})
+
 export default function Settings() {
   const { user, updateProfile } = useAuth()
   const { push } = useToast()
@@ -61,16 +70,24 @@ export default function Settings() {
   })
   const [saved, setSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [initialSettings, setInitialSettings] = useState<UserSettings | null>(null)
   const previewWeeklyPlan = useMemo(
     () => generateWeeklyPlan(settings.sessionsPerWeek ?? 3),
     [settings.sessionsPerWeek]
   )
+  const trimmedEmail = settings.email.trim()
+  const hasEmail = trimmedEmail.length > 0
+  const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+  const hasChanges =
+    initialSettings !== null &&
+    JSON.stringify(normalizeForComparison(settings)) !== JSON.stringify(normalizeForComparison(initialSettings))
+  const canSave = hasChanges && hasEmail && isEmailValid && !isSaving
 
   useEffect(() => {
     // Charger les paramètres utilisateur
     const userSettings = readLocalSettings() as Partial<UserSettings>
     
-    setSettings({
+    const loadedSettings: UserSettings = {
       name: userSettings.name || user?.name || '',
       email: userSettings.email || user?.email || '',
       phone: userSettings.phone || user?.phone || '',
@@ -97,10 +114,26 @@ export default function Settings() {
       weeklyPlan: Array.isArray(userSettings.weeklyPlan)
         ? userSettings.weeklyPlan
         : generateWeeklyPlan(Number.isFinite(userSettings.sessionsPerWeek) ? Number(userSettings.sessionsPerWeek) : 3),
-    })
+    }
+    setSettings(loadedSettings)
+    setInitialSettings(loadedSettings)
   }, [user?.email, user?.name, user?.phone])
 
+  useEffect(() => {
+    if (!hasChanges) return
+
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [hasChanges])
+
   const handleSave = async () => {
+    if (!canSave) return
+
     setIsSaving(true)
     try {
       const previousSettings = readLocalSettings()
@@ -108,7 +141,7 @@ export default function Settings() {
       const nextSettings = {
         ...previousSettings,
         name: settings.name,
-        email: settings.email,
+        email: trimmedEmail,
         phone: settings.phone,
         level: settings.level,
         goals: settings.goals,
@@ -143,6 +176,8 @@ export default function Settings() {
         push('Paramètres enregistrés, mais le profil Supabase n’a pas pu être mis à jour.', 'info')
       }
 
+      setSettings((prev) => ({ ...prev, email: trimmedEmail }))
+      setInitialSettings({ ...settings, email: trimmedEmail, weeklyPlan })
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
       push('Paramètres enregistrés.', 'success')
@@ -180,6 +215,12 @@ export default function Settings() {
   return (
     <div className="page-wrap">
       <h1 className="section-title mb-8">Paramètres</h1>
+      <p
+        className={`mb-4 text-sm ${saved ? 'text-green-700' : hasChanges ? 'text-amber-700' : 'text-gray-600'}`}
+        aria-live="polite"
+      >
+        {saved ? 'Paramètres sauvegardés.' : hasChanges ? 'Modifications non enregistrées.' : 'Tous les changements sont sauvegardés.'}
+      </p>
 
       <div className="space-y-6">
         <div className="card-soft">
@@ -298,9 +339,17 @@ export default function Settings() {
                 type="email"
                 value={settings.email}
                 onChange={(e) => setSettings((prev) => ({ ...prev, email: e.target.value }))}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:border-transparent ${
+                  !hasEmail || isEmailValid
+                    ? 'border-gray-300 focus:ring-primary-500'
+                    : 'border-red-400 focus:ring-red-500'
+                }`}
                 placeholder="votre.email@example.com"
+                aria-invalid={hasEmail && !isEmailValid}
               />
+              {hasEmail && !isEmailValid && (
+                <p className="mt-2 text-sm text-red-600">Adresse email invalide.</p>
+              )}
             </div>
 
             <div>
@@ -349,8 +398,10 @@ export default function Settings() {
               <div className="flex flex-wrap gap-2">
                 {goalsOptions.map((goal) => (
                   <button
+                    type="button"
                     key={goal}
                     onClick={() => toggleGoal(goal)}
+                    aria-pressed={settings.goals.includes(goal)}
                     className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                       settings.goals.includes(goal)
                         ? 'bg-primary-600 text-white border-primary-600'
@@ -448,6 +499,7 @@ export default function Settings() {
             <div className="flex flex-wrap gap-2">
               {focusOptions.map((zone) => (
                 <button
+                  type="button"
                   key={zone}
                   onClick={() =>
                     setSettings((prev) => ({
@@ -457,6 +509,7 @@ export default function Settings() {
                         : [...(prev.focusZones || []), zone],
                     }))
                   }
+                  aria-pressed={settings.focusZones?.includes(zone)}
                   className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                     settings.focusZones?.includes(zone)
                       ? 'bg-primary-600 text-white border-primary-600'
@@ -474,6 +527,7 @@ export default function Settings() {
             <div className="flex flex-wrap gap-2">
               {avoidOptions.map((zone) => (
                 <button
+                  type="button"
                   key={zone}
                   onClick={() =>
                     setSettings((prev) => ({
@@ -483,6 +537,7 @@ export default function Settings() {
                         : [...(prev.avoidZones || []), zone],
                     }))
                   }
+                  aria-pressed={settings.avoidZones?.includes(zone)}
                   className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                     settings.avoidZones?.includes(zone)
                       ? 'bg-red-500 text-white border-red-500'
@@ -506,8 +561,10 @@ export default function Settings() {
           <div className="flex flex-wrap gap-2">
             {equipmentOptions.map((equipment) => (
               <button
+                type="button"
                 key={equipment}
                 onClick={() => toggleEquipment(equipment)}
+                aria-pressed={settings.equipment.includes(equipment)}
                 className={`px-4 py-2 rounded-lg border-2 transition-colors ${
                   settings.equipment.includes(equipment)
                     ? 'bg-primary-600 text-white border-primary-600'
@@ -642,9 +699,22 @@ export default function Settings() {
             </span>
           )}
           <button
+            type="button"
+            onClick={() => {
+              if (!initialSettings) return
+              setSettings(initialSettings)
+              setSaved(false)
+            }}
+            className="btn-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+            disabled={!hasChanges || isSaving}
+          >
+            Réinitialiser
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             className="btn-primary flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={isSaving}
+            disabled={!canSave}
           >
             <Save className="h-5 w-5" />
             <span>{isSaving ? 'Sauvegarde...' : saved ? 'Sauvegardé !' : 'Sauvegarder les paramètres'}</span>
