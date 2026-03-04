@@ -71,6 +71,7 @@ export default function Settings() {
   const [saved, setSaved] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [initialSettings, setInitialSettings] = useState<UserSettings | null>(null)
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const previewWeeklyPlan = useMemo(
     () => generateWeeklyPlan(settings.sessionsPerWeek ?? 3),
     [settings.sessionsPerWeek]
@@ -178,6 +179,7 @@ export default function Settings() {
 
       setSettings((prev) => ({ ...prev, email: trimmedEmail }))
       setInitialSettings({ ...settings, email: trimmedEmail, weeklyPlan })
+      setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
       push('Paramètres enregistrés.', 'success')
@@ -187,6 +189,18 @@ export default function Settings() {
       setIsSaving(false)
     }
   }
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 's') {
+        event.preventDefault()
+        void handleSave()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [handleSave])
 
   const toggleGoal = (goal: string) => {
     setSettings(prev => ({
@@ -220,6 +234,10 @@ export default function Settings() {
         aria-live="polite"
       >
         {saved ? 'Paramètres sauvegardés.' : hasChanges ? 'Modifications non enregistrées.' : 'Tous les changements sont sauvegardés.'}
+      </p>
+      <p className="mb-4 text-xs text-gray-500">
+        Raccourci: Cmd/Ctrl + S
+        {lastSavedAt ? ` · Dernière sauvegarde: ${lastSavedAt}` : ''}
       </p>
 
       <div className="space-y-6">
