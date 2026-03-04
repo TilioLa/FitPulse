@@ -163,8 +163,7 @@ export default function Settings() {
 
     if (
       settings.reminderEmailsEnabled !== initialSettings.reminderEmailsEnabled ||
-      settings.pushRemindersEnabled !== initialSettings.pushRemindersEnabled ||
-      settings.autoRestAfterSet !== initialSettings.autoRestAfterSet
+      settings.pushRemindersEnabled !== initialSettings.pushRemindersEnabled
     ) {
       sections.push(SECTION_LABELS.reminders)
     }
@@ -344,6 +343,16 @@ export default function Settings() {
     }))
   }
 
+  const handleReset = () => {
+    if (!initialSettings) return
+    if (changedSectionCount >= 3) {
+      const confirmed = window.confirm('Réinitialiser toutes les modifications non sauvegardées ?')
+      if (!confirmed) return
+    }
+    setSettings(initialSettings)
+    setSaved(false)
+  }
+
   const goalsOptions = ['Perte de poids', 'Prise de masse', 'Endurance', 'Force', 'Souplesse']
   const focusOptions = ['Pectoraux', 'Dos', 'Bras', 'Jambes', 'Épaules', 'Abdos', 'Fessiers']
   const avoidOptions = ['Dos', 'Genoux', 'Épaules', 'Hanches']
@@ -413,8 +422,15 @@ export default function Settings() {
               checked={settings.pushRemindersEnabled}
               onChange={(e) => setSettings({ ...settings, pushRemindersEnabled: e.target.checked })}
               className="h-5 w-5 accent-primary-600"
+              disabled={!notificationsSupported}
+              aria-describedby={!notificationsSupported ? 'notifications-browser-unsupported' : undefined}
             />
           </label>
+          {!notificationsSupported && (
+            <p id="notifications-browser-unsupported" className="mt-2 text-xs text-amber-700">
+              Notifications navigateur non supportées sur cet appareil.
+            </p>
+          )}
           <label className="mt-3 flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
             <div>
               <div className="text-sm font-semibold text-gray-900">Auto repos après série</div>
@@ -441,7 +457,8 @@ export default function Settings() {
                 if (status === 'granted') push('Notifications navigateur activées.', 'success')
                 else if (status === 'denied') push('Notifications refusées par le navigateur.', 'error')
               }}
-              className="btn-secondary"
+              className="btn-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!notificationsSupported}
             >
               Activer les notifications
             </button>
@@ -451,7 +468,8 @@ export default function Settings() {
                 if (sendTestBrowserNotification()) push('Notification de test envoyée.', 'success')
                 else push('Active d’abord les notifications navigateur.', 'error')
               }}
-              className="btn-secondary"
+              className="btn-secondary disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!notificationsSupported}
             >
               Tester la notification
             </button>
@@ -775,6 +793,22 @@ export default function Settings() {
               onChange={(e) => setSettings({ ...settings, restTime: Number(e.target.value) })}
               className="w-full accent-primary-600"
             />
+            <div className="flex flex-wrap gap-2">
+              {[45, 60, 90].map((value) => (
+                <button
+                  key={`rest-${value}`}
+                  type="button"
+                  onClick={() => setSettings((prev) => ({ ...prev, restTime: value }))}
+                  className={`rounded-md border px-2 py-1 text-xs font-semibold transition-colors ${
+                    settings.restTime === value
+                      ? 'border-primary-600 bg-primary-50 text-primary-700'
+                      : 'border-gray-300 text-gray-600 hover:border-primary-400'
+                  }`}
+                >
+                  {value}s
+                </button>
+              ))}
+            </div>
             <div className="pt-4 border-t border-gray-100">
               <div className="text-sm text-gray-600 mb-2">
                 Temps de repos entre exercices.
@@ -791,6 +825,22 @@ export default function Settings() {
                 }
                 className="w-full accent-primary-600"
               />
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[120, 180, 240].map((value) => (
+                  <button
+                    key={`rest-between-${value}`}
+                    type="button"
+                    onClick={() => setSettings((prev) => ({ ...prev, restBetweenExercises: value }))}
+                    className={`rounded-md border px-2 py-1 text-xs font-semibold transition-colors ${
+                      settings.restBetweenExercises === value
+                        ? 'border-primary-600 bg-primary-50 text-primary-700'
+                        : 'border-gray-300 text-gray-600 hover:border-primary-400'
+                    }`}
+                  >
+                    {value}s
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -881,7 +931,9 @@ export default function Settings() {
             <p className="mb-2 text-sm text-gray-600 sm:text-right">{saveBlockedReason}</p>
           )}
           {changedSectionsText && (
-            <p className="mb-2 text-xs text-amber-700 sm:text-right">Sections modifiées: {changedSectionsText}</p>
+            <p className="mb-2 text-xs text-amber-700 sm:text-right" aria-live="polite">
+              Sections modifiées: {changedSectionsText}
+            </p>
           )}
           <div className="flex justify-end items-center space-x-3">
             {saved && (
@@ -891,11 +943,7 @@ export default function Settings() {
             )}
             <button
               type="button"
-              onClick={() => {
-                if (!initialSettings) return
-                setSettings(initialSettings)
-                setSaved(false)
-              }}
+              onClick={handleReset}
               className="btn-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
               disabled={!hasChanges || isSaving}
             >
