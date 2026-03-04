@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { User, Target, Dumbbell, Save } from 'lucide-react'
 import { useToast } from '@/components/ui/ToastProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
@@ -45,6 +45,56 @@ const normalizeForComparison = (value: UserSettings) => ({
   avoidZones: [...(value.avoidZones ?? [])].sort(),
 })
 
+const areSameArrays = (left: string[] = [], right: string[] = []) => {
+  if (left.length !== right.length) return false
+  const sortedLeft = [...left].sort()
+  const sortedRight = [...right].sort()
+  return sortedLeft.every((value, index) => value === sortedRight[index])
+}
+
+const getChangedSectionCount = (current: UserSettings, initial: UserSettings) => {
+  let count = 0
+
+  if (current.name !== initial.name || current.email.trim() !== initial.email.trim() || current.phone !== initial.phone) {
+    count += 1
+  }
+  if (current.level !== initial.level || !areSameArrays(current.goals, initial.goals)) {
+    count += 1
+  }
+  if (
+    current.weight !== initial.weight ||
+    current.height !== initial.height ||
+    current.goal !== initial.goal ||
+    current.sessionsPerWeek !== initial.sessionsPerWeek ||
+    current.weightUnit !== initial.weightUnit ||
+    !areSameArrays(current.focusZones ?? [], initial.focusZones ?? []) ||
+    !areSameArrays(current.avoidZones ?? [], initial.avoidZones ?? [])
+  ) {
+    count += 1
+  }
+  if (!areSameArrays(current.equipment, initial.equipment)) {
+    count += 1
+  }
+  if (
+    current.reminderEmailsEnabled !== initial.reminderEmailsEnabled ||
+    current.pushRemindersEnabled !== initial.pushRemindersEnabled
+  ) {
+    count += 1
+  }
+  if (
+    current.autoRestAfterSet !== initial.autoRestAfterSet ||
+    current.restTime !== initial.restTime ||
+    current.restBetweenExercises !== initial.restBetweenExercises
+  ) {
+    count += 1
+  }
+  if (current.soundEnabled !== initial.soundEnabled || current.voiceEnabled !== initial.voiceEnabled) {
+    count += 1
+  }
+
+  return count
+}
+
 export default function Settings() {
   const { user, updateProfile } = useAuth()
   const { push } = useToast()
@@ -83,6 +133,19 @@ export default function Settings() {
     initialSettings !== null &&
     JSON.stringify(normalizeForComparison(settings)) !== JSON.stringify(normalizeForComparison(initialSettings))
   const canSave = hasChanges && hasEmail && isEmailValid && !isSaving
+  const changedSectionCount = useMemo(
+    () => (initialSettings ? getChangedSectionCount(settings, initialSettings) : 0),
+    [settings, initialSettings]
+  )
+  const saveBlockedReason = isSaving
+    ? 'Sauvegarde en cours...'
+    : !hasChanges
+      ? 'Aucune modification à sauvegarder.'
+      : !hasEmail
+        ? 'Ajoute une adresse email pour sauvegarder.'
+        : !isEmailValid
+          ? 'Renseigne une adresse email valide.'
+          : null
 
   useEffect(() => {
     // Charger les paramètres utilisateur
@@ -132,7 +195,7 @@ export default function Settings() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload)
   }, [hasChanges])
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     if (!canSave) return
 
     setIsSaving(true)
@@ -188,7 +251,7 @@ export default function Settings() {
     } finally {
       setIsSaving(false)
     }
-  }
+  }, [canSave, push, settings, trimmedEmail, updateProfile, user?.id])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -236,8 +299,13 @@ export default function Settings() {
         {saved ? 'Paramètres sauvegardés.' : hasChanges ? 'Modifications non enregistrées.' : 'Tous les changements sont sauvegardés.'}
       </p>
       <p className="mb-4 text-xs text-gray-500">
-        Raccourci: Cmd/Ctrl + S
+        Raccourci: <kbd className="rounded border border-gray-300 bg-gray-50 px-1.5 py-0.5 font-mono text-[11px]">Cmd/Ctrl + S</kbd>
         {lastSavedAt ? ` · Dernière sauvegarde: ${lastSavedAt}` : ''}
+      </p>
+      <p className={`mb-6 text-sm ${hasChanges ? 'text-amber-700' : 'text-gray-600'}`}>
+        {hasChanges
+          ? `${changedSectionCount} section${changedSectionCount > 1 ? 's' : ''} modifiée${changedSectionCount > 1 ? 's' : ''}.`
+          : 'Aucune section modifiée.'}
       </p>
 
       <div className="space-y-6">
@@ -364,9 +432,10 @@ export default function Settings() {
                 }`}
                 placeholder="votre.email@example.com"
                 aria-invalid={hasEmail && !isEmailValid}
+                aria-describedby={hasEmail && !isEmailValid ? 'settings-email-error' : undefined}
               />
               {hasEmail && !isEmailValid && (
-                <p className="mt-2 text-sm text-red-600">Adresse email invalide.</p>
+                <p id="settings-email-error" className="mt-2 text-sm text-red-600">Adresse email invalide.</p>
               )}
             </div>
 
@@ -395,10 +464,11 @@ export default function Settings() {
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="settings-level" className="block text-sm font-medium text-gray-700 mb-2">
                 Votre niveau
               </label>
               <select
+                id="settings-level"
                 value={settings.level}
                 onChange={(e) => setSettings({ ...settings, level: e.target.value })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -409,18 +479,18 @@ export default function Settings() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 mb-2">
                 Vos objectifs (plusieurs choix possibles)
-              </label>
-              <div className="flex flex-wrap gap-2">
+              </legend>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Objectifs">
                 {goalsOptions.map((goal) => (
                   <button
                     type="button"
                     key={goal}
                     onClick={() => toggleGoal(goal)}
                     aria-pressed={settings.goals.includes(goal)}
-                    className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
                       settings.goals.includes(goal)
                         ? 'bg-primary-600 text-white border-primary-600'
                         : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
@@ -430,7 +500,7 @@ export default function Settings() {
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
           </div>
         </div>
 
@@ -443,8 +513,9 @@ export default function Settings() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Poids ({settings.weightUnit})</label>
+              <label htmlFor="settings-weight" className="block text-sm font-medium text-gray-700 mb-2">Poids ({settings.weightUnit})</label>
               <input
+                id="settings-weight"
                 type="number"
                 min={30}
                 max={250}
@@ -454,8 +525,9 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Taille (cm)</label>
+              <label htmlFor="settings-height" className="block text-sm font-medium text-gray-700 mb-2">Taille (cm)</label>
               <input
+                id="settings-height"
                 type="number"
                 min={120}
                 max={230}
@@ -467,8 +539,9 @@ export default function Settings() {
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Objectif principal</label>
+            <label htmlFor="settings-goal" className="block text-sm font-medium text-gray-700 mb-2">Objectif principal</label>
             <select
+              id="settings-goal"
               value={settings.goal}
               onChange={(e) => setSettings({ ...settings, goal: e.target.value })}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -483,8 +556,9 @@ export default function Settings() {
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
+            <label htmlFor="settings-sessions" className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
             <input
+              id="settings-sessions"
               type="range"
               min={1}
               max={7}
@@ -513,59 +587,63 @@ export default function Settings() {
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Zones à muscler</label>
-            <div className="flex flex-wrap gap-2">
-              {focusOptions.map((zone) => (
-                <button
-                  type="button"
-                  key={zone}
-                  onClick={() =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      focusZones: prev.focusZones?.includes(zone)
-                        ? prev.focusZones.filter((item) => item !== zone)
-                        : [...(prev.focusZones || []), zone],
-                    }))
-                  }
-                  aria-pressed={settings.focusZones?.includes(zone)}
-                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                    settings.focusZones?.includes(zone)
-                      ? 'bg-primary-600 text-white border-primary-600'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
-                  }`}
-                >
-                  {zone}
-                </button>
-              ))}
-            </div>
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 mb-2">Zones à muscler</legend>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Zones à muscler">
+                {focusOptions.map((zone) => (
+                  <button
+                    type="button"
+                    key={zone}
+                    onClick={() =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        focusZones: prev.focusZones?.includes(zone)
+                          ? prev.focusZones.filter((item) => item !== zone)
+                          : [...(prev.focusZones || []), zone],
+                      }))
+                    }
+                    aria-pressed={settings.focusZones?.includes(zone)}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
+                      settings.focusZones?.includes(zone)
+                        ? 'bg-primary-600 text-white border-primary-600'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                    }`}
+                  >
+                    {zone}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           </div>
 
           <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Zones à éviter</label>
-            <div className="flex flex-wrap gap-2">
-              {avoidOptions.map((zone) => (
-                <button
-                  type="button"
-                  key={zone}
-                  onClick={() =>
-                    setSettings((prev) => ({
-                      ...prev,
-                      avoidZones: prev.avoidZones?.includes(zone)
-                        ? prev.avoidZones.filter((item) => item !== zone)
-                        : [...(prev.avoidZones || []), zone],
-                    }))
-                  }
-                  aria-pressed={settings.avoidZones?.includes(zone)}
-                  className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                    settings.avoidZones?.includes(zone)
-                      ? 'bg-red-500 text-white border-red-500'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
-                  }`}
-                >
-                  {zone}
-                </button>
-              ))}
-            </div>
+            <fieldset>
+              <legend className="block text-sm font-medium text-gray-700 mb-2">Zones à éviter</legend>
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Zones à éviter">
+                {avoidOptions.map((zone) => (
+                  <button
+                    type="button"
+                    key={zone}
+                    onClick={() =>
+                      setSettings((prev) => ({
+                        ...prev,
+                        avoidZones: prev.avoidZones?.includes(zone)
+                          ? prev.avoidZones.filter((item) => item !== zone)
+                          : [...(prev.avoidZones || []), zone],
+                      }))
+                    }
+                    aria-pressed={settings.avoidZones?.includes(zone)}
+                    className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-red-500 ${
+                      settings.avoidZones?.includes(zone)
+                        ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
+                    }`}
+                  >
+                    {zone}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
           </div>
         </div>
 
@@ -576,23 +654,26 @@ export default function Settings() {
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Matériel disponible</h2>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {equipmentOptions.map((equipment) => (
-              <button
-                type="button"
-                key={equipment}
-                onClick={() => toggleEquipment(equipment)}
-                aria-pressed={settings.equipment.includes(equipment)}
-                className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                  settings.equipment.includes(equipment)
-                    ? 'bg-primary-600 text-white border-primary-600'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
-                }`}
-              >
-                {equipment}
-              </button>
-            ))}
-          </div>
+          <fieldset>
+            <legend className="sr-only">Matériel disponible</legend>
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Matériel disponible">
+              {equipmentOptions.map((equipment) => (
+                <button
+                  type="button"
+                  key={equipment}
+                  onClick={() => toggleEquipment(equipment)}
+                  aria-pressed={settings.equipment.includes(equipment)}
+                  className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
+                    settings.equipment.includes(equipment)
+                      ? 'bg-primary-600 text-white border-primary-600'
+                      : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+                  }`}
+                >
+                  {equipment}
+                </button>
+              ))}
+            </div>
+          </fieldset>
         </div>
 
         {/* Temps de repos */}
@@ -649,7 +730,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setSettings({ ...settings, soundEnabled: !settings.soundEnabled })}
-              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+              className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
                 settings.soundEnabled
                   ? 'bg-primary-600 text-white border-primary-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
@@ -666,7 +747,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setSettings({ ...settings, voiceEnabled: !settings.voiceEnabled })}
-              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+              className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
                 settings.voiceEnabled
                   ? 'bg-primary-600 text-white border-primary-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
@@ -687,7 +768,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setSettings({ ...settings, weightUnit: 'kg' })}
-              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+              className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
                 settings.weightUnit === 'kg'
                   ? 'bg-primary-600 text-white border-primary-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
@@ -698,7 +779,7 @@ export default function Settings() {
             <button
               type="button"
               onClick={() => setSettings({ ...settings, weightUnit: 'lbs' })}
-              className={`px-4 py-2 rounded-lg border-2 transition-colors ${
+              className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
                 settings.weightUnit === 'lbs'
                   ? 'bg-primary-600 text-white border-primary-600'
                   : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
@@ -710,33 +791,40 @@ export default function Settings() {
         </div>
 
         {/* Bouton de sauvegarde */}
-        <div className="flex justify-end items-center space-x-3">
-          {saved && (
-            <span className="text-sm text-green-600" role="status" aria-live="polite">
-              Paramètres sauvegardés
-            </span>
+        <div className="sticky bottom-0 z-10 -mx-2 rounded-xl border border-gray-200 bg-white/95 px-2 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:border-0">
+          {saveBlockedReason && (
+            <p className="mb-2 text-sm text-gray-600 sm:text-right">{saveBlockedReason}</p>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              if (!initialSettings) return
-              setSettings(initialSettings)
-              setSaved(false)
-            }}
-            className="btn-secondary disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={!hasChanges || isSaving}
-          >
-            Réinitialiser
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="btn-primary flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
-            disabled={!canSave}
-          >
-            <Save className="h-5 w-5" />
-            <span>{isSaving ? 'Sauvegarde...' : saved ? 'Sauvegardé !' : 'Sauvegarder les paramètres'}</span>
-          </button>
+          <div className="flex justify-end items-center space-x-3">
+            {saved && (
+              <span className="text-sm text-green-600" role="status" aria-live="polite">
+                Paramètres sauvegardés
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                if (!initialSettings) return
+                setSettings(initialSettings)
+                setSaved(false)
+              }}
+              className="btn-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-gray-500 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!hasChanges || isSaving}
+            >
+              Réinitialiser
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleSave()}
+              className="btn-primary flex items-center space-x-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 disabled:opacity-60 disabled:cursor-not-allowed"
+              disabled={!canSave}
+              title={saveBlockedReason ?? 'Sauvegarder les paramètres'}
+              aria-keyshortcuts="Meta+S Control+S"
+            >
+              <Save className="h-5 w-5" />
+              <span>{isSaving ? 'Sauvegarde...' : saved ? 'Sauvegardé !' : 'Sauvegarder les paramètres'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
