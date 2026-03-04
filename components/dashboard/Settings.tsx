@@ -95,6 +95,17 @@ const getChangedSectionCount = (current: UserSettings, initial: UserSettings) =>
   return count
 }
 
+const SECTION_LABELS = {
+  reminders: 'Rappels',
+  personal: 'Infos perso',
+  goals: 'Niveau/Objectifs',
+  profile: 'Profil fitness',
+  equipment: 'Matériel',
+  rest: 'Repos',
+  sound: 'Son',
+  weightUnit: 'Unité de poids',
+} as const
+
 export default function Settings() {
   const { user, updateProfile } = useAuth()
   const { push } = useToast()
@@ -146,6 +157,56 @@ export default function Settings() {
         : !isEmailValid
           ? 'Renseigne une adresse email valide.'
           : null
+  const changedSections = useMemo(() => {
+    if (!initialSettings) return [] as string[]
+    const sections: string[] = []
+
+    if (
+      settings.reminderEmailsEnabled !== initialSettings.reminderEmailsEnabled ||
+      settings.pushRemindersEnabled !== initialSettings.pushRemindersEnabled ||
+      settings.autoRestAfterSet !== initialSettings.autoRestAfterSet
+    ) {
+      sections.push(SECTION_LABELS.reminders)
+    }
+    if (
+      settings.name !== initialSettings.name ||
+      settings.email.trim() !== initialSettings.email.trim() ||
+      settings.phone !== initialSettings.phone
+    ) {
+      sections.push(SECTION_LABELS.personal)
+    }
+    if (settings.level !== initialSettings.level || !areSameArrays(settings.goals, initialSettings.goals)) {
+      sections.push(SECTION_LABELS.goals)
+    }
+    if (
+      settings.weight !== initialSettings.weight ||
+      settings.height !== initialSettings.height ||
+      settings.goal !== initialSettings.goal ||
+      settings.sessionsPerWeek !== initialSettings.sessionsPerWeek ||
+      !areSameArrays(settings.focusZones ?? [], initialSettings.focusZones ?? []) ||
+      !areSameArrays(settings.avoidZones ?? [], initialSettings.avoidZones ?? [])
+    ) {
+      sections.push(SECTION_LABELS.profile)
+    }
+    if (!areSameArrays(settings.equipment, initialSettings.equipment)) {
+      sections.push(SECTION_LABELS.equipment)
+    }
+    if (
+      settings.restTime !== initialSettings.restTime ||
+      settings.restBetweenExercises !== initialSettings.restBetweenExercises
+    ) {
+      sections.push(SECTION_LABELS.rest)
+    }
+    if (settings.soundEnabled !== initialSettings.soundEnabled || settings.voiceEnabled !== initialSettings.voiceEnabled) {
+      sections.push(SECTION_LABELS.sound)
+    }
+    if (settings.weightUnit !== initialSettings.weightUnit) {
+      sections.push(SECTION_LABELS.weightUnit)
+    }
+
+    return sections
+  }, [initialSettings, settings])
+  const changedSectionsText = changedSections.length > 0 ? changedSections.join(' · ') : null
 
   useEffect(() => {
     // Charger les paramètres utilisateur
@@ -324,6 +385,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-4">
             <Target className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Rappels</h2>
+            {changedSections.includes(SECTION_LABELS.reminders) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
           <label className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
             <div>
@@ -399,6 +463,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <User className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Informations personnelles</h2>
+            {changedSections.includes(SECTION_LABELS.personal) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -460,6 +527,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <Target className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Niveau et objectifs</h2>
+            {changedSections.includes(SECTION_LABELS.goals) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
 
           <div className="space-y-4">
@@ -509,6 +579,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <Target className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Profil fitness</h2>
+            {changedSections.includes(SECTION_LABELS.profile) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -652,6 +725,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <Dumbbell className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Matériel disponible</h2>
+            {changedSections.includes(SECTION_LABELS.equipment) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
 
           <fieldset>
@@ -681,6 +757,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <Dumbbell className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Temps de repos</h2>
+            {changedSections.includes(SECTION_LABELS.rest) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
           <div className="space-y-4">
             <div className="text-sm text-gray-600">
@@ -721,6 +800,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <Dumbbell className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Son</h2>
+            {changedSections.includes(SECTION_LABELS.sound) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
           <div className="flex items-center justify-between">
             <div>
@@ -763,6 +845,9 @@ export default function Settings() {
           <div className="flex items-center space-x-2 mb-6">
             <Dumbbell className="h-6 w-6 text-primary-600" />
             <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Unité de poids</h2>
+            {changedSections.includes(SECTION_LABELS.weightUnit) && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">Modifié</span>
+            )}
           </div>
           <div className="flex items-center gap-4">
             <button
@@ -794,6 +879,9 @@ export default function Settings() {
         <div className="sticky bottom-0 z-10 -mx-2 rounded-xl border border-gray-200 bg-white/95 px-2 py-3 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80 sm:mx-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:border-0">
           {saveBlockedReason && (
             <p className="mb-2 text-sm text-gray-600 sm:text-right">{saveBlockedReason}</p>
+          )}
+          {changedSectionsText && (
+            <p className="mb-2 text-xs text-amber-700 sm:text-right">Sections modifiées: {changedSectionsText}</p>
           )}
           <div className="flex justify-end items-center space-x-3">
             {saved && (
