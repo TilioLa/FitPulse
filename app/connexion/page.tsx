@@ -117,7 +117,7 @@ export default function ConnexionPage() {
                 </div>
               )}
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                <div id="connexion-error" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
                   {error}
                 </div>
               )}
@@ -133,7 +133,12 @@ export default function ConnexionPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setEmail((prev) => prev.trim())}
                     required
+                    autoComplete="email"
+                    inputMode="email"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'connexion-error' : undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="votre.email@example.com"
                   />
@@ -152,6 +157,9 @@ export default function ConnexionPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'connexion-error' : undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Votre mot de passe"
                   />
@@ -162,6 +170,7 @@ export default function ConnexionPage() {
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full btn-primary py-3"
+                aria-busy={isSubmitting}
               >
                 {isSubmitting ? 'Connexion...' : 'Se connecter'}
               </button>

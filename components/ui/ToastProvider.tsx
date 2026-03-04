@@ -57,12 +57,17 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
             : 'bg-green-50 border-green-200 text-green-700'
 
           return (
-            <div key={toast.id} className={`toast ${baseStyles} ${variantStyles}`} role="status" aria-live="polite">
+            <div
+              key={toast.id}
+              className={`toast ${baseStyles} ${variantStyles}`}
+              role={toast.variant === 'error' ? 'alert' : 'status'}
+              aria-live={toast.variant === 'error' ? 'assertive' : 'polite'}
+            >
               <p className="text-sm font-medium flex-1">{toast.message}</p>
               <button
                 type="button"
                 onClick={() => removeToast(toast.id)}
-                className="text-current opacity-70 hover:opacity-100"
+                className="text-current opacity-70 hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-current/50 rounded"
                 aria-label="Fermer la notification"
               >
                 <X className="h-4 w-4" />

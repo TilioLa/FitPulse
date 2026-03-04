@@ -58,19 +58,24 @@ export default function ResetRequestPage() {
                   type="email"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  onBlur={() => setEmail((prev) => prev.trim())}
                   required
+                  autoComplete="email"
+                  inputMode="email"
+                  aria-describedby={message ? 'reset-feedback' : undefined}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="votre.email@example.com"
                 />
               </div>
 
-              <button type="submit" className="w-full btn-primary py-3" disabled={status === 'loading'}>
+              <button type="submit" className="w-full btn-primary py-3" disabled={status === 'loading'} aria-busy={status === 'loading'}>
                 {status === 'loading' ? 'Envoi...' : 'Envoyer le lien'}
               </button>
             </form>
 
             {message && (
               <p
+                id="reset-feedback"
                 className={`mt-6 text-sm ${status === 'error' ? 'text-red-600' : 'text-green-600'}`}
                 role="status"
                 aria-live="polite"
