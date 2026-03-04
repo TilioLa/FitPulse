@@ -7,6 +7,31 @@
     @apply bg-gray-50 text-gray-900;
     font-family: "Manrope", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   }
+
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role='button'] {
+    @apply outline-none;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role='button']:focus-visible {
+    @apply ring-2 ring-primary-300 ring-offset-2;
+  }
+
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    @apply cursor-not-allowed;
+  }
 }
 
 @layer components {
@@ -44,6 +69,10 @@
 
   .panel-stack {
     @apply space-y-6;
+  }
+
+  .skip-link {
+    @apply sr-only focus:not-sr-only fixed left-4 top-4 z-[100] rounded-md bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-lg;
   }
 }
 
@@ -90,6 +119,19 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html:focus-within {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
   .reveal,
   .toast {
     animation: none;

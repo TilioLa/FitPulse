@@ -30,7 +30,7 @@ export default function MobileBottomNav({
   const router = useRouter()
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 shadow-[0_-6px_24px_rgba(0,0,0,0.06)] lg:hidden">
+    <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 shadow-[0_-6px_24px_rgba(0,0,0,0.06)] lg:hidden" aria-label="Navigation dashboard mobile">
       <div className="grid grid-cols-5 gap-1 px-2 py-2">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -38,6 +38,7 @@ export default function MobileBottomNav({
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => {
                 if (isActive) return
                 if (item.id === 'exercises') {
@@ -46,6 +47,7 @@ export default function MobileBottomNav({
                 }
                 setActiveSection(item.id)
               }}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex flex-col items-center justify-center rounded-lg py-2 text-[11px] font-medium ${
                 isActive ? 'text-primary-700 bg-primary-50' : 'text-gray-500'
               }`}

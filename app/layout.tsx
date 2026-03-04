@@ -31,8 +31,13 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
+        <a href="#main-content" className="skip-link">
+          Aller au contenu
+        </a>
         <PwaRegister />
-        <Providers>{children}</Providers>
+        <div id="main-content">
+          <Providers>{children}</Providers>
+        </div>
       </body>
     </html>
   )

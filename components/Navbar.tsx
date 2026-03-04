@@ -28,6 +28,7 @@ export default function Navbar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
               className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
                 isActive(item.href)
                   ? 'bg-primary-50 text-primary-700'
@@ -48,6 +49,25 @@ export default function Navbar() {
           </Link>
         </div>
       </div>
+
+      <nav className="md:hidden border-t border-gray-100 px-4 py-2" aria-label="Navigation principale mobile">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {links.map((item) => (
+            <Link
+              key={`mobile-${item.href}`}
+              href={item.href}
+              aria-current={isActive(item.href) ? 'page' : undefined}
+              className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors ${
+                isActive(item.href)
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700'
+              }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
     </header>
   )
 }
