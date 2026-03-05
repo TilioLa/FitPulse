@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
@@ -29,6 +29,7 @@ export default function InscriptionPage() {
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const alertRef = useRef<HTMLDivElement | null>(null)
   const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
   const weeklyPlanPreview = useMemo(() => generateWeeklyPlan(sessionsPerWeek), [sessionsPerWeek])
   const recommended = useMemo(
@@ -41,6 +42,14 @@ export default function InscriptionPage() {
       }),
     [level, goals, equipment, sessionsPerWeek]
   )
+
+  useEffect(() => {
+    if (!error) return
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+    window.setTimeout(() => {
+      alertRef.current?.focus()
+    }, 150)
+  }, [error])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -163,7 +172,14 @@ export default function InscriptionPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div id="inscription-error" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                <div
+                  id="inscription-error"
+                  ref={alertRef}
+                  tabIndex={-1}
+                  className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg"
+                  role="alert"
+                  aria-live="assertive"
+                >
                   {error}
                 </div>
               )}

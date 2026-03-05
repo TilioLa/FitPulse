@@ -114,6 +114,7 @@ export default function ConnexionPage() {
               {signupStatus === 'check-email' && (
                 <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg">
                   Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
+                  Pense aussi à vérifier ton dossier spams/indésirables.
                 </div>
               )}
               {error && (
