@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint -c node_modules/eslint-config-next/dist/core-web-vitals.js . --ext .ts,.tsx --ignore-pattern \"android/**\" --ignore-pattern \"ios/**\" --ignore-pattern \".next/**\" --ignore-pattern \"test-results/**\" --ignore-pattern \"playwright-report/**\" --rule 'react-hooks/set-state-in-effect: off'",
+    "lint:a11y": "eslint -c node_modules/eslint-config-next/dist/core-web-vitals.js app/connexion/page.tsx app/inscription/page.tsx app/dashboard/page.tsx app/exercices/page.tsx components/Navbar.tsx components/dashboard/Sidebar.tsx components/dashboard/MobileBottomNav.tsx --ext .ts,.tsx --rule 'jsx-a11y/alt-text: error' --rule 'jsx-a11y/aria-props: error' --rule 'jsx-a11y/aria-proptypes: error' --rule 'jsx-a11y/aria-role: error' --rule 'jsx-a11y/role-has-required-aria-props: error' --rule 'jsx-a11y/role-supports-aria-props: error'",
     "test:e2e": "env -u FORCE_COLOR NO_COLOR=1 playwright test",
     "test:e2e:standard": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/public-pages.spec.ts e2e/workout-flow.spec.ts e2e/workout-recovery.spec.ts",
     "test:e2e:auth-real": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/auth-real.spec.ts",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "@types/nodemailer": "^7.0.9"
+    "@types/nodemailer": "^7.0.9",
+    "eslint-plugin-jsx-a11y": "^6.10.2"
   }
 }

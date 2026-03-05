@@ -12,6 +12,19 @@ import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
 import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
 
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const getPasswordStrength = (value: string) => {
+  let score = 0
+  if (value.length >= 8) score += 1
+  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1
+  if (/\d/.test(value) || /[^A-Za-z0-9]/.test(value)) score += 1
+
+  if (score <= 1) return { label: 'Faible', color: 'bg-red-500', score }
+  if (score === 2) return { label: 'Moyen', color: 'bg-amber-500', score }
+  return { label: 'Fort', color: 'bg-emerald-500', score }
+}
+
 export default function InscriptionPage() {
   const router = useRouter()
   const [name, setName] = useState('')
@@ -42,6 +55,18 @@ export default function InscriptionPage() {
       }),
     [level, goals, equipment, sessionsPerWeek]
   )
+  const normalizedEmail = email.trim().toLowerCase()
+  const isEmailValid = normalizedEmail.length > 0 && emailPattern.test(normalizedEmail)
+  const isPasswordLongEnough = password.length >= 6
+  const isConfirmPasswordValid = confirmPassword.length > 0 && password === confirmPassword
+  const hasAtLeastOneGoal = goals.length > 0
+  const passwordStrength = useMemo(() => getPasswordStrength(password), [password])
+  const canSubmit =
+    !isSubmitting &&
+    isEmailValid &&
+    isPasswordLongEnough &&
+    isConfirmPasswordValid &&
+    hasAtLeastOneGoal
 
   useEffect(() => {
     if (!error) return
@@ -74,7 +99,11 @@ export default function InscriptionPage() {
       return
     }
 
-    const normalizedEmail = email.trim().toLowerCase()
+    if (!emailPattern.test(normalizedEmail)) {
+      setError('Renseigne une adresse email valide')
+      setIsSubmitting(false)
+      return
+    }
 
     const safeName = name || normalizedEmail.split('@')[0]
     const normalizedGoals = goals.length > 0 ? goals : ['Cardio']
@@ -135,7 +164,7 @@ export default function InscriptionPage() {
       if (signInError) {
         const message = (signInError.message || '').toLowerCase()
         if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
-          router.replace('/connexion?signup=check-email')
+          router.replace(`/connexion?signup=check-email&email=${encodeURIComponent(normalizedEmail)}`)
           return
         }
         throw signInError
@@ -220,11 +249,16 @@ export default function InscriptionPage() {
                     autoComplete="email"
                     inputMode="email"
                     aria-invalid={Boolean(error)}
-                    aria-describedby={error ? 'inscription-error' : undefined}
+                    aria-describedby={`${error ? 'inscription-error ' : ''}${email && !isEmailValid ? 'inscription-email-error' : ''}`.trim() || undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="votre.email@example.com"
                   />
                 </div>
+                {email && !isEmailValid && (
+                  <p id="inscription-email-error" className="mt-2 text-sm text-red-600">
+                    Adresse email invalide.
+                  </p>
+                )}
               </div>
 
               <div>
@@ -259,12 +293,30 @@ export default function InscriptionPage() {
                     required
                     minLength={6}
                     autoComplete="new-password"
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={error ? 'inscription-error' : undefined}
+                    aria-invalid={Boolean(error) || (password.length > 0 && !isPasswordLongEnough)}
+                    aria-describedby={`${error ? 'inscription-error ' : ''}${password.length > 0 ? 'inscription-password-hint' : ''}`.trim() || undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Minimum 6 caractères"
                   />
                 </div>
+                {password.length > 0 && (
+                  <div id="inscription-password-hint" className="mt-2">
+                    <div className="mb-1 text-xs text-gray-600">
+                      Force du mot de passe: <span className="font-semibold">{passwordStrength.label}</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1">
+                      {[0, 1, 2].map((index) => (
+                        <div
+                          key={`pwd-strength-${index}`}
+                          className={`h-1.5 rounded ${passwordStrength.score > index ? passwordStrength.color : 'bg-gray-200'}`}
+                        />
+                      ))}
+                    </div>
+                    {!isPasswordLongEnough && (
+                      <p className="mt-2 text-sm text-red-600">Le mot de passe doit contenir au moins 6 caractères.</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div>
@@ -281,12 +333,17 @@ export default function InscriptionPage() {
                     required
                     minLength={6}
                     autoComplete="new-password"
-                    aria-invalid={Boolean(error)}
-                    aria-describedby={error ? 'inscription-error' : undefined}
+                    aria-invalid={Boolean(error) || (confirmPassword.length > 0 && !isConfirmPasswordValid)}
+                    aria-describedby={`${error ? 'inscription-error ' : ''}${confirmPassword.length > 0 && !isConfirmPasswordValid ? 'inscription-confirm-error' : ''}`.trim() || undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Répétez le mot de passe"
                   />
                 </div>
+                {confirmPassword.length > 0 && !isConfirmPasswordValid && (
+                  <p id="inscription-confirm-error" className="mt-2 text-sm text-red-600">
+                    Les mots de passe ne correspondent pas.
+                  </p>
+                )}
               </div>
 
               <div className="border-t pt-6 space-y-4">
@@ -346,6 +403,9 @@ export default function InscriptionPage() {
                       </button>
                     ))}
                   </div>
+                  {!hasAtLeastOneGoal && (
+                    <p className="mt-2 text-sm text-red-600">Sélectionne au moins un objectif.</p>
+                  )}
                 </div>
 
                 <div>
@@ -484,7 +544,7 @@ export default function InscriptionPage() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={!canSubmit}
                 className="w-full btn-primary py-3"
                 aria-busy={isSubmitting}
               >

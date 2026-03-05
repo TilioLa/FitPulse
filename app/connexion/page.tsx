@@ -9,6 +9,7 @@ import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 
 export default function ConnexionPage() {
+  const signupReminderKey = 'fitpulse_signup_check_email_pending'
   const router = useRouter()
   const { status } = useAuth()
   const [email, setEmail] = useState('')
@@ -16,6 +17,9 @@ export default function ConnexionPage() {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [signupStatus, setSignupStatus] = useState<string | null>(null)
+  const [showSignupReminder, setShowSignupReminder] = useState(false)
+  const [resendState, setResendState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [resendMessage, setResendMessage] = useState('')
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -26,7 +30,18 @@ export default function ConnexionPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
-    setSignupStatus(params.get('signup'))
+    const signup = params.get('signup')
+    const signupEmail = params.get('email')
+    setSignupStatus(signup)
+    if (signupEmail) {
+      setEmail((prev) => prev || signupEmail)
+    }
+    if (signup === 'check-email') {
+      setShowSignupReminder(true)
+      localStorage.setItem(signupReminderKey, 'true')
+    } else if (localStorage.getItem(signupReminderKey) === 'true') {
+      setShowSignupReminder(true)
+    }
     const errorCode = params.get('error_code') || params.get('error')
     const errorDescription = params.get('error_description')
 
@@ -55,6 +70,38 @@ export default function ConnexionPage() {
       }
     }
   }, [])
+
+  const handleResendConfirmation = async () => {
+    const targetEmail = email.trim().toLowerCase()
+    if (!targetEmail) {
+      setResendState('error')
+      setResendMessage("Renseigne d'abord ton email pour renvoyer l'email de confirmation.")
+      return
+    }
+
+    setResendState('loading')
+    setResendMessage('')
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const appUrl =
+        process.env.NEXT_PUBLIC_APP_URL ||
+        (typeof window !== 'undefined' ? window.location.origin : '')
+      const emailRedirectTo = appUrl ? `${appUrl.replace(/\/$/, '')}/connexion` : undefined
+      const { error: resendError } = await supabase.auth.resend({
+        type: 'signup',
+        email: targetEmail,
+        options: {
+          emailRedirectTo,
+        },
+      })
+      if (resendError) throw resendError
+      setResendState('success')
+      setResendMessage('Email de confirmation renvoyé. Vérifie aussi le dossier spams/indésirables.')
+    } catch {
+      setResendState('error')
+      setResendMessage("Impossible de renvoyer l'email pour le moment. Réessaie dans quelques instants.")
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -86,7 +133,9 @@ export default function ConnexionPage() {
 
       if (typeof window !== 'undefined') {
         localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
+        localStorage.removeItem(signupReminderKey)
       }
+      setShowSignupReminder(false)
       router.replace('/dashboard')
     } catch {
       setError('Impossible de se connecter pour le moment. Réessaie dans quelques secondes.')
@@ -111,10 +160,25 @@ export default function ConnexionPage() {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {signupStatus === 'check-email' && (
-                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg">
-                  Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
-                  Pense aussi à vérifier ton dossier spams/indésirables.
+              {showSignupReminder && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg" role="status" aria-live="polite">
+                  <p>
+                    Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
+                    Pense aussi à vérifier ton dossier spams/indésirables.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleResendConfirmation}
+                    disabled={resendState === 'loading'}
+                    className="mt-3 btn-secondary px-4 py-2 text-sm disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {resendState === 'loading' ? 'Renvoi en cours...' : "Renvoyer l'email de confirmation"}
+                  </button>
+                  {resendMessage && (
+                    <p className={`mt-2 text-sm ${resendState === 'error' ? 'text-red-700' : 'text-emerald-800'}`}>
+                      {resendMessage}
+                    </p>
+                  )}
                 </div>
               )}
               {error && (
