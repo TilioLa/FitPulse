@@ -15,11 +15,19 @@ export default function Hero() {
             Avancez avec un plan simple et mesurable.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 reveal reveal-2">
-            <Link href="/inscription" className="btn-primary bg-white text-primary-600 hover:bg-primary-50 text-lg px-8 py-4 flex items-center space-x-2">
+            <Link
+              href="/inscription"
+              data-cta-id="hero_primary_signup"
+              className="btn-primary bg-white text-primary-600 hover:bg-primary-50 text-lg px-8 py-4 flex items-center space-x-2"
+            >
               <span>Commencez gratuitement</span>
               <ArrowRight className="h-5 w-5" />
             </Link>
-            <Link href="/programmes" className="btn-secondary border-white text-lg px-8 py-4">
+            <Link
+              href="/programmes"
+              data-cta-id="hero_secondary_programs"
+              className="btn-secondary border-white text-lg px-8 py-4"
+            >
               Découvrir les programmes
             </Link>
           </div>

@@ -69,7 +69,11 @@ export default function Testimonials() {
         </div>
 
         <div className="mt-10 text-center">
-          <Link href="/inscription" className="btn-primary inline-flex items-center gap-2 px-6 py-3">
+          <Link
+            href="/inscription"
+            data-cta-id="testimonials_join"
+            className="btn-primary inline-flex items-center gap-2 px-6 py-3"
+          >
             Rejoindre la communauté
           </Link>
         </div>

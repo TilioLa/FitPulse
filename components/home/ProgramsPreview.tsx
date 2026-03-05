@@ -54,6 +54,7 @@ export default function ProgramsPreview() {
               </div>
               <Link
                 href="/programmes"
+                data-cta-id={`program_preview_${program.slug}`}
                 className="inline-flex items-center text-primary-600 font-semibold hover:text-primary-700 group-hover:translate-x-1 transition-transform"
               >
                 En savoir plus
@@ -64,7 +65,11 @@ export default function ProgramsPreview() {
         </div>
 
         <div className="text-center">
-          <Link href="/programmes" className="btn-primary text-lg px-8 py-4 inline-flex items-center space-x-2">
+          <Link
+            href="/programmes"
+            aria-label="Voir tous les programmes FitPulse"
+            className="btn-primary text-lg px-8 py-4 inline-flex items-center space-x-2"
+          >
             <span>Voir tous les programmes</span>
             <ArrowRight className="h-5 w-5" />
           </Link>

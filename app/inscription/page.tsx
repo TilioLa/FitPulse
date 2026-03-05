@@ -11,6 +11,7 @@ import { programs } from '@/data/programs'
 import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
 import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
+import { trackUxEvent } from '@/lib/ux-events'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -80,26 +81,31 @@ export default function InscriptionPage() {
     e.preventDefault()
     setError('')
     setIsSubmitting(true)
+    trackUxEvent('cta_click', { location: 'inscription', cta: 'signup_submit' })
 
     if (password !== confirmPassword) {
+      trackUxEvent('auth_validation_error', { page: 'inscription', reason: 'password_mismatch' })
       setError('Les mots de passe ne correspondent pas')
       setIsSubmitting(false)
       return
     }
 
     if (password.length < 6) {
+      trackUxEvent('auth_validation_error', { page: 'inscription', reason: 'password_too_short' })
       setError('Le mot de passe doit contenir au moins 6 caractères')
       setIsSubmitting(false)
       return
     }
 
     if (goals.length === 0) {
+      trackUxEvent('auth_validation_error', { page: 'inscription', reason: 'missing_goal' })
       setError('Sélectionne au moins un objectif pour personnaliser ton plan')
       setIsSubmitting(false)
       return
     }
 
     if (!emailPattern.test(normalizedEmail)) {
+      trackUxEvent('auth_validation_error', { page: 'inscription', reason: 'invalid_email' })
       setError('Renseigne une adresse email valide')
       setIsSubmitting(false)
       return
@@ -164,6 +170,7 @@ export default function InscriptionPage() {
       if (signInError) {
         const message = (signInError.message || '').toLowerCase()
         if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+          trackUxEvent('auth_pending_confirmation', { page: 'inscription' })
           router.replace(`/connexion?signup=check-email&email=${encodeURIComponent(normalizedEmail)}`)
           return
         }
@@ -175,7 +182,9 @@ export default function InscriptionPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
       }
+      trackUxEvent('auth_success', { method: 'password', page: 'inscription' })
     } catch (err) {
+      trackUxEvent('auth_error', { page: 'inscription' })
       setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
       setIsSubmitting(false)
       return
@@ -196,6 +205,9 @@ export default function InscriptionPage() {
               </h1>
               <p className="text-gray-600">
                 Commencez votre parcours fitness dès aujourd&apos;hui
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                Gratuit, sans engagement. Ton plan est prêt en quelques minutes.
               </p>
             </div>
 
@@ -547,6 +559,7 @@ export default function InscriptionPage() {
                 disabled={!canSubmit}
                 className="w-full btn-primary py-3"
                 aria-busy={isSubmitting}
+                data-cta-id="signup_submit"
               >
                 {isSubmitting ? 'Création du compte...' : 'Créer mon compte'}
               </button>
@@ -555,7 +568,12 @@ export default function InscriptionPage() {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Déjà un compte ?{' '}
-                <Link href="/connexion" className="text-primary-600 hover:text-primary-700 font-semibold">
+                <Link
+                  href="/connexion"
+                  className="text-primary-600 hover:text-primary-700 font-semibold"
+                  data-cta-id="signup_to_login"
+                  onClick={() => trackUxEvent('cta_click', { location: 'inscription', cta: 'to_login' })}
+                >
                   Se connecter
                 </Link>
               </p>

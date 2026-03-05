@@ -7,6 +7,7 @@ import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/components/SupabaseAuthProvider'
+import { trackUxEvent } from '@/lib/ux-events'
 
 export default function ConnexionPage() {
   const signupReminderKey = 'fitpulse_signup_check_email_pending'
@@ -16,7 +17,6 @@ export default function ConnexionPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [signupStatus, setSignupStatus] = useState<string | null>(null)
   const [showSignupReminder, setShowSignupReminder] = useState(false)
   const [resendState, setResendState] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
   const [resendMessage, setResendMessage] = useState('')
@@ -32,7 +32,6 @@ export default function ConnexionPage() {
     const params = new URLSearchParams(window.location.search)
     const signup = params.get('signup')
     const signupEmail = params.get('email')
-    setSignupStatus(signup)
     if (signupEmail) {
       setEmail((prev) => prev || signupEmail)
     }
@@ -135,6 +134,7 @@ export default function ConnexionPage() {
         localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
         localStorage.removeItem(signupReminderKey)
       }
+      trackUxEvent('auth_success', { method: 'password', page: 'connexion' })
       setShowSignupReminder(false)
       router.replace('/dashboard')
     } catch {
@@ -156,6 +156,9 @@ export default function ConnexionPage() {
               </h1>
               <p className="text-gray-600">
                 Connectez-vous à votre compte FitPulse
+              </p>
+              <p className="mt-2 text-xs text-gray-500">
+                Reprends tes séances, ton historique et tes programmes en un clic.
               </p>
             </div>
 
@@ -236,6 +239,8 @@ export default function ConnexionPage() {
                 disabled={isSubmitting}
                 className="w-full btn-primary py-3"
                 aria-busy={isSubmitting}
+                data-cta-id="login_submit"
+                onClick={() => trackUxEvent('cta_click', { location: 'connexion', cta: 'login_submit' })}
               >
                 {isSubmitting ? 'Connexion...' : 'Se connecter'}
               </button>
@@ -244,7 +249,12 @@ export default function ConnexionPage() {
             <div className="mt-6 text-center">
               <p className="text-gray-600">
                 Pas encore de compte ?{' '}
-                <Link href="/inscription" className="text-primary-600 hover:text-primary-700 font-semibold">
+                <Link
+                  href="/inscription"
+                  className="text-primary-600 hover:text-primary-700 font-semibold"
+                  data-cta-id="login_to_signup"
+                  onClick={() => trackUxEvent('cta_click', { location: 'connexion', cta: 'to_signup' })}
+                >
                   Créer un compte
                 </Link>
               </p>
