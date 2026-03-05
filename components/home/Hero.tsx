@@ -23,6 +23,9 @@ export default function Hero() {
               Découvrir les programmes
             </Link>
           </div>
+          <p className="text-sm text-primary-100 mb-10 reveal reveal-2">
+            Sans carte bancaire. Configure ton premier plan en moins de 2 minutes.
+          </p>
           
           {/* Features icons */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
@@ -46,6 +49,21 @@ export default function Hero() {
               </div>
               <h3 className="font-semibold text-lg mb-2">Suivi en temps réel</h3>
               <p className="text-primary-100 text-sm">Suivez vos progrès au jour le jour</p>
+            </div>
+          </div>
+
+          <div className="mt-10 grid grid-cols-3 gap-3 max-w-2xl mx-auto reveal reveal-3">
+            <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-4">
+              <div className="text-2xl font-bold">10k+</div>
+              <div className="text-xs text-primary-100 mt-1">Utilisateurs actifs</div>
+            </div>
+            <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-4">
+              <div className="text-2xl font-bold">4.8/5</div>
+              <div className="text-xs text-primary-100 mt-1">Satisfaction moyenne</div>
+            </div>
+            <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-4">
+              <div className="text-2xl font-bold">26 min</div>
+              <div className="text-xs text-primary-100 mt-1">Durée médiane séance</div>
             </div>
           </div>
         </div>

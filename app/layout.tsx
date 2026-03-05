@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import PwaRegister from '@/components/PwaRegister'
+import BackToTop from '@/components/BackToTop'
 
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
@@ -38,6 +39,7 @@ export default function RootLayout({
         <div id="main-content">
           <Providers>{children}</Providers>
         </div>
+        <BackToTop />
       </body>
     </html>
   )

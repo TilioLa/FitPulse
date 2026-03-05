@@ -51,13 +51,14 @@ export default function FAQ() {
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-            <div key={index} className="card">
+            <div key={faq.question} className="card">
               <button
                 type="button"
                 className="w-full text-left flex items-center justify-between"
                 onClick={() => toggleFAQ(index)}
                 aria-expanded={openIndex === index}
                 aria-controls={`faq-panel-${index}`}
+                id={`faq-trigger-${index}`}
               >
                 <span className="text-lg font-semibold text-gray-900 pr-8">
                   {faq.question}
@@ -69,9 +70,14 @@ export default function FAQ() {
                 )}
               </button>
               {openIndex === index && (
-                <p id={`faq-panel-${index}`} className="mt-4 text-gray-600 leading-relaxed">
-                  {faq.answer}
-                </p>
+                <div
+                  id={`faq-panel-${index}`}
+                  className="mt-4 text-gray-600 leading-relaxed"
+                  role="region"
+                  aria-labelledby={`faq-trigger-${index}`}
+                >
+                  <p>{faq.answer}</p>
+                </div>
               )}
             </div>
           ))}

@@ -84,6 +84,9 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
           <p>&copy; {new Date().getFullYear()} FitPulse. Tous droits réservés.</p>
+          <a href="#main-content" className="mt-2 inline-flex text-xs text-primary-300 hover:text-primary-200">
+            Retour en haut
+          </a>
         </div>
       </div>
     </footer>
