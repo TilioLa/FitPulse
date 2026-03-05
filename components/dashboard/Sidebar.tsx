@@ -50,7 +50,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
         <span className="text-xl font-bold text-gray-900">FitPulse</span>
       </div>
 
-      <nav className="hidden lg:grid lg:grid-cols-1 gap-2 lg:space-y-1">
+      <nav className="hidden lg:grid lg:grid-cols-1 gap-2 lg:space-y-1" aria-label="Navigation principale dashboard">
         {menuItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
@@ -59,6 +59,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
               <Link
                 key={item.id}
                 href={item.href}
+                aria-current={isActive ? 'page' : undefined}
                 className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
                   isActive
                     ? 'bg-primary-600 text-white'
@@ -73,7 +74,9 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
           return (
             <button
               key={item.id}
+              type="button"
               onClick={() => setActiveSection(item.id)}
+              aria-current={isActive ? 'page' : undefined}
               className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
                 isActive
                   ? 'bg-primary-600 text-white shadow-sm'
@@ -89,13 +92,16 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
 
       <div className="hidden lg:grid mt-4 lg:mt-8 pt-3 lg:pt-4 border-t grid-cols-2 gap-2 lg:space-y-2 lg:grid-cols-1">
         <button
+          type="button"
           onClick={handleLogout}
           className="w-full flex items-center justify-center lg:justify-start space-x-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
         >
           <span className="text-sm font-medium">{t('logout')}</span>
         </button>
         <button
+          type="button"
           onClick={() => setActiveSection('settings')}
+          aria-current={activeSection === 'settings' ? 'page' : undefined}
           className={`w-full grid grid-cols-[20px_1fr] items-center gap-2 lg:gap-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg transition-colors text-left ${
             activeSection === 'settings'
               ? 'bg-primary-600 text-white'
@@ -128,6 +134,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
             </div>
           </div>
           <button
+            type="button"
             onClick={handleLogout}
             className="h-9 w-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
             aria-label="Déconnexion"

@@ -163,7 +163,7 @@ export default function InscriptionPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                <div id="inscription-error" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
                   {error}
                 </div>
               )}
@@ -179,6 +179,9 @@ export default function InscriptionPage() {
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
+                    onBlur={() => setName((prev) => prev.trim())}
+                    autoComplete="name"
+                    aria-describedby={error ? 'inscription-error' : undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Votre nom"
                   />
@@ -196,7 +199,12 @@ export default function InscriptionPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
+                    onBlur={() => setEmail((prev) => prev.trim())}
                     required
+                    autoComplete="email"
+                    inputMode="email"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'inscription-error' : undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="votre.email@example.com"
                   />
@@ -212,6 +220,10 @@ export default function InscriptionPage() {
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  onBlur={() => setPhone((prev) => prev.trim())}
+                  autoComplete="tel"
+                  inputMode="tel"
+                  aria-describedby={error ? 'inscription-error' : undefined}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                   placeholder="+33 6 12 34 56 78"
                 />
@@ -230,6 +242,9 @@ export default function InscriptionPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'inscription-error' : undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Minimum 6 caractères"
                   />
@@ -249,6 +264,9 @@ export default function InscriptionPage() {
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     required
                     minLength={6}
+                    autoComplete="new-password"
+                    aria-invalid={Boolean(error)}
+                    aria-describedby={error ? 'inscription-error' : undefined}
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                     placeholder="Répétez le mot de passe"
                   />
@@ -306,6 +324,7 @@ export default function InscriptionPage() {
                             ? 'bg-primary-600 text-white border-primary-600'
                             : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
                         }`}
+                        aria-pressed={goals.includes(goalOption)}
                       >
                         {goalOption}
                       </button>
@@ -330,6 +349,7 @@ export default function InscriptionPage() {
                             ? 'bg-primary-600 text-white border-primary-600'
                             : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
                         }`}
+                        aria-pressed={focusZones.includes(zone)}
                       >
                         {zone}
                       </button>
@@ -354,6 +374,7 @@ export default function InscriptionPage() {
                             ? 'bg-red-500 text-white border-red-500'
                             : 'bg-white text-gray-700 border-gray-300 hover:border-red-300'
                         }`}
+                        aria-pressed={avoidZones.includes(zone)}
                       >
                         {zone}
                       </button>
@@ -362,8 +383,9 @@ export default function InscriptionPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
+                  <label htmlFor="inscription-level" className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
                   <select
+                    id="inscription-level"
                     value={level}
                     onChange={(e) => setLevel(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -375,8 +397,9 @@ export default function InscriptionPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
+                  <label htmlFor="inscription-sessions" className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
                   <input
+                    id="inscription-sessions"
                     type="range"
                     min={1}
                     max={7}
@@ -404,6 +427,7 @@ export default function InscriptionPage() {
                             ? 'bg-primary-600 text-white border-primary-600'
                             : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
                         }`}
+                        aria-pressed={equipment.includes(item)}
                       >
                         {item}
                       </button>
@@ -446,6 +470,7 @@ export default function InscriptionPage() {
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full btn-primary py-3"
+                aria-busy={isSubmitting}
               >
                 {isSubmitting ? 'Création du compte...' : 'Créer mon compte'}
               </button>
