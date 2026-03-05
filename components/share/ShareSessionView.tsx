@@ -97,6 +97,7 @@ export default function ShareSessionView() {
 
       <div className="card-soft">
         <h2 className="text-2xl font-semibold text-gray-900">{session.workoutName}</h2>
+        <p className="mt-1 text-sm text-gray-500">Compare tes stats et retrouve les groupes musculaires les plus sollicités.</p>
         <div className="mt-4 grid grid-cols-3 gap-4 text-sm">
           <div className="rounded-lg bg-gray-50 px-3 py-2">
             <div className="text-xs text-gray-500">Durée</div>
@@ -134,9 +135,14 @@ export default function ShareSessionView() {
       </div>
 
       <div className="text-center">
-        <Link href="/" className="btn-primary">
-          Rejoindre FitPulse
-        </Link>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link href="/" className="btn-primary">
+            Rejoindre FitPulse
+          </Link>
+          <Link href="/share" className="btn-secondary">
+            Voir d&apos;autres partages
+          </Link>
+        </div>
       </div>
     </div>
   )

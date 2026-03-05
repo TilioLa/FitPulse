@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Footer from '@/components/Footer'
-import { Mail, Phone, MapPin } from 'lucide-react'
+import { Mail } from 'lucide-react'
 import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ContactPage() {
@@ -28,29 +28,36 @@ export default function ContactPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
               <div className="card-soft">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-6">Envoyer un message</h2>
+                <h2 className="text-2xl font-semibold text-gray-900 mb-2">Envoyer un message</h2>
+                <p className="text-sm text-gray-500 mb-6">Réponse moyenne sous 24 à 48h ouvrées.</p>
                 <form className="space-y-4" onSubmit={handleSubmit}>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
+                    <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
                     <input
+                      id="contact-name"
                       type="text"
                       required
+                      autoComplete="name"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Votre nom"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
                     <input
+                      id="contact-email"
                       type="email"
                       required
+                      autoComplete="email"
+                      inputMode="email"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="votre.email@example.com"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
+                    <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 mb-2">Sujet</label>
                     <input
+                      id="contact-subject"
                       type="text"
                       required
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -58,8 +65,9 @@ export default function ContactPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                    <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-2">Message</label>
                     <textarea
+                      id="contact-message"
                       required
                       rows={5}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -84,7 +92,9 @@ export default function ContactPage() {
                 <div className="space-y-3 text-gray-600">
                   <div className="flex items-center space-x-3">
                     <Mail className="h-5 w-5 text-primary-600" />
-                    <span>fitpulset@gmail.com</span>
+                    <a href="mailto:fitpulset@gmail.com" className="hover:text-primary-700">
+                      fitpulset@gmail.com
+                    </a>
                   </div>
                 </div>
               </div>
