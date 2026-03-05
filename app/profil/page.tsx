@@ -78,6 +78,7 @@ export default function ProfilPage() {
               </div>
               <div className="text-right">
                 <button
+                  type="button"
                   onClick={() => router.push('/dashboard')}
                   className="btn-primary"
                 >
@@ -140,17 +141,25 @@ export default function ProfilPage() {
             <div className="card bg-gradient-to-br from-accent-50 to-primary-50">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Prochaine étape</h3>
               <p className="text-gray-600">Planifie ta prochaine séance pour garder ta streak.</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <button type="button" onClick={() => router.push('/dashboard?view=session')} className="btn-primary px-4 py-2 text-sm">
+                  Lancer une séance
+                </button>
+                <button type="button" onClick={() => router.push('/dashboard?view=programs')} className="btn-secondary px-4 py-2 text-sm">
+                  Choisir un programme
+                </button>
+              </div>
             </div>
           </div>
 
           {/* Historique récent */}
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <section className="bg-white rounded-xl shadow-lg p-8" aria-labelledby="profile-history-title">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
               <Calendar className="h-6 w-6 mr-2 text-primary-600" />
-              Historique récent
+              <span id="profile-history-title">Historique récent</span>
             </h2>
             <HistoryList />
-          </div>
+          </section>
 
           </div>
         </main>

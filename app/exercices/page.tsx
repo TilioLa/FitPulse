@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { useAuth } from '@/components/SupabaseAuthProvider'
@@ -35,6 +35,7 @@ export default function ExercicesPage() {
   const [goal, setGoal] = useState<'all' | ExerciseGoal>('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -82,6 +83,20 @@ export default function ExercicesPage() {
       return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal
     })
   }, [allExercises, query, equipment, muscle, level, goal])
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === '/' && document.activeElement !== searchInputRef.current) {
+        event.preventDefault()
+        searchInputRef.current?.focus()
+      }
+      if (event.key === 'Escape') {
+        setQuery('')
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [])
 
   const goalOptions = useMemo(() => {
     const set = new Set<ExerciseGoal>()
@@ -212,6 +227,7 @@ export default function ExercicesPage() {
               <p className="text-sm text-gray-500 mt-1">Bibliothèque complète, stats et favoris.</p>
             </div>
             <button
+              type="button"
               onClick={handleAddCustom}
               className="btn-secondary px-4 py-2 text-sm flex items-center gap-2"
             >
@@ -357,6 +373,7 @@ export default function ExercicesPage() {
                       <div className="flex flex-wrap gap-2">
                         {relatedExercises.map((item) => (
                           <button
+                            type="button"
                             key={item.id}
                             onClick={() => setSelected(item)}
                             className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
@@ -392,7 +409,25 @@ export default function ExercicesPage() {
                 </div>
 
                 <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{filtered.length} exercice{filtered.length > 1 ? 's' : ''}</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEquipment('all')
+                        setMuscle('all')
+                        setLevel('all')
+                        setGoal('all')
+                        setQuery('')
+                      }}
+                      className="text-primary-600 hover:text-primary-700"
+                    >
+                      Réinitialiser les filtres
+                    </button>
+                  </div>
+                  <label htmlFor="exercises-filter-equipment" className="sr-only">Filtrer par matériel</label>
                   <select
+                    id="exercises-filter-equipment"
                     value={equipment}
                     onChange={(e) => setEquipment(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -403,7 +438,9 @@ export default function ExercicesPage() {
                       </option>
                     ))}
                   </select>
+                  <label htmlFor="exercises-filter-muscle" className="sr-only">Filtrer par muscle</label>
                   <select
+                    id="exercises-filter-muscle"
                     value={muscle}
                     onChange={(e) => setMuscle(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -413,8 +450,10 @@ export default function ExercicesPage() {
                         {opt === 'all' ? 'Tous les muscles' : opt}
                       </option>
                     ))}
-                    </select>
+                  </select>
+                  <label htmlFor="exercises-filter-level" className="sr-only">Filtrer par niveau</label>
                   <select
+                    id="exercises-filter-level"
                     value={level}
                     onChange={(e) => setLevel(e.target.value as 'all' | ExerciseLevel)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -424,7 +463,9 @@ export default function ExercicesPage() {
                     <option value="intermediate">Intermédiaire</option>
                     <option value="advanced">Avancé</option>
                   </select>
+                  <label htmlFor="exercises-filter-goal" className="sr-only">Filtrer par objectif</label>
                   <select
+                    id="exercises-filter-goal"
                     value={goal}
                     onChange={(e) => setGoal(e.target.value as 'all' | ExerciseGoal)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
@@ -448,12 +489,16 @@ export default function ExercicesPage() {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
+                      id="exercises-search"
+                      ref={searchInputRef}
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       placeholder="Rechercher un exercice"
+                      aria-label="Rechercher un exercice"
                       className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
                     />
                   </div>
+                  <p className="text-[11px] text-gray-500">Astuce: touche `/` pour rechercher rapidement.</p>
                 </div>
 
                 <div className="mt-4 rounded-2xl border border-gray-200 bg-white">
@@ -463,6 +508,7 @@ export default function ExercicesPage() {
                   <div className="max-h-[520px] overflow-y-auto pb-2">
                     {filtered.map((item) => (
                       <button
+                        type="button"
                         key={item.id}
                         onClick={() => setSelected(item)}
                         className={`w-full text-left px-4 py-2 transition-colors ${

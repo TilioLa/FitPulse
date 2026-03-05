@@ -19,12 +19,14 @@ export default function ProgramsList() {
   const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
   const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilité']
 
-  const filteredPrograms = allPrograms.filter(program => {
-    const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
-    const equipmentMatch = selectedEquipment === 'all' || program.equipment === selectedEquipment
-    const bodyPartMatch = selectedBodyPart === 'all' || program.bodyParts.includes(selectedBodyPart)
-    return levelMatch && equipmentMatch && bodyPartMatch
-  })
+  const filteredPrograms = useMemo(() => {
+    return allPrograms.filter((program) => {
+      const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
+      const equipmentMatch = selectedEquipment === 'all' || program.equipment === selectedEquipment
+      const bodyPartMatch = selectedBodyPart === 'all' || program.bodyParts.includes(selectedBodyPart)
+      return levelMatch && equipmentMatch && bodyPartMatch
+    })
+  }, [selectedBodyPart, selectedEquipment, selectedLevel])
 
   const { recommendedProgram, showQuickStart } = useMemo(() => {
     if (typeof window === 'undefined') {
@@ -79,15 +81,34 @@ export default function ProgramsList() {
 
       {/* Filtres */}
       <div className="card-soft mb-8">
-        <div className="flex items-center space-x-2 mb-6">
-          <Filter className="h-5 w-5 text-primary-600" />
-          <h2 className="text-xl font-semibold text-gray-900">Filtres</h2>
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center space-x-2">
+            <Filter className="h-5 w-5 text-primary-600" />
+            <h2 className="text-xl font-semibold text-gray-900">Filtres</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-500">
+              {filteredPrograms.length} programme{filteredPrograms.length > 1 ? 's' : ''}
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedLevel('all')
+                setSelectedEquipment('all')
+                setSelectedBodyPart('all')
+              }}
+              className="btn-secondary px-3 py-1.5 text-xs"
+            >
+              Réinitialiser
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
+            <label htmlFor="programs-filter-level" className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
             <select
+              id="programs-filter-level"
               value={selectedLevel}
               onChange={(e) => setSelectedLevel(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -101,8 +122,9 @@ export default function ProgramsList() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Matériel</label>
+            <label htmlFor="programs-filter-equipment" className="block text-sm font-medium text-gray-700 mb-2">Matériel</label>
             <select
+              id="programs-filter-equipment"
               value={selectedEquipment}
               onChange={(e) => setSelectedEquipment(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -116,8 +138,9 @@ export default function ProgramsList() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Zone du corps</label>
+            <label htmlFor="programs-filter-bodypart" className="block text-sm font-medium text-gray-700 mb-2">Zone du corps</label>
             <select
+              id="programs-filter-bodypart"
               value={selectedBodyPart}
               onChange={(e) => setSelectedBodyPart(e.target.value)}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
