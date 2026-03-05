@@ -14,10 +14,10 @@ test('inscription validates password confirmation', async ({ page }) => {
   await page.getByLabel('Email *').fill('qa-fitpulse@example.com')
   await page.getByLabel(/^Mot de passe \*$/).fill('abcdef')
   await page.getByLabel(/^Confirmer le mot de passe \*$/).fill('abcdeg')
-  await page.getByRole('button', { name: /créer mon compte/i }).click()
+  await expect(page.getByRole('button', { name: /créer mon compte/i })).toBeDisabled()
 
   await expect(
-    page.getByRole('alert').filter({ hasText: /mots de passe ne correspondent pas/i })
+    page.getByText(/mots de passe ne correspondent pas/i)
   ).toBeVisible()
 })
 
