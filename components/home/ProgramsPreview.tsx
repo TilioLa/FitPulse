@@ -5,7 +5,7 @@ import { labelize } from '@/lib/labels'
 
 export default function ProgramsPreview() {
   return (
-    <section className="py-20 bg-white">
+    <section id="programs-preview" aria-label="Aperçu programmes" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -13,6 +13,9 @@ export default function ProgramsPreview() {
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
             Choisissez le programme qui correspond à votre niveau et à vos objectifs
+          </p>
+          <p className="mt-3 text-sm text-gray-500">
+            Mise en route rapide: choisis un plan, lance ta première séance, ajuste ensuite selon ton rythme.
           </p>
         </div>
 
@@ -65,6 +68,7 @@ export default function ProgramsPreview() {
             <span>Voir tous les programmes</span>
             <ArrowRight className="h-5 w-5" />
           </Link>
+          <p className="mt-3 text-xs text-gray-500">Tu peux changer de programme à tout moment.</p>
         </div>
       </div>
     </section>

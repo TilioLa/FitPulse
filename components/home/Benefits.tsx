@@ -35,7 +35,7 @@ const benefits = [
 
 export default function Benefits() {
   return (
-    <section className="py-20 bg-white">
+    <section id="benefits" aria-label="Avantages FitPulse" className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4 reveal">
@@ -44,6 +44,25 @@ export default function Benefits() {
           <p className="text-xl text-gray-600 max-w-2xl mx-auto reveal reveal-1">
             Tout ce dont vous avez besoin pour transformer votre corps et atteindre vos objectifs sportifs.
           </p>
+        </div>
+
+        <div className="mb-10 grid grid-cols-2 md:grid-cols-4 gap-3 reveal reveal-2">
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center">
+            <div className="text-lg font-bold text-gray-900">24/7</div>
+            <div className="text-xs text-gray-600">Accès aux séances</div>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center">
+            <div className="text-lg font-bold text-gray-900">+500</div>
+            <div className="text-xs text-gray-600">Exercices guidés</div>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center">
+            <div className="text-lg font-bold text-gray-900">Débutant</div>
+            <div className="text-xs text-gray-600">à avancé</div>
+          </div>
+          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-center">
+            <div className="text-lg font-bold text-gray-900">0€</div>
+            <div className="text-xs text-gray-600">Actuellement gratuit</div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">

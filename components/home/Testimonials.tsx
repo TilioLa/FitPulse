@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Star, Quote } from 'lucide-react'
 
 const testimonials = [
@@ -33,7 +34,7 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="py-20 bg-gray-50">
+    <section id="testimonials" aria-label="Témoignages utilisateurs" className="py-20 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
@@ -65,6 +66,12 @@ export default function Testimonials() {
               </p>
             </div>
           ))}
+        </div>
+
+        <div className="mt-10 text-center">
+          <Link href="/inscription" className="btn-primary inline-flex items-center gap-2 px-6 py-3">
+            Rejoindre la communauté
+          </Link>
         </div>
       </div>
     </section>

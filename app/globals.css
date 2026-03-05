@@ -98,6 +98,16 @@
   }
 }
 
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
 .toast {
   animation: toast-in 160ms ease-out;
 }
@@ -116,6 +126,16 @@
 
 .reveal-3 {
   animation-delay: 240ms;
+}
+
+.skeleton {
+  @apply rounded-lg bg-gray-200;
+  animation: pulse-soft 1.2s ease-in-out infinite;
+}
+
+.skeleton-line {
+  @apply h-4 rounded bg-gray-200;
+  animation: pulse-soft 1.2s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
