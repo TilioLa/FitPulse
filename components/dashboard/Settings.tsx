@@ -256,7 +256,7 @@ export default function Settings() {
   }, [user?.email, user?.name, user?.phone])
 
   const updateA11y = (patch: Partial<A11yPreferences>) => {
-    setA11yPrefs((prev) => {
+    setA11yPrefs((prev: A11yPreferences) => {
       const next = { ...prev, ...patch }
       writeA11yPreferences(next)
       return next
