@@ -101,6 +101,13 @@ type SessionHint = {
 }
 
 const lastExerciseKey = (workoutId: string) => `fitpulse_last_exercise_index_${workoutId}`
+const pendingSyncCountKey = 'fitpulse_pending_sync_count'
+
+const setPendingSyncCount = (count: number) => {
+  const next = Math.max(0, Math.floor(count))
+  localStorage.setItem(pendingSyncCountKey, String(next))
+  window.dispatchEvent(new Event('fitpulse-sync-queue'))
+}
 
 export default function MySessions() {
   const { push } = useToast()
@@ -172,9 +179,11 @@ export default function MySessions() {
     writeLocalCurrentWorkout(snapshot as unknown as Record<string, unknown>)
     if (!isOnline) {
       setHasPendingCloudSync(true)
+      setPendingSyncCount(1)
     } else if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
       setHasPendingCloudSync(false)
+      setPendingSyncCount(0)
     }
     setSaveState('saved')
     setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))
@@ -185,6 +194,7 @@ export default function MySessions() {
     if (!isOnline) return
     saveSnapshotNow()
     setHasPendingCloudSync(false)
+    setPendingSyncCount(0)
     push('Synchronisation lancée.', 'success')
   }
 
@@ -372,6 +382,7 @@ export default function MySessions() {
     reconnectSyncInFlightRef.current = true
     saveSnapshotNow(workout)
     setHasPendingCloudSync(false)
+    setPendingSyncCount(0)
     setTimeout(() => {
       reconnectSyncInFlightRef.current = false
     }, 500)
@@ -483,10 +494,12 @@ export default function MySessions() {
       const now = Date.now()
       if (!isOnline) {
         setHasPendingCloudSync(true)
+        setPendingSyncCount(1)
       } else if (user?.id && now - lastCloudPersistRef.current > 10_000) {
         lastCloudPersistRef.current = now
         void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
         setHasPendingCloudSync(false)
+        setPendingSyncCount(0)
       }
       setSaveState('saved')
       setLastSavedAt(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }))

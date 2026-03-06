@@ -12,6 +12,7 @@ import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } 
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalSettings } from '@/lib/user-state-store'
 import { useToast } from '@/components/ui/ToastProvider'
+import { addNotification } from '@/lib/in-app-notifications'
 
 type FeedItem = {
   id: string
@@ -99,6 +100,7 @@ export default function Feed() {
   const [nextAction, setNextAction] = useState<NextAction | null>(null)
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
+  const [onboardingCollapsed, setOnboardingCollapsed] = useState(false)
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -521,12 +523,34 @@ export default function Feed() {
   }, [entitlement.plan, entitlement.effectivePlan, entitlement.trialDaysLeft, entitlement.isTrialActive])
 
   useEffect(() => {
+    try {
+      setOnboardingCollapsed(localStorage.getItem('fitpulse_onboarding_collapsed') === 'true')
+    } catch {
+      setOnboardingCollapsed(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('fitpulse_onboarding_collapsed', onboardingCollapsed ? 'true' : 'false')
+    } catch {
+      // ignore
+    }
+  }, [onboardingCollapsed])
+
+  useEffect(() => {
     if (onboardingSteps.length === 0) return
     const allDone = onboardingSteps.every((step) => step.done)
     if (!allDone) return
     const key = 'fitpulse_onboarding_complete_toast_v1'
     if (localStorage.getItem(key) === 'true') return
     push('Bravo, onboarding terminé. Tu es prêt pour progresser.', 'success')
+    addNotification({
+      level: 'success',
+      title: 'Onboarding terminé',
+      body: 'Ton espace est prêt. Continue avec ta progression hebdomadaire.',
+      href: '/dashboard?view=progress',
+    })
     localStorage.setItem(key, 'true')
   }, [onboardingSteps, push])
 
@@ -585,24 +609,43 @@ export default function Feed() {
 
       {onboardingSteps.some((step) => !step.done) && (
         <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
-          <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Onboarding</div>
-          <div className="mt-1 text-base font-semibold text-emerald-900">
-            Progression: {onboardingSteps.filter((step) => step.done).length}/{onboardingSteps.length}
-          </div>
-          <div className="mt-3 space-y-2">
-            {onboardingSteps.map((step) => (
-              <div key={step.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2 border border-emerald-100">
-                <div className={`text-sm ${step.done ? 'text-emerald-800' : 'text-gray-700'}`}>
-                  {step.done ? '✓ ' : ''}{step.label}
-                </div>
-                {!step.done && (
-                  <Link href={step.href} className="text-xs font-semibold text-emerald-700 underline underline-offset-2">
-                    {step.cta}
-                  </Link>
-                )}
+          <div className="flex items-center justify-between gap-2">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Onboarding</div>
+              <div className="mt-1 text-base font-semibold text-emerald-900">
+                Progression: {onboardingSteps.filter((step) => step.done).length}/{onboardingSteps.length}
               </div>
-            ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setOnboardingCollapsed((prev) => !prev)}
+              className="rounded-lg border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold text-emerald-700"
+            >
+              {onboardingCollapsed ? 'Afficher' : 'Réduire'}
+            </button>
           </div>
+          {!onboardingCollapsed && (
+            <div className="mt-3 space-y-2">
+              {onboardingSteps.map((step) => (
+                <div key={step.id} className="flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2 border border-emerald-100">
+                  <div className={`text-sm ${step.done ? 'text-emerald-800' : 'text-gray-700'}`}>
+                    {step.done ? '✓ ' : ''}{step.label}
+                  </div>
+                  {!step.done && (
+                    <Link href={step.href} className="text-xs font-semibold text-emerald-700 underline underline-offset-2">
+                      {step.cta}
+                    </Link>
+                  )}
+                </div>
+              ))}
+              <Link
+                href="/dashboard?view=progress"
+                className="mt-2 inline-flex rounded-lg border border-emerald-200 bg-white px-3 py-2 text-xs font-semibold text-emerald-800"
+              >
+                Voir ma progression hebdo
+              </Link>
+            </div>
+          )}
         </div>
       )}
 

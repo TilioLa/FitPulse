@@ -1,14 +1,14 @@
 'use client'
 
-import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIcon, Sparkles, History } from 'lucide-react'
+import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIcon, History, BarChart3 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useI18n } from '@/components/I18nProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
-
-type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
+import type { DashboardSection } from '@/lib/dashboard-navigation'
+import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 type MenuItem = {
   id: DashboardSection
@@ -26,6 +26,7 @@ const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
   { id: 'session', labelKey: 'session', icon: Activity },
   { id: 'history', labelKey: 'history', icon: History },
+  { id: 'progress', labelKey: 'progress', icon: BarChart3 },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },
   { id: 'routines', labelKey: 'routines', icon: FolderPlus },
   { id: 'exercises', labelKey: 'exercises', icon: Dumbbell, href: '/exercices' },
@@ -142,6 +143,9 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
           >
             ↗
           </button>
+        </div>
+        <div className="mt-3 px-2">
+          <NotificationCenter />
         </div>
       </div>
 

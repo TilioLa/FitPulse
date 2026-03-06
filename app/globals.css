@@ -8,6 +8,27 @@
     font-family: "Manrope", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   }
 
+  html[data-fitpulse-font-scale='large'] {
+    font-size: 17px;
+  }
+
+  html[data-fitpulse-font-scale='xlarge'] {
+    font-size: 18px;
+  }
+
+  html[data-fitpulse-contrast='high'] body {
+    background-color: #ffffff;
+    color: #0b0f19;
+  }
+
+  html[data-fitpulse-motion='reduce'] *,
+  html[data-fitpulse-motion='reduce'] *::before,
+  html[data-fitpulse-motion='reduce'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
   a,
   button,
   input,

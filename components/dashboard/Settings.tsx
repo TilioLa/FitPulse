@@ -11,6 +11,12 @@ import {
   requestBrowserNotificationPermission,
   sendTestBrowserNotification,
 } from '@/lib/web-notification-reminder'
+import {
+  A11yPreferences,
+  initA11yPreferences,
+  writeA11yPreferences,
+} from '@/lib/a11y-preferences'
+import { addNotification } from '@/lib/in-app-notifications'
 
 interface UserSettings {
   name: string
@@ -130,6 +136,11 @@ export default function Settings() {
     avoidZones: [],
   })
   const [saved, setSaved] = useState(false)
+  const [a11yPrefs, setA11yPrefs] = useState<A11yPreferences>({
+    fontScale: 'normal',
+    reducedMotion: false,
+    highContrast: false,
+  })
   const [isSaving, setIsSaving] = useState(false)
   const [initialSettings, setInitialSettings] = useState<UserSettings | null>(null)
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
@@ -210,6 +221,7 @@ export default function Settings() {
   useEffect(() => {
     // Charger les paramètres utilisateur
     const userSettings = readLocalSettings() as Partial<UserSettings>
+    setA11yPrefs(initA11yPreferences())
     
     const loadedSettings: UserSettings = {
       name: userSettings.name || user?.name || '',
@@ -242,6 +254,14 @@ export default function Settings() {
     setSettings(loadedSettings)
     setInitialSettings(loadedSettings)
   }, [user?.email, user?.name, user?.phone])
+
+  const updateA11y = (patch: Partial<A11yPreferences>) => {
+    setA11yPrefs((prev) => {
+      const next = { ...prev, ...patch }
+      writeA11yPreferences(next)
+      return next
+    })
+  }
 
   useEffect(() => {
     if (!hasChanges) return
@@ -306,6 +326,12 @@ export default function Settings() {
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
       push('Paramètres enregistrés.', 'success')
+      addNotification({
+        level: 'success',
+        title: 'Paramètres sauvegardés',
+        body: 'Tes préférences ont bien été mises à jour.',
+        href: '/dashboard?view=settings',
+      })
     } catch (error) {
       push("Impossible d'enregistrer les paramètres", 'error')
     } finally {
@@ -473,6 +499,52 @@ export default function Settings() {
             >
               Tester la notification
             </button>
+          </div>
+        </div>
+
+        <div className="card-soft">
+          <div className="flex items-center space-x-2 mb-4">
+            <Target className="h-6 w-6 text-primary-600" />
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Accessibilité</h2>
+          </div>
+          <p className="mb-3 text-xs text-gray-500">Appliqué instantanément sur l’interface.</p>
+          <div className="space-y-3">
+            <label className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Taille de texte</div>
+              </div>
+              <select
+                value={a11yPrefs.fontScale}
+                onChange={(event) => updateA11y({ fontScale: event.target.value as A11yPreferences['fontScale'] })}
+                className="rounded-lg border border-gray-300 px-2 py-1 text-sm"
+              >
+                <option value="normal">Normale</option>
+                <option value="large">Grande</option>
+                <option value="xlarge">Très grande</option>
+              </select>
+            </label>
+            <label className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Contraste élevé</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={a11yPrefs.highContrast}
+                onChange={(event) => updateA11y({ highContrast: event.target.checked })}
+                className="h-5 w-5 accent-primary-600"
+              />
+            </label>
+            <label className="flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3">
+              <div>
+                <div className="text-sm font-semibold text-gray-900">Réduire les animations</div>
+              </div>
+              <input
+                type="checkbox"
+                checked={a11yPrefs.reducedMotion}
+                onChange={(event) => updateA11y({ reducedMotion: event.target.checked })}
+                className="h-5 w-5 accent-primary-600"
+              />
+            </label>
           </div>
         </div>
 

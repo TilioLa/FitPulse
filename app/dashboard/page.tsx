@@ -1,12 +1,15 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
+import ConnectivityBanner from '@/components/system/ConnectivityBanner'
+import CommandPalette from '@/components/system/CommandPalette'
+import FeedbackWidget from '@/components/system/FeedbackWidget'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 import {
   DashboardSection,
@@ -18,6 +21,9 @@ const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
 })
 const History = dynamic(() => import('@/components/dashboard/History'), {
+  loading: () => <SectionSkeleton />,
+})
+const WeeklyProgress = dynamic(() => import('@/components/dashboard/WeeklyProgress'), {
   loading: () => <SectionSkeleton />,
 })
 const MySessions = dynamic(() => import('@/components/dashboard/MySessions'), {
@@ -109,6 +115,30 @@ function DashboardPageContent() {
     })
   }
 
+  const openSection = useCallback(
+    (section: DashboardSection) => {
+      scheduleSection(section)
+      const nextParams = new URLSearchParams(searchParams.toString())
+      nextParams.set('view', sectionToView(section))
+      router.replace(`/dashboard?${nextParams.toString()}`, { scroll: false })
+    },
+    [router, searchParams]
+  )
+
+  const paletteActions = useMemo(
+    () => [
+      { id: 'feed', label: 'Aller à l’accueil dashboard', keywords: ['home', 'dashboard'], onRun: () => openSection('feed') },
+      { id: 'session', label: 'Ouvrir ma séance', keywords: ['workout', 'train'], onRun: () => openSection('session') },
+      { id: 'history', label: 'Voir mon historique', keywords: ['stats'], onRun: () => openSection('history') },
+      { id: 'progress', label: 'Voir ma progression hebdo', keywords: ['weekly'], onRun: () => openSection('progress') },
+      { id: 'programs', label: 'Explorer les programmes', keywords: ['plan'], onRun: () => openSection('programs') },
+      { id: 'settings', label: 'Ouvrir les paramètres', keywords: ['preferences'], onRun: () => openSection('settings') },
+      { id: 'exercises', label: 'Catalogue des exercices', keywords: ['library'], onRun: () => router.push('/exercices') },
+      { id: 'profile', label: 'Mon profil public', keywords: ['profil'], onRun: () => router.push('/profil') },
+    ],
+    [openSection, router]
+  )
+
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
     const currentView = searchParams.get('view')
@@ -193,6 +223,8 @@ function DashboardPageContent() {
         return <Feed />
       case 'history':
         return <History />
+      case 'progress':
+        return <WeeklyProgress />
       case 'session':
         return <MySessions />
       case 'programs':
@@ -213,10 +245,13 @@ function DashboardPageContent() {
       <div className="flex flex-col lg:flex-row flex-grow">
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+          <ConnectivityBanner />
           {renderSection()}
         </main>
       </div>
       <Footer />
+      <CommandPalette actions={paletteActions} />
+      <FeedbackWidget />
     </div>
   )
 }
