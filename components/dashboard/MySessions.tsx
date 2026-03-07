@@ -109,6 +109,22 @@ const setPendingSyncCount = (count: number) => {
   window.dispatchEvent(new Event('fitpulse-sync-queue'))
 }
 
+const normalizeExerciseInputs = (workout: Workout, draftInputs?: ExerciseInputs): ExerciseInputs => {
+  const next: ExerciseInputs = {}
+  workout.exercises.forEach((exercise) => {
+    const existing = draftInputs?.[exercise.id] || []
+    next[exercise.id] = Array.from({ length: exercise.sets }).map((_, idx) => {
+      const row = existing[idx]
+      return {
+        weight: row?.weight ?? 0,
+        reps: row?.reps ?? exercise.reps,
+        completed: row?.completed ?? false,
+      }
+    })
+  })
+  return next
+}
+
 export default function MySessions() {
   const { push } = useToast()
   const { user } = useAuth()
@@ -206,14 +222,7 @@ export default function MySessions() {
       setWorkout(parsed)
       const parsedDraft = parsed?.draft
       if (parsed?.exercises?.length) {
-        const inputs: ExerciseInputs = {}
-        parsed.exercises.forEach((exercise: Exercise) => {
-          inputs[exercise.id] = Array.from({ length: exercise.sets }).map(() => ({
-            weight: 0,
-            reps: exercise.reps,
-          }))
-        })
-        setExerciseInputs(parsedDraft?.exerciseInputs || inputs)
+        setExerciseInputs(normalizeExerciseInputs(parsed, parsedDraft?.exerciseInputs))
       }
       if (parsedDraft?.exerciseNotes) {
         setExerciseNotes(parsedDraft.exerciseNotes)
@@ -1382,7 +1391,7 @@ export default function MySessions() {
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="card-soft text-center transition-all hover:-translate-y-0.5 hover:shadow-md">
-              <div className="text-2xl font-bold text-primary-600">{currentExercise.sets}</div>
+              <div className="text-2xl font-bold text-primary-600">{currentInputs.length}</div>
               <div className="text-sm text-gray-600">Séries</div>
             </div>
             <div className="card-soft text-center transition-all hover:-translate-y-0.5 hover:shadow-md">
