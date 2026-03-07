@@ -75,6 +75,16 @@ export default function Footer() {
                   Nous contacter
                 </Link>
               </li>
+              <li>
+                <Link href="/aide" className="rounded hover:text-primary-400 transition-colors focus-visible:text-primary-400">
+                  Centre d’aide
+                </Link>
+              </li>
+              <li>
+                <Link href="/compte/etat" className="rounded hover:text-primary-400 transition-colors focus-visible:text-primary-400">
+                  État du compte
+                </Link>
+              </li>
               <li className="text-sm text-gray-400">
                 fitpulset@gmail.com
               </li>

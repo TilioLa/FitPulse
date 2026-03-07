@@ -43,6 +43,7 @@ export default function InscriptionPage() {
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const alertRef = useRef<HTMLDivElement | null>(null)
   const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
   const weeklyPlanPreview = useMemo(() => generateWeeklyPlan(sessionsPerWeek), [sessionsPerWeek])
@@ -68,6 +69,9 @@ export default function InscriptionPage() {
     isPasswordLongEnough &&
     isConfirmPasswordValid &&
     hasAtLeastOneGoal
+  const accountStepDone = isEmailValid && isPasswordLongEnough && isConfirmPasswordValid
+  const profileStepDone = goals.length > 0 && (weight.length > 0 || height.length > 0 || focusZones.length > 0)
+  const planStepDone = equipment.length > 0 && sessionsPerWeek > 0
 
   useEffect(() => {
     if (!error) return
@@ -76,6 +80,41 @@ export default function InscriptionPage() {
       alertRef.current?.focus()
     }, 150)
   }, [error])
+
+  useEffect(() => {
+    try {
+      const localSettings = JSON.parse(localStorage.getItem('fitpulse_settings') || '{}') as {
+        level?: string
+        goals?: string[]
+        equipment?: string[]
+        sessionsPerWeek?: number
+        focusZones?: string[]
+        avoidZones?: string[]
+        weight?: number
+        height?: number
+      }
+      if (Array.isArray(localSettings.goals) && localSettings.goals.length > 0) setGoals(localSettings.goals)
+      if (Array.isArray(localSettings.equipment) && localSettings.equipment.length > 0) setEquipment(localSettings.equipment)
+      if (Array.isArray(localSettings.focusZones)) setFocusZones(localSettings.focusZones)
+      if (Array.isArray(localSettings.avoidZones)) setAvoidZones(localSettings.avoidZones)
+      if (localSettings.level) setLevel(localSettings.level)
+      if (Number.isFinite(localSettings.sessionsPerWeek)) setSessionsPerWeek(Number(localSettings.sessionsPerWeek))
+      if (Number.isFinite(localSettings.weight)) setWeight(String(localSettings.weight))
+      if (Number.isFinite(localSettings.height)) setHeight(String(localSettings.height))
+    } catch {
+      // ignore
+    }
+    if (navigator.language.startsWith('fr') && goals.length === 1 && goals[0] === 'Cardio') {
+      setGoals(['Perte de poids', 'Cardio'])
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (!accountStepDone) setStep(1)
+    else if (!profileStepDone) setStep(2)
+    else setStep(3)
+  }, [accountStepDone, profileStepDone])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -209,6 +248,17 @@ export default function InscriptionPage() {
               <p className="mt-2 text-xs text-gray-500">
                 Gratuit, sans engagement. Ton plan est prêt en quelques minutes.
               </p>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-[11px]">
+                <button type="button" onClick={() => setStep(1)} className={`rounded-lg px-2 py-1 font-semibold ${step === 1 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'}`}>
+                  1. Compte
+                </button>
+                <button type="button" onClick={() => setStep(2)} className={`rounded-lg px-2 py-1 font-semibold ${step === 2 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'}`}>
+                  2. Profil
+                </button>
+                <button type="button" onClick={() => setStep(3)} className={`rounded-lg px-2 py-1 font-semibold ${step === 3 ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'}`}>
+                  3. Plan
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -225,7 +275,7 @@ export default function InscriptionPage() {
                 </div>
               )}
 
-              <div>
+              <div className={step === 1 ? '' : 'opacity-70'}>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
                   Nom complet (optionnel)
                 </label>
@@ -245,7 +295,7 @@ export default function InscriptionPage() {
                 </div>
               </div>
 
-              <div>
+              <div className={step === 1 ? '' : 'opacity-70'}>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email *
                 </label>
@@ -273,7 +323,7 @@ export default function InscriptionPage() {
                 )}
               </div>
 
-              <div>
+              <div className={step === 1 ? '' : 'opacity-70'}>
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Numéro de téléphone (optionnel)
                 </label>
@@ -291,7 +341,7 @@ export default function InscriptionPage() {
                 />
               </div>
 
-              <div>
+              <div className={step === 1 ? '' : 'opacity-70'}>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Mot de passe *
                 </label>
@@ -331,7 +381,7 @@ export default function InscriptionPage() {
                 )}
               </div>
 
-              <div>
+              <div className={step === 1 ? '' : 'opacity-70'}>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                   Confirmer le mot de passe *
                 </label>
@@ -358,7 +408,7 @@ export default function InscriptionPage() {
                 )}
               </div>
 
-              <div className="border-t pt-6 space-y-4">
+              <div className={`border-t pt-6 space-y-4 ${step === 2 ? '' : 'opacity-70'}`}>
                 <h2 className="text-lg font-semibold text-gray-900">Profil fitness</h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -470,7 +520,7 @@ export default function InscriptionPage() {
                   </div>
                 </div>
 
-                <div>
+                <div className={step === 3 ? '' : 'opacity-70'}>
                   <label htmlFor="inscription-level" className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
                   <select
                     id="inscription-level"
@@ -484,7 +534,7 @@ export default function InscriptionPage() {
                   </select>
                 </div>
 
-                <div>
+                <div className={step === 3 ? '' : 'opacity-70'}>
                   <label htmlFor="inscription-sessions" className="block text-sm font-medium text-gray-700 mb-2">Séances par semaine</label>
                   <input
                     id="inscription-sessions"
@@ -498,7 +548,7 @@ export default function InscriptionPage() {
                   <div className="text-sm text-gray-600 mt-2">{sessionsPerWeek} séance(s) / semaine</div>
                 </div>
 
-                <div>
+                <div className={step === 3 ? '' : 'opacity-70'}>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Équipement disponible</label>
                   <div className="flex flex-wrap gap-2">
                     {['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines de salle'].map((item) => (
@@ -538,7 +588,7 @@ export default function InscriptionPage() {
                   </div>
                 )}
 
-                <div className="rounded-xl border border-gray-200 bg-white p-4">
+                <div className={`rounded-xl border border-gray-200 bg-white p-4 ${step === 3 ? '' : 'opacity-70'}`}>
                   <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Aperçu de ta semaine
                   </div>

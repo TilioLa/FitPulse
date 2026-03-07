@@ -44,7 +44,7 @@
   select:focus-visible,
   textarea:focus-visible,
   [role='button']:focus-visible {
-    @apply ring-2 ring-primary-300 ring-offset-2;
+    @apply ring-2 ring-primary-500 ring-offset-2;
   }
 
   button:disabled,
@@ -182,5 +182,29 @@
   .btn-secondary,
   .card {
     transition: none;
+  }
+}
+
+@media (prefers-contrast: more) {
+  body {
+    background: #fff;
+    color: #0f172a;
+  }
+
+  .card,
+  .card-soft,
+  .card-compact {
+    border: 1px solid #334155;
+    box-shadow: none;
+  }
+
+  .btn-primary {
+    background: #0f172a;
+    color: #fff;
+  }
+
+  .btn-secondary {
+    border-color: #0f172a;
+    color: #0f172a;
   }
 }

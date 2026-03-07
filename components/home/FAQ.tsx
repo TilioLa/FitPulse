@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useState } from 'react'
 import { ChevronDown, ChevronUp } from 'lucide-react'
 
@@ -81,6 +82,11 @@ export default function FAQ() {
               )}
             </div>
           ))}
+        </div>
+        <div className="mt-8 text-center">
+          <Link href="/aide" className="btn-secondary inline-flex">
+            Ouvrir le centre d’aide
+          </Link>
         </div>
       </div>
     </section>

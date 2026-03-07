@@ -1,19 +1,49 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Activity } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { Activity, PlayCircle } from 'lucide-react'
+import { usePathname, useRouter } from 'next/navigation'
 
 export default function Navbar() {
   const pathname = usePathname()
+  const router = useRouter()
+  const [hasInProgressWorkout, setHasInProgressWorkout] = useState(false)
 
   const links = [
     { href: '/', label: 'Accueil' },
     { href: '/programmes', label: 'Programmes' },
     { href: '/exercices', label: 'Exercices' },
+    { href: '/aide', label: 'Aide' },
   ]
 
   const isActive = (href: string) => (href === '/' ? pathname === '/' : pathname.startsWith(href))
+
+  useEffect(() => {
+    const check = () => {
+      try {
+        const raw = localStorage.getItem('fitpulse_current_workout')
+        const parsed = raw ? (JSON.parse(raw) as { status?: string }) : null
+        setHasInProgressWorkout(parsed?.status === 'in_progress')
+      } catch {
+        setHasInProgressWorkout(false)
+      }
+    }
+    check()
+    window.addEventListener('fitpulse-current-workout', check)
+    window.addEventListener('storage', check)
+    return () => {
+      window.removeEventListener('fitpulse-current-workout', check)
+      window.removeEventListener('storage', check)
+    }
+  }, [])
+
+  useEffect(() => {
+    router.prefetch('/dashboard?view=session')
+    router.prefetch('/dashboard?view=feed')
+    router.prefetch('/programmes')
+    router.prefetch('/aide')
+  }, [router])
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/90 backdrop-blur">
@@ -41,6 +71,12 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
+          {hasInProgressWorkout && (
+            <Link href="/dashboard?view=session" className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800">
+              <PlayCircle className="h-4 w-4" />
+              Continuer ma séance
+            </Link>
+          )}
           <Link href="/connexion" className="btn-secondary px-4 py-2 text-sm">
             Connexion
           </Link>
@@ -52,6 +88,14 @@ export default function Navbar() {
 
       <nav className="md:hidden border-t border-gray-100 px-4 py-2" aria-label="Navigation principale mobile">
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          {hasInProgressWorkout && (
+            <Link
+              href="/dashboard?view=session"
+              className="whitespace-nowrap rounded-lg bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800"
+            >
+              Continuer séance
+            </Link>
+          )}
           {links.map((item) => (
             <Link
               key={`mobile-${item.href}`}

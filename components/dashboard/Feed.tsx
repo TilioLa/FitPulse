@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer } from 'lucide-react'
-import { WorkoutHistoryItem } from '@/lib/history'
+import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
@@ -101,6 +101,7 @@ export default function Feed() {
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [onboardingCollapsed, setOnboardingCollapsed] = useState(false)
+  const [badgeSummary, setBadgeSummary] = useState({ streak: 0, total: 0 })
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -223,6 +224,8 @@ export default function Feed() {
           settings.equipment.length > 0
         const hasStartedWorkout = Boolean(currentWorkout?.status === 'in_progress' || stored.length > 0)
         const hasCompletedWorkout = stored.length > 0
+        const stats = computeHistoryStats(stored)
+        setBadgeSummary({ streak: stats.streak, total: stats.totalWorkouts })
         setOnboardingSteps([
           {
             id: 'profile',
@@ -462,6 +465,7 @@ export default function Feed() {
         setMonthlyMuscles([])
         setMonthlyPr(null)
         setFocus(null)
+        setBadgeSummary({ streak: 0, total: 0 })
         setWeeklyLoad({
           current: 0,
           previous: 0,
@@ -573,7 +577,14 @@ export default function Feed() {
           <h1 className="section-title">Home</h1>
           <p className="text-sm text-gray-500 mt-1">{monthly.headline} · {monthly.monthLabel}</p>
         </div>
-        <div className="text-xs text-gray-500">Dernière mise à jour automatique</div>
+        <div className="flex items-center gap-2">
+          <div className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+            Streak: {badgeSummary.streak}
+          </div>
+          <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+            Séances: {badgeSummary.total}
+          </div>
+        </div>
       </div>
       {!hasProAccess(entitlement) && (
         <div className="mb-8 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
