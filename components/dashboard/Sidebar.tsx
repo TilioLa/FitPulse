@@ -8,7 +8,6 @@ import { useI18n } from '@/components/I18nProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
 import type { DashboardSection } from '@/lib/dashboard-navigation'
-import NotificationCenter from '@/components/notifications/NotificationCenter'
 
 type MenuItem = {
   id: DashboardSection
@@ -143,9 +142,6 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
           >
             ↗
           </button>
-        </div>
-        <div className="mt-3 px-2">
-          <NotificationCenter />
         </div>
       </div>
 
