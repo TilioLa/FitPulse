@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import { ArrowRight, Dumbbell, Target, TrendingUp } from 'lucide-react'
-import StreakBadge from '@/components/home/StreakBadge'
 
 export default function Hero() {
   return (
@@ -35,7 +34,6 @@ export default function Hero() {
           <p className="text-sm text-primary-100 mb-10 reveal reveal-2">
             Sans carte bancaire. Configure ton premier plan en moins de 2 minutes.
           </p>
-          <StreakBadge />
           
           {/* Features icons */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
