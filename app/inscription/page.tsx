@@ -196,6 +196,7 @@ export default function InscriptionPage() {
       }
 
       localStorage.setItem('fitpulse_settings', JSON.stringify(initialSettings))
+      localStorage.setItem('fitpulse_signup_at', new Date().toISOString())
       setStoredPlan('free')
       ensureTrialStarted()
       if (signUpData.user?.id) {

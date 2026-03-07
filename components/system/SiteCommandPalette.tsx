@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Search } from 'lucide-react'
+import { trackUxEvent } from '@/lib/ux-events'
 
 type Action = {
   id: string
@@ -22,7 +23,11 @@ export default function SiteCommandPalette() {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         if (pathname.startsWith('/dashboard')) return
-        setOpen((prev) => !prev)
+        setOpen((prev) => {
+          const next = !prev
+          trackUxEvent('palette_toggle', { location: pathname, open: next })
+          return next
+        })
       } else if (event.key === 'Escape') {
         setOpen(false)
       }
@@ -55,6 +60,15 @@ export default function SiteCommandPalette() {
     )
   }, [actions, query])
 
+  useEffect(() => {
+    if (!open) return
+    trackUxEvent('palette_search', {
+      location: pathname,
+      query_length: query.trim().length,
+      results_count: filtered.length,
+    })
+  }, [filtered.length, open, pathname, query])
+
   if (!open) return null
 
   return (
@@ -83,6 +97,11 @@ export default function SiteCommandPalette() {
               key={action.id}
               type="button"
               onClick={() => {
+                trackUxEvent('palette_action_selected', {
+                  location: pathname,
+                  action_id: action.id,
+                  query_length: query.trim().length,
+                })
                 action.run()
                 setOpen(false)
               }}

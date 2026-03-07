@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Activity, PlayCircle } from 'lucide-react'
+import { Activity, PlayCircle, LifeBuoy, UserCircle2 } from 'lucide-react'
 import { usePathname, useRouter } from 'next/navigation'
 
 export default function Navbar() {
@@ -87,6 +87,29 @@ export default function Navbar() {
       </div>
 
       <nav className="md:hidden border-t border-gray-100 px-4 py-2" aria-label="Navigation principale mobile">
+        <div className="mb-2 grid grid-cols-3 gap-2">
+          <Link
+            href={hasInProgressWorkout ? '/dashboard?view=session' : '/dashboard?view=feed'}
+            className="inline-flex items-center justify-center gap-1 rounded-lg bg-primary-100 px-3 py-1.5 text-xs font-semibold text-primary-800"
+          >
+            <PlayCircle className="h-4 w-4" />
+            {hasInProgressWorkout ? 'Reprendre' : 'Dashboard'}
+          </Link>
+          <Link
+            href="/aide"
+            className="inline-flex items-center justify-center gap-1 rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-800"
+          >
+            <LifeBuoy className="h-4 w-4" />
+            Aide
+          </Link>
+          <Link
+            href="/compte/etat"
+            className="inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-800"
+          >
+            <UserCircle2 className="h-4 w-4" />
+            Compte
+          </Link>
+        </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
           {hasInProgressWorkout && (
             <Link

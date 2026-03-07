@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { addNotification } from '@/lib/in-app-notifications'
 
 const LAST_NUDGE_KEY = 'fitpulse_last_smart_nudge_day'
+const LAST_SIGNUP_NUDGE_KEY = 'fitpulse_last_signup_nudge_day'
 
 function todayKey() {
   const now = new Date()
@@ -46,6 +47,47 @@ export default function SmartNudges() {
         }
       }
       localStorage.setItem(LAST_NUDGE_KEY, key)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  useEffect(() => {
+    const key = todayKey()
+    const last = localStorage.getItem(LAST_SIGNUP_NUDGE_KEY)
+    if (last === key) return
+
+    try {
+      const signupAtRaw = localStorage.getItem('fitpulse_signup_at')
+      if (!signupAtRaw) return
+      const signupAt = new Date(signupAtRaw).getTime()
+      if (!Number.isFinite(signupAt)) return
+
+      const daysSinceSignup = Math.floor((Date.now() - signupAt) / (24 * 60 * 60 * 1000))
+      const historyRaw = localStorage.getItem('fitpulse_history')
+      const history = historyRaw ? (JSON.parse(historyRaw) as unknown[]) : []
+      const sessionsCount = Array.isArray(history) ? history.length : 0
+
+      if (daysSinceSignup >= 1 && sessionsCount === 0) {
+        addNotification({
+          level: 'warning',
+          title: 'Ton plan t’attend',
+          body: 'Tu peux lancer ta première séance en moins de 2 minutes.',
+          href: '/dashboard?view=session',
+        })
+        localStorage.setItem(LAST_SIGNUP_NUDGE_KEY, key)
+        return
+      }
+
+      if (daysSinceSignup >= 3 && sessionsCount > 0 && sessionsCount < 3) {
+        addNotification({
+          level: 'info',
+          title: 'Objectif 3 séances',
+          body: 'Encore quelques séances cette semaine pour installer une vraie routine.',
+          href: '/dashboard?view=progress',
+        })
+        localStorage.setItem(LAST_SIGNUP_NUDGE_KEY, key)
+      }
     } catch {
       // ignore
     }
