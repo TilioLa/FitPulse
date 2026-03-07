@@ -11,15 +11,18 @@ export default function ContactPage() {
     email: '',
     subject: '',
     message: '',
+    website: '',
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [ticketId, setTicketId] = useState<string | null>(null)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setIsSubmitted(false)
     setError(null)
+    setTicketId(null)
     setIsSending(true)
     try {
       const response = await fetch('/api/contact', {
@@ -30,9 +33,11 @@ export default function ContactPage() {
           ...form,
         }),
       })
+      const data = (await response.json().catch(() => ({}))) as { ticketId?: string }
       if (!response.ok) throw new Error('send_failed')
       setIsSubmitted(true)
-      setForm({ name: '', email: '', subject: '', message: '' })
+      setTicketId(data.ticketId || null)
+      setForm({ name: '', email: '', subject: '', message: '', website: '' })
     } catch {
       setError('Envoi impossible pour le moment. Écris-nous à fitpulset@gmail.com.')
     } finally {
@@ -58,6 +63,15 @@ export default function ContactPage() {
                 <h2 className="text-2xl font-semibold text-gray-900 mb-2">Envoyer un message</h2>
                 <p className="text-sm text-gray-500 mb-6">Réponse moyenne sous 24 à 48h ouvrées.</p>
                 <form className="space-y-4" onSubmit={handleSubmit}>
+                  <input
+                    type="text"
+                    name="website"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    className="hidden"
+                    value={form.website}
+                    onChange={(event) => setForm((prev) => ({ ...prev, website: event.target.value }))}
+                  />
                   <div>
                     <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-2">Nom</label>
                     <input
@@ -114,7 +128,7 @@ export default function ContactPage() {
                   </button>
                   {isSubmitted && (
                     <p className="text-sm text-green-600" role="status" aria-live="polite">
-                      Merci ! Votre ticket a bien été envoyé à fitpulset@gmail.com. Nous vous répondrons sous 48h.
+                      Merci ! Votre ticket a bien été envoyé à fitpulset@gmail.com. Référence: {ticketId || 'FP-XXXX'}.
                     </p>
                   )}
                   {error && (

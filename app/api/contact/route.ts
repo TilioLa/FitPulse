@@ -9,7 +9,12 @@ type Payload = {
   subject?: string
   message?: string
   source?: 'contact_form' | 'feedback_widget' | string
+  website?: string
 }
+
+const RATE_LIMIT_WINDOW_MS = 30_000
+const RATE_LIMIT_MAX_REQUESTS = 3
+const requestLog = new Map<string, number[]>()
 
 function escapeHtml(value: string) {
   return value
@@ -22,6 +27,28 @@ function escapeHtml(value: string) {
 
 function sanitizeLine(value: string) {
   return value.replace(/[\r\n]+/g, ' ').trim()
+}
+
+function ticketId() {
+  const now = new Date()
+  const date = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase()
+  return `FP-${date}-${rand}`
+}
+
+function readIp(request: Request) {
+  const xff = request.headers.get('x-forwarded-for') || ''
+  if (xff) return xff.split(',')[0].trim()
+  return request.headers.get('x-real-ip') || 'unknown'
+}
+
+function isRateLimited(ip: string) {
+  const now = Date.now()
+  const windowStart = now - RATE_LIMIT_WINDOW_MS
+  const existing = (requestLog.get(ip) || []).filter((ts) => ts >= windowStart)
+  existing.push(now)
+  requestLog.set(ip, existing)
+  return existing.length > RATE_LIMIT_MAX_REQUESTS
 }
 
 export async function POST(request: Request) {
@@ -38,6 +65,15 @@ export async function POST(request: Request) {
     }
 
     const body = (await request.json().catch(() => ({}))) as Payload
+    const ip = readIp(request)
+    if (isRateLimited(ip)) {
+      return NextResponse.json({ ok: false, error: 'rate_limited' }, { status: 429 })
+    }
+
+    if (body.website && String(body.website).trim().length > 0) {
+      return NextResponse.json({ ok: true, accepted: true })
+    }
+
     const name = sanitizeLine(body.name || '')
     const email = sanitizeLine((body.email || '').toLowerCase())
     const subject = sanitizeLine(body.subject || '')
@@ -59,6 +95,7 @@ export async function POST(request: Request) {
     const safeSubject = escapeHtml(subject)
     const safeMessage = escapeHtml(message).replaceAll('\n', '<br/>')
     const safeSource = escapeHtml(source)
+    const id = ticketId()
 
     const transporter = nodemailer.createTransport({
       host: smtpHost,
@@ -74,8 +111,9 @@ export async function POST(request: Request) {
       from: emailFrom,
       to: ticketTo,
       replyTo: email || undefined,
-      subject: `[Ticket FitPulse] ${subject}`,
+      subject: `[${id}] [Ticket FitPulse] ${subject}`,
       text:
+        `Ticket: ${id}\n` +
         `Source: ${source}\n` +
         `Nom: ${name || 'Non renseigne'}\n` +
         `Email: ${email || 'Non renseigne'}\n\n` +
@@ -83,6 +121,7 @@ export async function POST(request: Request) {
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
           <h2>Nouveau ticket FitPulse</h2>
+          <p><strong>Ticket:</strong> ${id}</p>
           <p><strong>Source:</strong> ${safeSource}</p>
           <p><strong>Nom:</strong> ${safeName}</p>
           <p><strong>Email:</strong> ${safeEmail}</p>
@@ -95,7 +134,7 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, ticketId: id })
   } catch (error) {
     return NextResponse.json(
       {

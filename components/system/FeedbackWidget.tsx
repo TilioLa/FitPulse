@@ -32,13 +32,15 @@ export default function FeedbackWidget() {
           source: 'feedback_widget',
           subject: 'Feedback dashboard',
           message: body,
+          website: '',
         }),
       })
+      const data = (await response.json().catch(() => ({}))) as { ticketId?: string }
       if (!response.ok) throw new Error('send_failed')
       addNotification({
         level: 'success',
         title: 'Merci pour ton feedback',
-        body: 'Ticket envoyé à l’équipe FitPulse.',
+        body: `Ticket envoyé à l’équipe FitPulse (${data.ticketId || 'FP-XXXX'}).`,
       })
       setMessage('')
       setOpen(false)
