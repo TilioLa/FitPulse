@@ -918,10 +918,23 @@ export default function MySessions() {
     return exerciseRestOverride && exerciseRestOverride > 0 ? exerciseRestOverride : 180
   }, [exerciseRestOverride, isSupersetWithNext])
 
-  const currentInputs = currentExercise ? (exerciseInputs[currentExercise.id] || []) : []
+  const currentInputs = useMemo(() => {
+    if (!currentExercise) return []
+    return exerciseInputs[currentExercise.id] || []
+  }, [currentExercise, exerciseInputs])
   const currentVolume = currentInputs.reduce((sum, set) => sum + set.weight * set.reps, 0)
   const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
   const isLastExercise = workout ? currentExerciseIndex === workout.exercises.length - 1 : false
+  const repsLabel = useMemo(() => {
+    if (currentInputs.length === 0) return String(currentExercise?.reps || 0)
+    const repsValues = currentInputs.map((set) => Number(set.reps) || 0).filter((value) => value > 0)
+    if (repsValues.length === 0) return String(currentExercise?.reps || 0)
+    const unique = Array.from(new Set(repsValues))
+    if (unique.length === 1) return String(unique[0])
+    const min = Math.min(...unique)
+    const max = Math.max(...unique)
+    return `${min}-${max}`
+  }, [currentExercise?.reps, currentInputs])
 
   function toggleSetCompleted(setIndex: number, checked: boolean) {
     if (!currentExercise) return
@@ -1395,7 +1408,7 @@ export default function MySessions() {
               <div className="text-sm text-gray-600">Séries</div>
             </div>
             <div className="card-soft text-center transition-all hover:-translate-y-0.5 hover:shadow-md">
-              <div className="text-2xl font-bold text-primary-600">{currentExercise.reps}</div>
+              <div className="text-2xl font-bold text-primary-600">{repsLabel}</div>
               <div className="text-sm text-gray-600">Répétitions</div>
             </div>
           </div>
