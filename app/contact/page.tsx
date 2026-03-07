@@ -6,11 +6,38 @@ import { Mail } from 'lucide-react'
 import WithSidebar from '@/components/layouts/WithSidebar'
 
 export default function ContactPage() {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    setIsSubmitted(true)
+    setIsSubmitted(false)
+    setError(null)
+    setIsSending(true)
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'contact_form',
+          ...form,
+        }),
+      })
+      if (!response.ok) throw new Error('send_failed')
+      setIsSubmitted(true)
+      setForm({ name: '', email: '', subject: '', message: '' })
+    } catch {
+      setError('Envoi impossible pour le moment. Écris-nous à fitpulset@gmail.com.')
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -38,6 +65,8 @@ export default function ContactPage() {
                       type="text"
                       required
                       autoComplete="name"
+                      value={form.name}
+                      onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Votre nom"
                     />
@@ -50,6 +79,8 @@ export default function ContactPage() {
                       required
                       autoComplete="email"
                       inputMode="email"
+                      value={form.email}
+                      onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="votre.email@example.com"
                     />
@@ -60,6 +91,8 @@ export default function ContactPage() {
                       id="contact-subject"
                       type="text"
                       required
+                      value={form.subject}
+                      onChange={(event) => setForm((prev) => ({ ...prev, subject: event.target.value }))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Comment pouvons-nous aider ?"
                     />
@@ -70,16 +103,23 @@ export default function ContactPage() {
                       id="contact-message"
                       required
                       rows={5}
+                      value={form.message}
+                      onChange={(event) => setForm((prev) => ({ ...prev, message: event.target.value }))}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       placeholder="Décrivez votre besoin"
                     />
                   </div>
-                  <button type="submit" className="btn-primary">
-                    Envoyer le message
+                  <button type="submit" disabled={isSending} className="btn-primary disabled:opacity-60">
+                    {isSending ? 'Envoi en cours...' : 'Envoyer le message'}
                   </button>
                   {isSubmitted && (
                     <p className="text-sm text-green-600" role="status" aria-live="polite">
-                      Merci ! Votre message a bien été envoyé. Nous vous répondrons sous 48h.
+                      Merci ! Votre ticket a bien été envoyé à fitpulset@gmail.com. Nous vous répondrons sous 48h.
+                    </p>
+                  )}
+                  {error && (
+                    <p className="text-sm text-red-600" role="alert">
+                      {error}
                     </p>
                   )}
                 </form>

@@ -9,6 +9,7 @@ const DRAFT_KEY = 'fitpulse_feedback_draft'
 export default function FeedbackWidget() {
   const [open, setOpen] = useState(false)
   const [message, setMessage] = useState('')
+  const [isSending, setIsSending] = useState(false)
 
   useEffect(() => {
     const draft = localStorage.getItem(DRAFT_KEY)
@@ -19,19 +20,40 @@ export default function FeedbackWidget() {
     localStorage.setItem(DRAFT_KEY, message)
   }, [message])
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const body = message.trim()
-    if (!body) return
-    const subject = encodeURIComponent('Feedback FitPulse')
-    const content = encodeURIComponent(body)
-    window.location.href = `mailto:support@fitpulse.app?subject=${subject}&body=${content}`
-    addNotification({
-      level: 'success',
-      title: 'Merci pour ton feedback',
-      body: 'Ton client email a été ouvert pour envoyer le message.',
-    })
-    setMessage('')
-    setOpen(false)
+    if (!body || isSending) return
+    setIsSending(true)
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: 'feedback_widget',
+          subject: 'Feedback dashboard',
+          message: body,
+        }),
+      })
+      if (!response.ok) throw new Error('send_failed')
+      addNotification({
+        level: 'success',
+        title: 'Merci pour ton feedback',
+        body: 'Ticket envoyé à l’équipe FitPulse.',
+      })
+      setMessage('')
+      setOpen(false)
+    } catch {
+      const subject = encodeURIComponent('Feedback FitPulse')
+      const content = encodeURIComponent(body)
+      window.location.href = `mailto:fitpulset@gmail.com?subject=${subject}&body=${content}`
+      addNotification({
+        level: 'info',
+        title: 'Ouverture de ton client mail',
+        body: 'Le ticket a été préparé pour fitpulset@gmail.com.',
+      })
+    } finally {
+      setIsSending(false)
+    }
   }
 
   return (
@@ -51,8 +73,8 @@ export default function FeedbackWidget() {
             <button type="button" onClick={() => setOpen(false)} className="btn-secondary px-3 py-2 text-xs">
               Fermer
             </button>
-            <button type="button" onClick={handleSubmit} className="btn-primary px-3 py-2 text-xs">
-              Envoyer
+            <button type="button" onClick={() => void handleSubmit()} disabled={isSending} className="btn-primary px-3 py-2 text-xs disabled:opacity-60">
+              {isSending ? 'Envoi...' : 'Envoyer'}
             </button>
           </div>
         </div>
