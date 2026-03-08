@@ -10,5 +10,5 @@ test('home page loads and has CTA', async ({ page }) => {
 test('pricing page is not available', async ({ page }) => {
   const response = await page.goto('/pricing')
   expect(response?.status()).toBe(404)
-  await expect(page.getByRole('heading', { name: /404/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /Page introuvable/i })).toBeVisible({ timeout: 15_000 })
 })
