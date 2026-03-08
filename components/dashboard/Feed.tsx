@@ -10,7 +10,7 @@ import { muscleLabel } from '@/lib/muscles'
 import { recommendProgram } from '@/lib/recommendation'
 import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } from '@/lib/subscription'
 import { readLocalHistory } from '@/lib/history-store'
-import { readLocalSettings } from '@/lib/user-state-store'
+import { readLocalCurrentWorkout, readLocalSettings } from '@/lib/user-state-store'
 import { useToast } from '@/components/ui/ToastProvider'
 
 type FeedItem = {
@@ -141,6 +141,7 @@ export default function Feed() {
   })
   const [businessNudge, setBusinessNudge] = useState<BusinessNudge | null>(null)
   const [nextAction, setNextAction] = useState<NextAction | null>(null)
+  const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
 
@@ -300,8 +301,19 @@ export default function Feed() {
           weeks: weekBuckets,
         })
 
-        const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
-        const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
+        const currentWorkout = readLocalCurrentWorkout() as {
+          status?: string
+          programId?: string
+          id?: string
+        } | null
+        const hasInProgressWorkout = currentWorkout?.status === 'in_progress'
+        const workoutProgram = currentWorkout?.programId ? programsById[currentWorkout.programId] : null
+        const workoutSessionId = typeof currentWorkout?.id === 'string' ? currentWorkout.id : null
+        const resumeHref =
+          workoutProgram && workoutSessionId
+            ? `/programmes/${workoutProgram.slug}/seances/${workoutSessionId}`
+            : '/dashboard?view=session'
+        setResumeSessionHref(hasInProgressWorkout ? resumeHref : null)
         const recommendedPick = recommendProgram(programs, {
           level: settings.level,
           goals: settings.goals,
@@ -314,7 +326,7 @@ export default function Feed() {
           settings.goals.length > 0 &&
           Array.isArray(settings.equipment) &&
           settings.equipment.length > 0
-        const hasStartedWorkout = Boolean(currentWorkout?.status === 'in_progress' || stored.length > 0)
+        const hasStartedWorkout = Boolean(hasInProgressWorkout || stored.length > 0)
         const hasCompletedWorkout = stored.length > 0
         setOnboardingSteps([
           {
@@ -353,13 +365,7 @@ export default function Feed() {
             cta: 'Ouvrir les paramètres',
             href: '/dashboard?view=settings',
           })
-        } else if (currentWorkout?.status === 'in_progress') {
-          const workoutProgram = currentWorkout?.programId ? programsById[currentWorkout.programId] : null
-          const workoutSessionId = typeof currentWorkout?.id === 'string' ? currentWorkout.id : null
-          const resumeHref =
-            workoutProgram && workoutSessionId
-              ? `/programmes/${workoutProgram.slug}/seances/${workoutSessionId}`
-              : '/dashboard?view=session'
+        } else if (hasInProgressWorkout) {
           setNextAction({
             title: 'Séance en cours détectée',
             body: 'Reprends là où tu t’es arrêté pour garder ton rythme.',
@@ -623,6 +629,7 @@ export default function Feed() {
           deltaVolume: 0,
         })
         setBusinessNudge(null)
+        setResumeSessionHref(null)
         setNextAction({
           title: 'Complète ton profil',
           body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
@@ -658,11 +665,13 @@ export default function Feed() {
     computeFeed()
     window.addEventListener('fitpulse-history', computeFeed)
     window.addEventListener('fitpulse-settings', computeFeed)
+    window.addEventListener('fitpulse-current-workout', computeFeed)
     window.addEventListener('fitpulse-plan', computeFeed)
     window.addEventListener('storage', computeFeed)
     return () => {
       window.removeEventListener('fitpulse-history', computeFeed)
       window.removeEventListener('fitpulse-settings', computeFeed)
+      window.removeEventListener('fitpulse-current-workout', computeFeed)
       window.removeEventListener('fitpulse-plan', computeFeed)
       window.removeEventListener('storage', computeFeed)
     }
@@ -716,6 +725,8 @@ export default function Feed() {
     day: '2-digit',
     month: 'long',
   })
+  const primarySessionHref = resumeSessionHref || '/dashboard?view=session'
+  const primarySessionLabel = resumeSessionHref ? 'Reprendre la séance' : 'Démarrer une séance'
 
   return (
     <div className="page-wrap">
@@ -724,15 +735,20 @@ export default function Feed() {
           <h1 className="section-title">Tableau de bord</h1>
           <p className="text-sm text-gray-500 mt-1">{todayLabel} · {monthly.headline} · {monthly.monthLabel}</p>
         </div>
-        <div className="text-xs text-gray-500">Dernière mise à jour automatique</div>
+        <div className="flex items-center gap-2 text-xs text-gray-500">
+          {resumeSessionHref && (
+            <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">Séance en cours</span>
+          )}
+          <span>Dernière mise à jour automatique</span>
+        </div>
       </div>
       <div className="mb-8 rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 to-white px-5 py-4">
         <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Résumé du jour</div>
         <p className="mt-1 text-sm text-primary-900">{quickSummary}</p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/dashboard?view=session" className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm">
+          <Link href={primarySessionHref} className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm">
             <Play className="h-4 w-4" />
-            Démarrer une séance
+            {primarySessionLabel}
           </Link>
           <Link href="/dashboard?view=history" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
             <Calendar className="h-4 w-4" />
