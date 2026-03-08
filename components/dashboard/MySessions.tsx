@@ -1576,10 +1576,20 @@ export default function MySessions() {
                 <div className="mt-1">{checkInRecommendation.body}</div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" onClick={applyCheckInAdjustments} className="btn-primary px-4 py-2 text-xs">
+                <button
+                  type="button"
+                  onClick={applyCheckInAdjustments}
+                  className="btn-primary px-4 py-2 text-xs"
+                  data-testid="checkin-apply"
+                >
                   Appliquer automatiquement
                 </button>
-                <button type="button" onClick={skipCheckIn} className="btn-secondary px-4 py-2 text-xs">
+                <button
+                  type="button"
+                  onClick={skipCheckIn}
+                  className="btn-secondary px-4 py-2 text-xs"
+                  data-testid="checkin-skip"
+                >
                   Garder le plan actuel
                 </button>
               </div>
@@ -1842,6 +1852,7 @@ export default function MySessions() {
                 onClick={undoLastCompletedSet}
                 disabled={sessionPaused || !lastCompletedSet}
                 className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-amber-200 text-amber-700 hover:border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                data-testid="undo-last-set"
               >
                 Annuler la dernière série
               </button>
