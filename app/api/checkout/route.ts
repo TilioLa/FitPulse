@@ -25,7 +25,7 @@ export async function POST(request: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
     const successUrl = process.env.STRIPE_SUCCESS_URL || `${baseUrl}/dashboard?checkout=success`
-    const cancelUrl = process.env.STRIPE_CANCEL_URL || `${baseUrl}/pricing?checkout=cancel`
+    const cancelUrl = process.env.STRIPE_CANCEL_URL || `${baseUrl}/programmes?checkout=cancel`
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

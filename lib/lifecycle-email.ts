@@ -53,13 +53,13 @@ function getTemplate({ name, event, appUrl }: Omit<LifecycleEmailInput, 'to'>) {
 
   return {
     subject: 'FitPulse - Ton essai premium se termine bientôt',
-    text: `Salut ${safeName}, ton essai premium se termine bientôt. Voir les plans: ${appUrl}/pricing`,
+    text: `Salut ${safeName}, ton essai premium se termine bientôt. Reprends ton programme ici: ${appUrl}/programmes`,
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
         <h2>Essai premium bientôt terminé</h2>
         <p>Salut ${safeName},</p>
-        <p>Tu peux conserver les fonctions avancées en passant Pro.</p>
-        <p><a href="${appUrl}/pricing">Voir les plans FitPulse</a></p>
+        <p>Tu peux continuer avec ton suivi d'entraînement sur FitPulse.</p>
+        <p><a href="${appUrl}/programmes">Voir les programmes FitPulse</a></p>
       </div>
     `,
   }

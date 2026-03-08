@@ -14,7 +14,6 @@
 - **Dashboard** : Mes séances, Historique, Programmes recommandés, Paramètres
 - **Programmes** : Liste complète avec filtres (niveau, matériel, zone du corps)
 - **Profil** : Informations personnelles, statistiques, historique
-- **Tarifs** : plans Freemium / Pro / Pro+ avec sélecteur interactif
 - **Connexion / Inscription** : Authentification simulée
 - **Contact** : Formulaire et coordonnées
 - **Mentions légales / Confidentialité / CGV** : Pages légales statiques
@@ -113,7 +112,7 @@ STRIPE_SECRET_KEY="sk_test_..."
 STRIPE_PRICE_ID_PRO="price_..."
 STRIPE_PRICE_ID_PROPLUS="price_..."
 STRIPE_SUCCESS_URL="http://localhost:3000/dashboard?checkout=success"
-STRIPE_CANCEL_URL="http://localhost:3000/pricing?checkout=cancel"
+STRIPE_CANCEL_URL="http://localhost:3000/programmes?checkout=cancel"
 ```
 
 Les boutons Pro/Pro+ redirigent vers Stripe Checkout.
@@ -196,7 +195,6 @@ Le client essaie d’abord le lien court persistant (`/share?id=...`) et garde u
 FitPulse/
 ├── app/                    # Pages Next.js
 │   ├── dashboard/         # Dashboard avec menu latéral
-│   ├── pricing/           # Page tarifs
 │   ├── connexion/         # Page de connexion
 │   ├── inscription/       # Page d'inscription
 │   ├── profil/            # Page de profil
@@ -204,7 +202,6 @@ FitPulse/
 ├── components/            # Composants React
 │   ├── home/             # Composants page d'accueil
 │   ├── dashboard/        # Composants dashboard
-│   ├── pricing/          # Composants pricing
 │   └── programmes/       # Composants programmes
 └── public/               # Fichiers statiques
 ```
