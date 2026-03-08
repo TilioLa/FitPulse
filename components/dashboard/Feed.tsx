@@ -82,6 +82,17 @@ export default function Feed() {
   })
   const [weeklyGoal, setWeeklyGoal] = useState({ target: 3, completed: 0 })
   const [weekTrend, setWeekTrend] = useState<{ day: string; sessions: number; minutes: number }[]>([])
+  const [consistency, setConsistency] = useState({
+    score: 0,
+    last28Sessions: 0,
+    targetSessions: 12,
+    weeks: [0, 0, 0, 0] as number[],
+  })
+  const [recovery, setRecovery] = useState({
+    score: 80,
+    status: 'Equilibre',
+    hint: 'Rythme stable, continue sur ce volume.',
+  })
   const [monthly, setMonthly] = useState({
     headline: 'Mois en cours',
     monthLabel: '',
@@ -266,6 +277,27 @@ export default function Feed() {
         setWeeklyGoal({
           target: targetSessionsPerWeek,
           completed: sevenDaySeries.reduce((sum, day) => sum + day.sessions, 0),
+        })
+        const weekBuckets = Array.from({ length: 4 }, (_, index) => {
+          const end = new Date()
+          end.setHours(23, 59, 59, 999)
+          end.setDate(end.getDate() - (3 - index) * 7)
+          const start = new Date(end)
+          start.setHours(0, 0, 0, 0)
+          start.setDate(start.getDate() - 6)
+          return stored.filter((item) => {
+            const ts = new Date(item.date).getTime()
+            return ts >= start.getTime() && ts <= end.getTime()
+          }).length
+        })
+        const last28Sessions = weekBuckets.reduce((sum, value) => sum + value, 0)
+        const targetSessions = targetSessionsPerWeek * 4
+        const consistencyScore = Math.min(100, Math.round((last28Sessions / Math.max(1, targetSessions)) * 100))
+        setConsistency({
+          score: consistencyScore,
+          last28Sessions,
+          targetSessions,
+          weeks: weekBuckets,
         })
 
         const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
@@ -464,6 +496,38 @@ export default function Feed() {
           delta,
           suggestion,
         })
+        const sortedByDate = stored
+          .slice()
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        const latestSession = sortedByDate[0]
+        const recoveryDaysSinceLastSession = latestSession
+          ? Math.floor((Date.now() - new Date(latestSession.date).getTime()) / (24 * 60 * 60 * 1000))
+          : null
+        let recoveryScore = 85
+        let recoveryStatus = 'Equilibre'
+        let recoveryHint = 'Rythme stable, continue sur ce volume.'
+        if (recoveryDaysSinceLastSession == null) {
+          recoveryScore = 100
+          recoveryStatus = 'Prêt'
+          recoveryHint = 'Aucune fatigue détectée. Démarre une première séance progressive.'
+        } else if (recoveryDaysSinceLastSession >= 4) {
+          recoveryScore = 50
+          recoveryStatus = 'Reprise'
+          recoveryHint = 'Dernière séance ancienne: fais une reprise progressive sur 1 à 2 séances.'
+        } else if (weeklySessions > targetSessionsPerWeek + 2 || delta >= 20) {
+          recoveryScore = 58
+          recoveryStatus = 'Charge haute'
+          recoveryHint = 'Volume élevé: prévois une séance légère ou un jour de récupération active.'
+        } else if (weeklySessions < Math.max(1, targetSessionsPerWeek - 2)) {
+          recoveryScore = 75
+          recoveryStatus = 'Sous-charge'
+          recoveryHint = 'Tu peux augmenter légèrement le volume pour maintenir la progression.'
+        }
+        setRecovery({
+          score: recoveryScore,
+          status: recoveryStatus,
+          hint: recoveryHint,
+        })
         const monthlySessionRate = sessions
         const highVolumeSpike = delta >= 20 && currentLoad > 0
         const highFrequency = monthlySessionRate >= 12
@@ -522,6 +586,17 @@ export default function Feed() {
         })
         setWeekTrend([])
         setWeeklyGoal({ target: 3, completed: 0 })
+        setConsistency({
+          score: 0,
+          last28Sessions: 0,
+          targetSessions: 12,
+          weeks: [0, 0, 0, 0],
+        })
+        setRecovery({
+          score: 80,
+          status: 'Equilibre',
+          hint: 'Rythme stable, continue sur ce volume.',
+        })
         setMonthly({
           headline: 'Mois en cours',
           monthLabel: '',
@@ -621,6 +696,13 @@ export default function Feed() {
     Math.round((weeklyGoal.completed / Math.max(1, weeklyGoal.target)) * 100)
   )
   const remainingWeeklySessions = Math.max(0, weeklyGoal.target - weeklyGoal.completed)
+  const maxConsistencyWeek = Math.max(1, ...consistency.weeks)
+  const recoveryBadgeClass =
+    recovery.score >= 80
+      ? 'bg-emerald-100 text-emerald-700'
+      : recovery.score >= 60
+      ? 'bg-amber-100 text-amber-700'
+      : 'bg-rose-100 text-rose-700'
 
   return (
     <div className="page-wrap">
@@ -837,6 +919,52 @@ export default function Feed() {
               ? 'Objectif atteint cette semaine.'
               : `Il reste ${remainingWeeklySessions} séance(s) pour atteindre ton objectif.`}
           </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 reveal reveal-2">
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Consistance 4 semaines</div>
+            <Calendar className="h-5 w-5 text-primary-500" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">{consistency.score}%</div>
+          <div className="mt-2 h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-full bg-primary-600" style={{ width: `${consistency.score}%` }} />
+          </div>
+          <div className="mt-2 text-sm text-gray-600">
+            {consistency.last28Sessions} séance(s) sur {consistency.targetSessions} prévues (4 semaines)
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-2 items-end h-20">
+            {consistency.weeks.map((value, index) => {
+              const height = Math.max(8, Math.round((value / maxConsistencyWeek) * 100))
+              return (
+                <div key={`c-week-${index}`} className="flex flex-col items-center gap-1">
+                  <div className="h-14 w-full rounded bg-primary-100 flex items-end overflow-hidden">
+                    <div className="w-full bg-primary-600 rounded-t" style={{ height: `${height}%` }} />
+                  </div>
+                  <span className="text-[10px] text-gray-500">S-{3 - index}</span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Score récupération</div>
+            <Flame className="h-5 w-5 text-amber-500" />
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="text-2xl font-bold text-gray-900">{recovery.score}/100</div>
+            <span className={`px-2 py-1 rounded-full text-xs font-semibold ${recoveryBadgeClass}`}>
+              {recovery.status}
+            </span>
+          </div>
+          <div className="mt-3 h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-full bg-amber-500" style={{ width: `${recovery.score}%` }} />
+          </div>
+          <p className="mt-3 text-sm text-gray-600">{recovery.hint}</p>
         </div>
       </div>
 
