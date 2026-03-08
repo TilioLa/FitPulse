@@ -89,6 +89,7 @@ interface Workout {
     timeRemaining?: number
     timerKind?: 'set' | 'exercise' | null
     sessionPaused?: boolean
+    checkIn?: SessionCheckIn
     savedAt?: string
   }
 }
@@ -97,6 +98,29 @@ type SessionHint = {
   tone: 'amber' | 'blue' | 'emerald'
   title: string
   body: string
+}
+
+type SessionCheckIn = {
+  fatigue: number
+  sleep: number
+  pain: number
+  completed: boolean
+  adjusted: boolean
+  recommendation: string
+}
+
+type LastCompletedSet = {
+  exerciseId: string
+  exerciseName: string
+  setIndex: number
+}
+
+type CheckInRecommendation = {
+  title: string
+  body: string
+  tone: 'amber' | 'blue' | 'emerald'
+  setDelta: -1 | 0 | 1
+  restDelta: number
 }
 
 const lastExerciseKey = (workoutId: string) => `fitpulse_last_exercise_index_${workoutId}`
@@ -135,6 +159,45 @@ const getRepsLabel = (sets: SetInput[] | undefined, fallback: number) => {
   const max = Math.max(...repsValues)
   if (min === max) return `${min}`
   return `${min}-${max}`
+}
+
+const defaultSessionCheckIn = (): SessionCheckIn => ({
+  fatigue: 3,
+  sleep: 3,
+  pain: 2,
+  completed: false,
+  adjusted: false,
+  recommendation: '',
+})
+
+const getCheckInRecommendation = (checkIn: SessionCheckIn): CheckInRecommendation => {
+  const needsRecovery = checkIn.fatigue >= 4 || checkIn.pain >= 4 || checkIn.sleep <= 2
+  if (needsRecovery) {
+    return {
+      title: 'Séance allégée recommandée',
+      body: 'Réduis d’1 série par exercice et allonge le repos de 15s pour maintenir la qualité.',
+      tone: 'amber',
+      setDelta: -1,
+      restDelta: 15,
+    }
+  }
+  const canPush = checkIn.fatigue <= 2 && checkIn.pain <= 2 && checkIn.sleep >= 4
+  if (canPush) {
+    return {
+      title: 'Journée forte: progression possible',
+      body: 'Ajoute 1 série sur les 2 premiers exercices et raccourcis le repos de 10s.',
+      tone: 'emerald',
+      setDelta: 1,
+      restDelta: -10,
+    }
+  }
+  return {
+    title: 'Charge standard conseillée',
+    body: 'Garde la structure prévue et concentre-toi sur la technique propre.',
+    tone: 'blue',
+    setDelta: 0,
+    restDelta: 0,
+  }
 }
 
 export default function MySessions() {
@@ -182,6 +245,8 @@ export default function MySessions() {
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
   const [trainingMode, setTrainingMode] = useState(false)
   const [sessionHint, setSessionHint] = useState<SessionHint | null>(null)
+  const [sessionCheckIn, setSessionCheckIn] = useState<SessionCheckIn>(() => defaultSessionCheckIn())
+  const [lastCompletedSet, setLastCompletedSet] = useState<LastCompletedSet | null>(null)
   const lastCloudPersistRef = useRef(0)
   const wasOnlineRef = useRef(true)
   const reconnectSyncInFlightRef = useRef(false)
@@ -195,6 +260,7 @@ export default function MySessions() {
       timeRemaining,
       timerKind,
       sessionPaused: pausedOverride ?? sessionPaused,
+      checkIn: sessionCheckIn,
       savedAt: new Date().toISOString(),
     },
   })
@@ -237,6 +303,7 @@ export default function MySessions() {
       if (parsedDraft?.exerciseNotes) {
         setExerciseNotes(parsedDraft.exerciseNotes)
       }
+      setSessionCheckIn(parsedDraft?.checkIn || defaultSessionCheckIn())
       const draftIndex = Number(parsedDraft?.currentExerciseIndex)
       if (Number.isInteger(draftIndex)) {
         const nextIndex = Math.max(0, Math.min(draftIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
@@ -290,6 +357,7 @@ export default function MySessions() {
       setWorkout(defaultWorkout)
       writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
       setExerciseInputs(buildInputsForExercises(defaultWorkout.exercises))
+      setSessionCheckIn(defaultSessionCheckIn())
     }
 
     // Charger les statistiques depuis l'historique
@@ -517,7 +585,7 @@ export default function MySessions() {
 
     return () => clearTimeout(timeout)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, user?.id, isOnline])
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, sessionCheckIn, user?.id, isOnline])
 
   useEffect(() => {
     if (!workout?.id) return
@@ -541,7 +609,7 @@ export default function MySessions() {
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, user?.id])
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, sessionCheckIn, user?.id])
 
   function handleStartTimer(restTime: number, kind: 'set' | 'exercise') {
     if (sessionPaused) return
@@ -678,6 +746,7 @@ export default function MySessions() {
     setTimeRemaining(0)
     setIsRunning(false)
     setSessionPaused(false)
+    setLastCompletedSet(null)
     if (workout) {
       writeLocalCurrentWorkout(null)
       if (user?.id) {
@@ -719,6 +788,7 @@ export default function MySessions() {
     setTimerKind(null)
     setSessionPaused(false)
     setCurrentExerciseIndex(0)
+    setLastCompletedSet(null)
     writeLocalCurrentWorkout(null)
     if (user?.id) {
       void persistCurrentWorkoutForUser(user.id, null)
@@ -767,6 +837,70 @@ export default function MySessions() {
       sets: safeSetCount,
     }
     updateWorkoutExercises(nextExercises)
+  }
+
+  const applyCheckInAdjustments = () => {
+    if (!workout) return
+    const recommendation = getCheckInRecommendation(sessionCheckIn)
+    const nextExercises = workout.exercises.map((exercise, index) => {
+      const nextSets =
+        recommendation.setDelta === 0
+          ? exercise.sets
+          : recommendation.setDelta > 0
+          ? index < 2
+            ? Math.min(6, exercise.sets + 1)
+            : exercise.sets
+          : Math.max(1, exercise.sets - 1)
+      return {
+        ...exercise,
+        sets: nextSets,
+        rest: Math.max(20, exercise.rest + recommendation.restDelta),
+      }
+    })
+    if (recommendation.setDelta !== 0 || recommendation.restDelta !== 0) {
+      updateWorkoutExercises(nextExercises)
+    }
+    setSessionCheckIn((prev) => ({
+      ...prev,
+      completed: true,
+      adjusted: recommendation.setDelta !== 0 || recommendation.restDelta !== 0,
+      recommendation: recommendation.title,
+    }))
+    push(`Check-in appliqué: ${recommendation.title}`, 'success')
+  }
+
+  const skipCheckIn = () => {
+    setSessionCheckIn((prev) => ({
+      ...prev,
+      completed: true,
+      adjusted: false,
+      recommendation: 'Ajustement ignoré',
+    }))
+    push('Check-in enregistré sans ajustement.', 'info')
+  }
+
+  const undoLastCompletedSet = () => {
+    if (!lastCompletedSet) return
+    let reverted = false
+    setExerciseInputs((prev) => {
+      const rows = prev[lastCompletedSet.exerciseId] || []
+      const nextRows = rows.map((row, idx) => {
+        if (idx !== lastCompletedSet.setIndex || !row.completed) return row
+        reverted = true
+        return { ...row, completed: false }
+      })
+      return {
+        ...prev,
+        [lastCompletedSet.exerciseId]: nextRows,
+      }
+    })
+    if (reverted) {
+      push(
+        `Série ${lastCompletedSet.setIndex + 1} annulée (${lastCompletedSet.exerciseName}).`,
+        'info'
+      )
+    }
+    setLastCompletedSet(null)
   }
 
   const replaceExerciseAt = (index: number, name: string) => {
@@ -913,6 +1047,109 @@ export default function MySessions() {
     }
   }
 
+  const downloadSessionShareCard = async () => {
+    if (!workout || !lastSummary) {
+      push('Aucun résumé disponible pour exporter la carte.', 'error')
+      return
+    }
+    try {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1080
+      canvas.height = 1350
+      const ctx = canvas.getContext('2d')
+      if (!ctx) throw new Error('canvas-unavailable')
+
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height)
+      gradient.addColorStop(0, '#eff6ff')
+      gradient.addColorStop(1, '#ffffff')
+      ctx.fillStyle = gradient
+      ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+      ctx.fillStyle = '#1d4ed8'
+      ctx.fillRect(64, 64, 952, 80)
+      ctx.fillStyle = '#ffffff'
+      ctx.font = '700 38px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+      ctx.fillText('FitPulse • Carte de séance', 96, 116)
+
+      ctx.fillStyle = '#111827'
+      ctx.font = '700 44px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+      ctx.fillText(workout.name.slice(0, 34), 64, 220)
+      ctx.fillStyle = '#4b5563'
+      ctx.font = '500 28px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+      ctx.fillText(new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: '2-digit', month: 'long' }), 64, 264)
+
+      const cards = [
+        { label: 'Durée', value: `${lastSummary.duration} min` },
+        { label: 'Poids total', value: `${lastSummary.volume} ${weightUnit}` },
+        { label: 'Calories', value: `${lastSummary.calories} kcal` },
+        { label: 'Best PR', value: `${lastSummary.bestPrKg || 0} ${weightUnit}` },
+      ]
+      cards.forEach((item, index) => {
+        const x = 64 + (index % 2) * 476
+        const y = 320 + Math.floor(index / 2) * 150
+        ctx.fillStyle = '#ffffff'
+        ctx.fillRect(x, y, 440, 120)
+        ctx.strokeStyle = '#dbeafe'
+        ctx.lineWidth = 2
+        ctx.strokeRect(x, y, 440, 120)
+        ctx.fillStyle = '#6b7280'
+        ctx.font = '600 24px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+        ctx.fillText(item.label, x + 24, y + 44)
+        ctx.fillStyle = '#111827'
+        ctx.font = '700 34px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+        ctx.fillText(item.value, x + 24, y + 92)
+      })
+
+      ctx.fillStyle = '#111827'
+      ctx.font = '700 30px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+      ctx.fillText('Muscles les plus sollicités', 64, 670)
+      const topMuscles = lastSummary.muscleUsage
+        .slice()
+        .sort((a, b) => b.percent - a.percent)
+        .slice(0, 3)
+      topMuscles.forEach((muscle, index) => {
+        const y = 720 + index * 60
+        ctx.fillStyle = '#374151'
+        ctx.font = '600 24px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+        ctx.fillText(`${muscleLabel(muscle.id, 'fr')}`, 64, y)
+        ctx.fillStyle = '#1d4ed8'
+        ctx.fillRect(420, y - 24, Math.max(20, Math.round((muscle.percent / 100) * 520)), 20)
+        ctx.fillStyle = '#111827'
+        ctx.fillText(`${muscle.percent}%`, 960, y)
+      })
+
+      ctx.fillStyle = '#111827'
+      ctx.font = '700 30px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+      ctx.fillText('Exercices clés', 64, 960)
+      workout.exercises.slice(0, 5).forEach((exercise, index) => {
+        const y = 1010 + index * 56
+        const sets = exerciseInputs[exercise.id] || []
+        const bestWeight = Math.max(...sets.map((set) => set.weight || 0), 0)
+        ctx.fillStyle = '#374151'
+        ctx.font = '600 24px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+        ctx.fillText(`• ${exercise.name}`, 64, y)
+        ctx.fillStyle = '#1d4ed8'
+        ctx.fillText(`${exercise.sets}x${exercise.reps} • max ${bestWeight}${weightUnit}`, 620, y)
+      })
+
+      ctx.fillStyle = '#6b7280'
+      ctx.font = '500 22px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
+      ctx.fillText('Généré avec FitPulse', 64, 1288)
+
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'))
+      if (!blob) throw new Error('blob-failed')
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `fitpulse-share-${new Date().toISOString().slice(0, 10)}.png`
+      link.click()
+      URL.revokeObjectURL(url)
+      push('Carte de partage exportée en image.', 'success')
+    } catch {
+      push('Impossible de générer la carte image pour le moment.', 'error')
+    }
+  }
+
   const supersetKey = workout ? `fitpulse_superset_${workout.id}` : 'fitpulse_superset'
   const currentExercise = workout ? workout.exercises[currentExerciseIndex] : null
   const currentSupersetGroup = workout
@@ -943,12 +1180,28 @@ export default function MySessions() {
   function toggleSetCompleted(setIndex: number, checked: boolean) {
     if (!currentExercise) return
     if (sessionPaused) return
+    if (!checked) {
+      setLastCompletedSet((prev) => {
+        if (!prev) return prev
+        if (prev.exerciseId !== currentExercise.id || prev.setIndex !== setIndex) return prev
+        return null
+      })
+    }
     setExerciseInputs((prev) => {
+      const previousRows = prev[currentExercise.id] || []
+      const wasCompleted = !!previousRows[setIndex]?.completed
       const updated = {
         ...prev,
         [currentExercise.id]: (prev[currentExercise.id] || []).map((row, idx) =>
           idx === setIndex ? { ...row, completed: checked } : row
         ),
+      }
+      if (checked && !wasCompleted) {
+        setLastCompletedSet({
+          exerciseId: currentExercise.id,
+          exerciseName: currentExercise.name,
+          setIndex,
+        })
       }
       if (!checked) return updated
       const allDone = (updated[currentExercise.id] || []).every((row) => row.completed)
@@ -1074,6 +1327,9 @@ export default function MySessions() {
                 <button className="btn-secondary w-full" onClick={handleShareSession}>
                   Copier le lien
                 </button>
+                <button className="btn-secondary w-full" onClick={downloadSessionShareCard}>
+                  Télécharger la carte image
+                </button>
                 <button className="btn-secondary w-full" onClick={() => router.push('/dashboard?view=feed')}>
                   Retour au dashboard
                 </button>
@@ -1151,6 +1407,17 @@ export default function MySessions() {
     })
     .filter((point) => point.oneRm > 0)
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const volumeSeries = selectedHistory
+    .map((ex) => {
+      const volume = (ex.sets || []).reduce((sum: number, set: SetInput) => sum + set.weight * set.reps, 0)
+      return { date: ex.date, volume }
+    })
+    .filter((point) => point.volume > 0)
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000
+  const exerciseRegularity30d = selectedHistory.filter(
+    (entry) => new Date(entry.date).getTime() >= thirtyDaysAgo
+  ).length
 
   const previousBestOneRm = selectedExercise
     ? selectedHistory.reduce((max, ex) => {
@@ -1170,6 +1437,13 @@ export default function MySessions() {
     remainingSessions != null && sessionsPerWeek
       ? Math.max(1, Math.ceil(remainingSessions / sessionsPerWeek))
       : null
+  const checkInRecommendation = getCheckInRecommendation(sessionCheckIn)
+  const checkInToneClass =
+    checkInRecommendation.tone === 'amber'
+      ? 'border-amber-200 bg-amber-50 text-amber-900'
+      : checkInRecommendation.tone === 'emerald'
+      ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+      : 'border-blue-200 bg-blue-50 text-blue-900'
 
   return (
     <div className="page-wrap panel-stack" data-testid="session-root">
@@ -1251,6 +1525,71 @@ export default function MySessions() {
             <div className="mt-1">{sessionHint.body}</div>
           </div>
         )}
+        <div className={`mt-4 rounded-lg border px-4 py-3 ${checkInToneClass}`} data-testid="session-checkin">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-sm font-semibold">Check-in pré-séance</div>
+              <div className="mt-1 text-xs">
+                Fatigue, sommeil et douleurs pour adapter automatiquement séries et repos.
+              </div>
+            </div>
+            {sessionCheckIn.completed && (
+              <button
+                type="button"
+                onClick={() => setSessionCheckIn((prev) => ({ ...prev, completed: false }))}
+                className="text-xs font-semibold underline underline-offset-2"
+              >
+                Modifier
+              </button>
+            )}
+          </div>
+          {!sessionCheckIn.completed ? (
+            <>
+              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                {([
+                  ['fatigue', 'Fatigue', sessionCheckIn.fatigue],
+                  ['sleep', 'Sommeil', sessionCheckIn.sleep],
+                  ['pain', 'Douleurs', sessionCheckIn.pain],
+                ] as const).map(([field, label, value]) => (
+                  <label key={field} className="rounded-lg border border-white/60 bg-white/60 px-3 py-2 text-xs">
+                    <div className="mb-1 font-semibold text-gray-700">{label}: {value}/5</div>
+                    <input
+                      type="range"
+                      min={1}
+                      max={5}
+                      step={1}
+                      value={value}
+                      onChange={(event) => {
+                        const nextValue = clampPositiveInt(Number(event.target.value), 1)
+                        setSessionCheckIn((prev) => ({
+                          ...prev,
+                          [field]: Math.min(5, Math.max(1, nextValue)),
+                        }))
+                      }}
+                      className="w-full accent-primary-600"
+                    />
+                  </label>
+                ))}
+              </div>
+              <div className="mt-3 rounded-lg border border-white/60 bg-white/60 px-3 py-2 text-xs">
+                <div className="font-semibold">{checkInRecommendation.title}</div>
+                <div className="mt-1">{checkInRecommendation.body}</div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button type="button" onClick={applyCheckInAdjustments} className="btn-primary px-4 py-2 text-xs">
+                  Appliquer automatiquement
+                </button>
+                <button type="button" onClick={skipCheckIn} className="btn-secondary px-4 py-2 text-xs">
+                  Garder le plan actuel
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="mt-2 text-xs">
+              {sessionCheckIn.adjusted ? 'Ajustement appliqué' : 'Ajustement ignoré'} · {sessionCheckIn.recommendation || checkInRecommendation.title}
+            </div>
+          )}
+        </div>
         <div className="mt-4">
           <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
             <div
@@ -1500,6 +1839,14 @@ export default function MySessions() {
               </button>
               <button
                 type="button"
+                onClick={undoLastCompletedSet}
+                disabled={sessionPaused || !lastCompletedSet}
+                className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-amber-200 text-amber-700 hover:border-amber-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Annuler la dernière série
+              </button>
+              <button
+                type="button"
                 onClick={() => updateCurrentExerciseSetCount(currentInputs.length + 1)}
                 disabled={sessionPaused}
                 className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1740,7 +2087,7 @@ export default function MySessions() {
               </button>
             </div>
 
-            <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               <div className="rounded-lg border border-gray-200 p-3">
                 <div className="text-xs text-gray-500">Meilleur 1RM</div>
                 <div className="text-lg font-semibold text-gray-900">
@@ -1773,9 +2120,14 @@ export default function MySessions() {
                 <div className="text-xs text-gray-500">Séances avec cet exo</div>
                 <div className="text-lg font-semibold text-gray-900">{selectedHistory.length}</div>
               </div>
+              <div className="rounded-lg border border-gray-200 p-3">
+                <div className="text-xs text-gray-500">Régularité (30j)</div>
+                <div className="text-lg font-semibold text-gray-900">{exerciseRegularity30d} séance(s)</div>
+              </div>
             </div>
 
-            <div className="mt-6">
+            <div className="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div>
               <div className="text-sm font-semibold text-gray-700 mb-2">Progression 1RM</div>
               <div className="h-40 w-full rounded-lg border border-gray-200 bg-gray-50 p-3">
                 {historySeries.length < 2 ? (
@@ -1807,6 +2159,41 @@ export default function MySessions() {
                     />
                   </svg>
                 )}
+              </div>
+              </div>
+              <div>
+              <div className="text-sm font-semibold text-gray-700 mb-2">Progression volume</div>
+              <div className="h-40 w-full rounded-lg border border-gray-200 bg-gray-50 p-3">
+                {volumeSeries.length < 2 ? (
+                  <div className="text-xs text-gray-500">Pas assez de données pour afficher un graphique.</div>
+                ) : (
+                  <svg viewBox="0 0 100 40" className="h-full w-full">
+                    {volumeSeries.map((point, idx) => {
+                      const min = Math.min(...volumeSeries.map((p) => p.volume))
+                      const max = Math.max(...volumeSeries.map((p) => p.volume))
+                      const x = (idx / (volumeSeries.length - 1)) * 100
+                      const y = max === min ? 20 : 35 - ((point.volume - min) / (max - min)) * 30
+                      return (
+                        <circle key={point.date} cx={x} cy={y} r="1.5" fill="#16a34a" />
+                      )
+                    })}
+                    <polyline
+                      fill="none"
+                      stroke="#16a34a"
+                      strokeWidth="1.5"
+                      points={volumeSeries
+                        .map((point, idx) => {
+                          const min = Math.min(...volumeSeries.map((p) => p.volume))
+                          const max = Math.max(...volumeSeries.map((p) => p.volume))
+                          const x = (idx / (volumeSeries.length - 1)) * 100
+                          const y = max === min ? 20 : 35 - ((point.volume - min) / (max - min)) * 30
+                          return `${x},${y}`
+                        })
+                        .join(' ')}
+                    />
+                  </svg>
+                )}
+              </div>
               </div>
             </div>
           </div>

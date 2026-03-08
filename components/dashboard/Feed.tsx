@@ -46,6 +46,15 @@ type OnboardingStep = {
   cta: string
 }
 
+type ExerciseProgress = {
+  name: string
+  sessions: number
+  volume: number
+  bestOneRm: number
+  oneRmTrend: number
+  regularity30d: number
+}
+
 const toDayKey = (value: string) => value.slice(0, 10)
 
 const computeBestStreak = (dates: string[]) => {
@@ -67,6 +76,30 @@ const computeBestStreak = (dates: string[]) => {
     }
   }
   return best
+}
+
+const estimateOneRm = (weight: number, reps: number) => {
+  if (weight <= 0 || reps <= 0) return 0
+  return Math.round(weight * (1 + reps / 30))
+}
+
+const suggestCatchUpDays = (remainingSessions: number, sessionsDoneToday: number) => {
+  if (remainingSessions <= 0) return [] as string[]
+  const startOffset = sessionsDoneToday > 0 ? 1 : 0
+  const upcoming = Array.from({ length: Math.max(remainingSessions, 7 - startOffset) }, (_, index) => {
+    const date = new Date()
+    date.setDate(date.getDate() + startOffset + index)
+    return date.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit' }).replace('.', '')
+  })
+  const picks: string[] = []
+  const step = Math.max(1, Math.floor(upcoming.length / remainingSessions))
+  for (let cursor = 0; cursor < upcoming.length && picks.length < remainingSessions; cursor += step) {
+    picks.push(upcoming[cursor])
+  }
+  while (picks.length < remainingSessions && picks.length < upcoming.length) {
+    picks.push(upcoming[picks.length])
+  }
+  return picks.slice(0, remainingSessions)
 }
 
 export default function Feed() {
@@ -142,6 +175,8 @@ export default function Feed() {
   const [businessNudge, setBusinessNudge] = useState<BusinessNudge | null>(null)
   const [nextAction, setNextAction] = useState<NextAction | null>(null)
   const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
+  const [weeklyCatchUpDays, setWeeklyCatchUpDays] = useState<string[]>([])
+  const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
 
@@ -279,6 +314,12 @@ export default function Feed() {
           target: targetSessionsPerWeek,
           completed: sevenDaySeries.reduce((sum, day) => sum + day.sessions, 0),
         })
+        const sessionsDoneToday = sevenDaySeries[6]?.sessions || 0
+        const remainingSessions = Math.max(
+          0,
+          targetSessionsPerWeek - sevenDaySeries.reduce((sum, day) => sum + day.sessions, 0)
+        )
+        setWeeklyCatchUpDays(suggestCatchUpDays(remainingSessions, sessionsDoneToday))
         const weekBuckets = Array.from({ length: 4 }, (_, index) => {
           const end = new Date()
           end.setHours(23, 59, 59, 999)
@@ -468,6 +509,71 @@ export default function Feed() {
         }, null)
         setMonthlyPr(bestRecord)
 
+        const progressByExercise = new Map<
+          string,
+          {
+            sessions: number
+            volume: number
+            oneRmSeries: { date: string; oneRm: number }[]
+            activeDays30: Set<string>
+          }
+        >()
+        const threshold30d = Date.now() - 30 * 24 * 60 * 60 * 1000
+        stored.forEach((item) => {
+          const itemTs = new Date(item.date).getTime()
+          const itemDayKey = toLocalDateKey(item.date)
+          const exercises = (item as any).exercises || []
+          exercises.forEach((exercise: any) => {
+            const name = String(exercise?.name || '').trim()
+            if (!name) return
+            const sets = (exercise?.sets || []) as { weight: number; reps: number }[]
+            const volume = sets.reduce(
+              (sum, set) => sum + (Number(set?.weight) || 0) * (Number(set?.reps) || 0),
+              0
+            )
+            const oneRm = sets.reduce(
+              (max, set) => Math.max(max, estimateOneRm(Number(set?.weight) || 0, Number(set?.reps) || 0)),
+              0
+            )
+            const existing = progressByExercise.get(name) || {
+              sessions: 0,
+              volume: 0,
+              oneRmSeries: [],
+              activeDays30: new Set<string>(),
+            }
+            existing.sessions += 1
+            existing.volume += volume
+            if (oneRm > 0) {
+              existing.oneRmSeries.push({ date: item.date, oneRm })
+            }
+            if (itemTs >= threshold30d) {
+              existing.activeDays30.add(itemDayKey)
+            }
+            progressByExercise.set(name, existing)
+          })
+        })
+        const progressRows = Array.from(progressByExercise.entries())
+          .map(([name, data]) => {
+            const sortedOneRm = data.oneRmSeries
+              .slice()
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            const latest = sortedOneRm[sortedOneRm.length - 1]?.oneRm || 0
+            const previous = sortedOneRm[sortedOneRm.length - 2]?.oneRm || 0
+            const trend = previous > 0 ? Math.round(((latest - previous) / previous) * 100) : 0
+            const bestOneRm = sortedOneRm.reduce((max, point) => Math.max(max, point.oneRm), 0)
+            return {
+              name,
+              sessions: data.sessions,
+              volume: Math.round(data.volume),
+              bestOneRm,
+              oneRmTrend: trend,
+              regularity30d: data.activeDays30.size,
+            } as ExerciseProgress
+          })
+          .sort((a, b) => b.sessions - a.sessions || b.volume - a.volume)
+          .slice(0, 4)
+        setExerciseProgress(progressRows)
+
         const nowTs = Date.now()
         const dayMs = 24 * 60 * 60 * 1000
         const currentWindowStart = nowTs - 7 * dayMs
@@ -629,6 +735,8 @@ export default function Feed() {
           deltaVolume: 0,
         })
         setBusinessNudge(null)
+        setExerciseProgress([])
+        setWeeklyCatchUpDays([])
         setResumeSessionHref(null)
         setNextAction({
           title: 'Complète ton profil',
@@ -967,7 +1075,52 @@ export default function Feed() {
               ? 'Objectif atteint cette semaine.'
               : `Il reste ${remainingWeeklySessions} séance(s) pour atteindre ton objectif.`}
           </p>
+          {remainingWeeklySessions > 0 && weeklyCatchUpDays.length > 0 && (
+            <div className="mt-3 rounded-lg border border-emerald-100 bg-emerald-50 px-3 py-2">
+              <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                Rattrapage suggéré
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {weeklyCatchUpDays.map((day) => (
+                  <span key={day} className="rounded-full bg-white px-2 py-1 text-xs font-semibold text-emerald-800 border border-emerald-100">
+                    {day}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
+      </div>
+
+      <div className="card-compact mb-8">
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] uppercase tracking-wide text-gray-500">Progression par exercice</div>
+          <Link href="/dashboard?view=session" className="text-xs font-semibold text-primary-700 underline underline-offset-2">
+            Voir en séance
+          </Link>
+        </div>
+        {exerciseProgress.length === 0 ? (
+          <div className="mt-3 text-sm text-gray-500">Pas assez de données pour analyser la progression.</div>
+        ) : (
+          <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
+            {exerciseProgress.map((exercise) => (
+              <div key={exercise.name} className="rounded-lg border border-gray-200 bg-white px-3 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-gray-900">{exercise.name}</div>
+                  <div className={`text-xs font-semibold ${exercise.oneRmTrend >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
+                    {exercise.oneRmTrend >= 0 ? '+' : ''}{exercise.oneRmTrend}% 1RM
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-gray-600">
+                  {exercise.sessions} séance(s) · {exercise.volume} kg volume · régularité 30j: {exercise.regularity30d} j
+                </div>
+                <div className="mt-1 text-xs text-primary-700 font-semibold">
+                  Best 1RM: {exercise.bestOneRm > 0 ? `${exercise.bestOneRm} kg` : '—'}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 reveal reveal-2">

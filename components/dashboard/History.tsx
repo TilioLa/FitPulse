@@ -8,6 +8,7 @@ import { useI18n } from '@/components/I18nProvider'
 import Link from 'next/link'
 import { programsById } from '@/data/programs'
 import { applyHistoryLimit, getEntitlement } from '@/lib/subscription'
+import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 
 interface WorkoutHistory {
   id: string
@@ -24,6 +25,7 @@ export default function History() {
   const [history, setHistory] = useState<WorkoutHistory[]>([])
   const [stats, setStats] = useState({ total: 0, streak: 0, totalMinutes: 0, totalWeight: 0 })
   const [locale, setLocale] = useState('fr')
+  const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
   const { t } = useI18n()
 
   const loadHistory = () => {
@@ -56,9 +58,24 @@ export default function History() {
         totalMinutes,
         totalWeight: Math.round(totalWeight),
       })
+      const currentWorkout = readLocalCurrentWorkout() as {
+        status?: string
+        programId?: string
+        id?: string
+      } | null
+      if (currentWorkout?.status === 'in_progress') {
+        const program = currentWorkout.programId ? programsById[currentWorkout.programId] : null
+        const sessionId = typeof currentWorkout.id === 'string' ? currentWorkout.id : null
+        setResumeSessionHref(
+          program && sessionId ? `/programmes/${program.slug}/seances/${sessionId}` : '/dashboard?view=session'
+        )
+      } else {
+        setResumeSessionHref(null)
+      }
     } catch {
       setHistory([])
       setStats({ total: 0, streak: 0, totalMinutes: 0, totalWeight: 0 })
+      setResumeSessionHref(null)
     }
   }
 
@@ -68,7 +85,11 @@ export default function History() {
       setLocale(navigator.language || 'fr')
     }
     window.addEventListener('storage', loadHistory)
-    return () => window.removeEventListener('storage', loadHistory)
+    window.addEventListener('fitpulse-current-workout', loadHistory)
+    return () => {
+      window.removeEventListener('storage', loadHistory)
+      window.removeEventListener('fitpulse-current-workout', loadHistory)
+    }
   }, [])
 
   const formatDate = (dateString: string) => {
@@ -196,6 +217,17 @@ export default function History() {
   return (
     <div className="page-wrap">
       <h1 className="section-title mb-8 reveal">{t('sessionHistory')}</h1>
+      {resumeSessionHref && (
+        <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+          <div className="font-semibold">Séance en cours détectée</div>
+          <div className="mt-1">
+            Reprends ton entraînement avant d’en démarrer un nouveau.
+            <Link href={resumeSessionHref} className="ml-2 font-semibold underline underline-offset-2">
+              Reprendre la séance
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="mb-6 flex flex-wrap gap-2">
         <button onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
           <Download className="h-4 w-4" />

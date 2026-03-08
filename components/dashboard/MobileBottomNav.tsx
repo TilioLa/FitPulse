@@ -23,9 +23,11 @@ const navItems: NavItem[] = [
 export default function MobileBottomNav({
   activeSection,
   setActiveSection,
+  sessionInProgress = false,
 }: {
   activeSection: DashboardSection
   setActiveSection: (section: DashboardSection) => void
+  sessionInProgress?: boolean
 }) {
   const router = useRouter()
 
@@ -50,7 +52,12 @@ export default function MobileBottomNav({
                 isActive ? 'text-primary-700 bg-primary-50' : 'text-gray-500'
               }`}
             >
-              <Icon className="h-4 w-4 mb-1" />
+              <span className="relative mb-1 inline-flex">
+                <Icon className="h-4 w-4" />
+                {item.id === 'session' && sessionInProgress && (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-emerald-500" />
+                )}
+              </span>
               <span>{item.label}</span>
             </button>
           )

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIcon, Sparkles, History } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -7,6 +8,7 @@ import { useRouter } from 'next/navigation'
 import { useI18n } from '@/components/I18nProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
+import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 
 type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
@@ -37,6 +39,21 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
   const { t } = useI18n()
   const displayName = user?.name || 'Utilisateur'
   const initials = displayName.trim().charAt(0).toUpperCase() || 'U'
+  const [sessionInProgress, setSessionInProgress] = useState(false)
+
+  useEffect(() => {
+    const syncInProgress = () => {
+      const current = readLocalCurrentWorkout() as { status?: string } | null
+      setSessionInProgress(current?.status === 'in_progress')
+    }
+    syncInProgress()
+    window.addEventListener('fitpulse-current-workout', syncInProgress)
+    window.addEventListener('storage', syncInProgress)
+    return () => {
+      window.removeEventListener('fitpulse-current-workout', syncInProgress)
+      window.removeEventListener('storage', syncInProgress)
+    }
+  }, [])
 
   const handleLogout = async () => {
     await signOut()
@@ -66,10 +83,17 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
                 }`}
               >
                 <Icon className="h-5 w-5" />
-                <span className="text-sm font-medium leading-tight truncate">{t(item.labelKey as any)}</span>
-              </Link>
-            )
-          }
+              <span className="flex items-center gap-2 text-sm font-medium leading-tight truncate">
+                <span className="truncate">{t(item.labelKey as any)}</span>
+                {item.id === 'session' && sessionInProgress && (
+                  <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                    Reprendre
+                  </span>
+                )}
+              </span>
+            </Link>
+          )
+        }
           return (
             <button
               key={item.id}
@@ -81,7 +105,16 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
               }`}
             >
               <Icon className="h-5 w-5" />
-              <span className="text-sm font-medium leading-tight truncate">{t(item.labelKey as any)}</span>
+              <span className="flex items-center gap-2 text-sm font-medium leading-tight truncate">
+                <span className="truncate">{t(item.labelKey as any)}</span>
+                {item.id === 'session' && sessionInProgress && (
+                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    isActive ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-700'
+                  }`}>
+                    Reprendre
+                  </span>
+                )}
+              </span>
             </button>
           )
         })}
@@ -138,7 +171,11 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
         </div>
       </div>
 
-      <MobileBottomNav activeSection={activeSection} setActiveSection={setActiveSection} />
+      <MobileBottomNav
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+        sessionInProgress={sessionInProgress}
+      />
     </aside>
   )
 }
