@@ -30,6 +30,8 @@ export type WorkoutHistoryItem = {
   records?: WorkoutRecord[]
   muscleUsage?: WorkoutHistoryMuscleUse[]
   exercises?: WorkoutExerciseHistory[]
+  sessionMood?: 'low' | 'ok' | 'great' | null
+  sessionNote?: string
 }
 
 export function toLocalDateKey(value: string | Date) {

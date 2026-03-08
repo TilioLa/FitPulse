@@ -30,6 +30,7 @@ interface UserSettings {
   autoRestAfterSet: boolean
   soundEnabled: boolean
   voiceEnabled: boolean
+  voiceCoachEnabled: boolean
   reminderEmailsEnabled: boolean
   pushRemindersEnabled: boolean
   weightUnit: 'kg' | 'lbs'
@@ -37,6 +38,7 @@ interface UserSettings {
   height?: number
   goal?: string
   sessionsPerWeek?: number
+  monthlyGoalSessions?: number
   focusZones?: string[]
   avoidZones?: string[]
   weeklyPlan?: WeeklyPlanDay[]
@@ -72,6 +74,7 @@ const getChangedSectionCount = (current: UserSettings, initial: UserSettings) =>
     current.height !== initial.height ||
     current.goal !== initial.goal ||
     current.sessionsPerWeek !== initial.sessionsPerWeek ||
+    current.monthlyGoalSessions !== initial.monthlyGoalSessions ||
     current.weightUnit !== initial.weightUnit ||
     !areSameArrays(current.focusZones ?? [], initial.focusZones ?? []) ||
     !areSameArrays(current.avoidZones ?? [], initial.avoidZones ?? [])
@@ -94,7 +97,11 @@ const getChangedSectionCount = (current: UserSettings, initial: UserSettings) =>
   ) {
     count += 1
   }
-  if (current.soundEnabled !== initial.soundEnabled || current.voiceEnabled !== initial.voiceEnabled) {
+  if (
+    current.soundEnabled !== initial.soundEnabled ||
+    current.voiceEnabled !== initial.voiceEnabled ||
+    current.voiceCoachEnabled !== initial.voiceCoachEnabled
+  ) {
     count += 1
   }
 
@@ -127,6 +134,7 @@ export default function Settings() {
     autoRestAfterSet: true,
     soundEnabled: true,
     voiceEnabled: false,
+    voiceCoachEnabled: false,
     reminderEmailsEnabled: true,
     pushRemindersEnabled: true,
     weightUnit: 'kg',
@@ -193,6 +201,7 @@ export default function Settings() {
       settings.height !== initialSettings.height ||
       settings.goal !== initialSettings.goal ||
       settings.sessionsPerWeek !== initialSettings.sessionsPerWeek ||
+      settings.monthlyGoalSessions !== initialSettings.monthlyGoalSessions ||
       !areSameArrays(settings.focusZones ?? [], initialSettings.focusZones ?? []) ||
       !areSameArrays(settings.avoidZones ?? [], initialSettings.avoidZones ?? [])
     ) {
@@ -207,7 +216,11 @@ export default function Settings() {
     ) {
       sections.push(SECTION_LABELS.rest)
     }
-    if (settings.soundEnabled !== initialSettings.soundEnabled || settings.voiceEnabled !== initialSettings.voiceEnabled) {
+    if (
+      settings.soundEnabled !== initialSettings.soundEnabled ||
+      settings.voiceEnabled !== initialSettings.voiceEnabled ||
+      settings.voiceCoachEnabled !== initialSettings.voiceCoachEnabled
+    ) {
       sections.push(SECTION_LABELS.sound)
     }
     if (settings.weightUnit !== initialSettings.weightUnit) {
@@ -236,6 +249,7 @@ export default function Settings() {
         typeof userSettings.autoRestAfterSet === 'boolean' ? userSettings.autoRestAfterSet : true,
       soundEnabled: typeof userSettings.soundEnabled === 'boolean' ? userSettings.soundEnabled : true,
       voiceEnabled: typeof userSettings.voiceEnabled === 'boolean' ? userSettings.voiceEnabled : false,
+      voiceCoachEnabled: typeof userSettings.voiceCoachEnabled === 'boolean' ? userSettings.voiceCoachEnabled : false,
       reminderEmailsEnabled:
         typeof userSettings.reminderEmailsEnabled === 'boolean' ? userSettings.reminderEmailsEnabled : true,
       pushRemindersEnabled:
@@ -245,6 +259,9 @@ export default function Settings() {
       height: Number.isFinite(userSettings.height) ? Number(userSettings.height) : undefined,
       goal: userSettings.goal || 'Cardio',
       sessionsPerWeek: Number.isFinite(userSettings.sessionsPerWeek) ? Number(userSettings.sessionsPerWeek) : 3,
+      monthlyGoalSessions: Number.isFinite(userSettings.monthlyGoalSessions)
+        ? Number(userSettings.monthlyGoalSessions)
+        : 12,
       focusZones: Array.isArray(userSettings.focusZones) ? userSettings.focusZones : [],
       avoidZones: Array.isArray(userSettings.avoidZones) ? userSettings.avoidZones : [],
       weeklyPlan: Array.isArray(userSettings.weeklyPlan)
@@ -295,6 +312,7 @@ export default function Settings() {
         autoRestAfterSet: settings.autoRestAfterSet,
         soundEnabled: settings.soundEnabled,
         voiceEnabled: settings.voiceEnabled,
+        voiceCoachEnabled: settings.voiceCoachEnabled,
         reminderEmailsEnabled: settings.reminderEmailsEnabled,
         pushRemindersEnabled: settings.pushRemindersEnabled,
         weightUnit: settings.weightUnit,
@@ -302,6 +320,7 @@ export default function Settings() {
         height: settings.height,
         goal: settings.goal,
         sessionsPerWeek: settings.sessionsPerWeek,
+        monthlyGoalSessions: settings.monthlyGoalSessions,
         focusZones: settings.focusZones,
         avoidZones: settings.avoidZones,
         weeklyPlan,
@@ -748,6 +767,20 @@ export default function Settings() {
               </div>
             </div>
           </div>
+          <div className="mt-4">
+            <label htmlFor="settings-month-goal" className="block text-sm font-medium text-gray-700 mb-2">
+              Objectif mensuel (séances)
+            </label>
+            <input
+              id="settings-month-goal"
+              type="number"
+              min={1}
+              max={40}
+              value={settings.monthlyGoalSessions ?? 12}
+              onChange={(e) => setSettings({ ...settings, monthlyGoalSessions: Number(e.target.value) || 12 })}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
 
           <div className="mt-4">
             <fieldset>
@@ -958,6 +991,23 @@ export default function Settings() {
               }`}
             >
               {settings.voiceEnabled ? 'Activé' : 'Désactivé'}
+            </button>
+          </div>
+          <div className="flex items-center justify-between mt-4">
+            <div>
+              <div className="text-sm font-medium text-gray-700">Coach vocal séance</div>
+              <div className="text-xs text-gray-500">Annonce l’exercice et les transitions.</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSettings({ ...settings, voiceCoachEnabled: !settings.voiceCoachEnabled })}
+              className={`px-4 py-2 rounded-lg border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary-600 ${
+                settings.voiceCoachEnabled
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
+              }`}
+            >
+              {settings.voiceCoachEnabled ? 'Activé' : 'Désactivé'}
             </button>
           </div>
         </div>

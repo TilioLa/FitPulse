@@ -13,6 +13,7 @@ import { readLocalHistory } from '@/lib/history-store'
 import { readLocalSettings } from '@/lib/user-state-store'
 import { useToast } from '@/components/ui/ToastProvider'
 import { addNotification } from '@/lib/in-app-notifications'
+import WeeklyPlanner from '@/components/dashboard/WeeklyPlanner'
 
 type FeedItem = {
   id: string
@@ -102,6 +103,12 @@ export default function Feed() {
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [onboardingCollapsed, setOnboardingCollapsed] = useState(false)
   const [badgeSummary, setBadgeSummary] = useState({ streak: 0, total: 0 })
+  const [monthlyGoal, setMonthlyGoal] = useState({ target: 12, progress: 0 })
+  const [relaunchPlan, setRelaunchPlan] = useState<{
+    active: boolean
+    reason?: string
+    weeks?: string[]
+  }>({ active: false })
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -207,6 +214,7 @@ export default function Feed() {
           goals?: string[]
           equipment?: string[]
           sessionsPerWeek?: number
+          monthlyGoalSessions?: number
         }
         const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
         const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
@@ -347,6 +355,14 @@ export default function Feed() {
           previousSessions: previousMonthItems.length,
           deltaVolume,
         })
+        const goalTarget =
+          Number.isFinite(settings.monthlyGoalSessions) && Number(settings.monthlyGoalSessions) > 0
+            ? Number(settings.monthlyGoalSessions)
+            : 12
+        setMonthlyGoal({
+          target: goalTarget,
+          progress: Math.min(100, Math.round((sessions / goalTarget) * 100)),
+        })
 
         const muscleTotals = monthlyItems.reduce((acc: Record<string, number>, item: any) => {
           const muscles = item.muscleUsage || []
@@ -423,6 +439,26 @@ export default function Feed() {
               }
             : { active: false }
         )
+        const twoWeekMs = 14 * 24 * 60 * 60 * 1000
+        const recent = stored.filter((item: any) => Date.now() - new Date(item.date).getTime() <= twoWeekMs)
+        const recentVolume = recent.reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
+        const previousRecent = stored.filter((item: any) => {
+          const age = Date.now() - new Date(item.date).getTime()
+          return age > twoWeekMs && age <= twoWeekMs * 2
+        })
+        const previousRecentVolume = previousRecent.reduce((sum: number, item: any) => sum + (Number(item.volume) || 0), 0)
+        if (stored.length >= 8 && recentVolume <= previousRecentVolume * 1.02) {
+          setRelaunchPlan({
+            active: true,
+            reason: 'Progression stable depuis 4 semaines',
+            weeks: [
+              'Semaine 1: +1 série sur les mouvements principaux',
+              'Semaine 2: +2.5 à +5% de charge sur les exercices de base',
+            ],
+          })
+        } else {
+          setRelaunchPlan({ active: false })
+        }
 
         const lastProgramEntry = stored.find((item) => (item as any).programId)
         if (lastProgramEntry) {
@@ -481,6 +517,8 @@ export default function Feed() {
           deltaVolume: 0,
         })
         setBusinessNudge(null)
+        setMonthlyGoal({ target: 12, progress: 0 })
+        setRelaunchPlan({ active: false })
         setNextAction({
           title: 'Complète ton profil',
           body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
@@ -596,6 +634,30 @@ export default function Feed() {
           </Link>
         </div>
       )}
+
+      <WeeklyPlanner />
+
+      <div className="mb-8 rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-indigo-700">Objectif mensuel</div>
+        <div className="mt-1 text-base font-semibold text-indigo-900">
+          {monthly.sessions}/{monthlyGoal.target} séances
+        </div>
+        <div className="mt-2 h-2 rounded-full bg-indigo-100">
+          <div className="h-full rounded-full bg-indigo-600" style={{ width: `${monthlyGoal.progress}%` }} />
+        </div>
+      </div>
+
+      {relaunchPlan.active && (
+        <div className="mb-8 rounded-2xl border border-violet-200 bg-violet-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-violet-700">Plan de relance 2 semaines</div>
+          <div className="mt-1 text-sm text-violet-900">{relaunchPlan.reason}</div>
+          <div className="mt-2 space-y-1 text-sm text-violet-800">
+            {(relaunchPlan.weeks || []).map((item) => (
+              <div key={item}>• {item}</div>
+            ))}
+          </div>
+        </div>
+      )}
       {businessNudge && (
         <div className="mb-8 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
           <div className="text-xs font-semibold uppercase tracking-wide text-amber-700">Suggestion FitPulse</div>
@@ -708,6 +770,62 @@ export default function Feed() {
           </div>
         </div>
       )}
+
+      <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-5 py-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-600">Comparaison mensuelle</div>
+        <div className="mt-3 space-y-2">
+          <div>
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Mois actuel</span>
+              <strong>{monthlyCompare.currentVolume} kg</strong>
+            </div>
+            <div className="mt-1 h-2 rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full bg-primary-600"
+                style={{
+                  width: `${
+                    monthlyCompare.currentVolume > 0 || monthlyCompare.previousVolume > 0
+                      ? Math.max(
+                          5,
+                          Math.round(
+                            (monthlyCompare.currentVolume /
+                              Math.max(monthlyCompare.currentVolume, monthlyCompare.previousVolume, 1)) *
+                              100
+                          )
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
+          <div>
+            <div className="flex justify-between text-xs text-gray-600">
+              <span>Mois précédent</span>
+              <strong>{monthlyCompare.previousVolume} kg</strong>
+            </div>
+            <div className="mt-1 h-2 rounded-full bg-gray-100">
+              <div
+                className="h-full rounded-full bg-slate-500"
+                style={{
+                  width: `${
+                    monthlyCompare.currentVolume > 0 || monthlyCompare.previousVolume > 0
+                      ? Math.max(
+                          5,
+                          Math.round(
+                            (monthlyCompare.previousVolume /
+                              Math.max(monthlyCompare.currentVolume, monthlyCompare.previousVolume, 1)) *
+                              100
+                          )
+                        )
+                      : 0
+                  }%`,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 reveal reveal-1">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">

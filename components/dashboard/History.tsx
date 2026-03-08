@@ -153,6 +153,7 @@ export default function History() {
             <td>${workout.duration} min</td>
             <td>${workout.volume || 0} kg</td>
             <td>${workout.calories || 0} kcal</td>
+            <td>${(workout as any).sessionMood || '-'}</td>
           </tr>
         `
       )
@@ -163,16 +164,26 @@ export default function History() {
           <title>FitPulse - Historique</title>
           <style>
             body { font-family: Arial, sans-serif; padding: 24px; color: #111827; }
-            h1 { margin-bottom: 4px; }
+            h1 { margin-bottom: 4px; color: #0f172a; }
             p { color: #6b7280; margin-top: 0; }
+            .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin: 12px 0 16px; }
+            .box { border:1px solid #e5e7eb; border-radius:8px; padding:8px; }
+            .label { font-size:11px; color:#6b7280; text-transform:uppercase; }
+            .value { font-size:18px; font-weight:700; color:#111827; }
             table { border-collapse: collapse; width: 100%; margin-top: 16px; }
             th, td { border: 1px solid #e5e7eb; text-align: left; padding: 8px; font-size: 12px; }
             th { background: #f3f4f6; }
           </style>
         </head>
         <body>
-          <h1>FitPulse - Historique des séances</h1>
+          <h1>FitPulse - Rapport de progression</h1>
           <p>Export du ${new Date().toLocaleDateString(locale.startsWith('fr') ? 'fr-FR' : 'en-US')}</p>
+          <div class="summary">
+            <div class="box"><div class="label">Total séances</div><div class="value">${stats.total}</div></div>
+            <div class="box"><div class="label">Streak</div><div class="value">${stats.streak}</div></div>
+            <div class="box"><div class="label">Minutes</div><div class="value">${stats.totalMinutes}</div></div>
+            <div class="box"><div class="label">Volume</div><div class="value">${stats.totalWeight} kg</div></div>
+          </div>
           <table>
             <thead>
               <tr>
@@ -181,6 +192,7 @@ export default function History() {
                 <th>Durée</th>
                 <th>Poids total</th>
                 <th>Calories</th>
+                <th>Ressenti</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>

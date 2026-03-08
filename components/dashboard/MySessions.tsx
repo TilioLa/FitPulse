@@ -25,6 +25,7 @@ import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscript
 import { encodeSharedSession } from '@/lib/session-share'
 import { slugify } from '@/lib/slug'
 import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
+import { workoutTemplates } from '@/lib/workout-templates'
 
 const playBeep = () => {
   try {
@@ -102,6 +103,24 @@ type SessionHint = {
 
 const lastExerciseKey = (workoutId: string) => `fitpulse_last_exercise_index_${workoutId}`
 const pendingSyncCountKey = 'fitpulse_pending_sync_count'
+const recoveryCheckinKey = () => {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `fitpulse_recovery_checkin_${y}-${m}-${d}`
+}
+
+const isAutomationContext = () => {
+  try {
+    if (typeof window === 'undefined') return false
+    const hasE2eParam = new URLSearchParams(window.location.search).get('e2e') === '1'
+    const hasBypassFlag = localStorage.getItem('fitpulse_e2e_bypass') === 'true'
+    return hasE2eParam || hasBypassFlag || navigator.webdriver === true
+  } catch {
+    return false
+  }
+}
 
 const setPendingSyncCount = (count: number) => {
   const next = Math.max(0, Math.floor(count))
@@ -144,6 +163,7 @@ export default function MySessions() {
   const [autoRestAfterSet, setAutoRestAfterSet] = useState(true)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [voiceEnabled, setVoiceEnabled] = useState(false)
+  const [voiceCoachEnabled, setVoiceCoachEnabled] = useState(false)
   const [timerKind, setTimerKind] = useState<'set' | 'exercise' | null>(null)
   const [sessionPaused, setSessionPaused] = useState(false)
   const [supersetMap, setSupersetMap] = useState<Record<string, string>>({})
@@ -158,6 +178,13 @@ export default function MySessions() {
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [summaryMood, setSummaryMood] = useState<'low' | 'ok' | 'great'>('ok')
+  const [summaryNote, setSummaryNote] = useState('')
+  const [savedJournal, setSavedJournal] = useState(false)
+  const [lastCompletedSessionDate, setLastCompletedSessionDate] = useState<string | null>(null)
+  const [recoveryCheckinOpen, setRecoveryCheckinOpen] = useState(false)
+  const [recoveryCheckin, setRecoveryCheckin] = useState({ sleep: 7, fatigue: 3, pain: 1 })
+  const [recoveryModeApplied, setRecoveryModeApplied] = useState(false)
   const [lastSummary, setLastSummary] = useState<{
     calories: number
     volume: number
@@ -411,6 +438,7 @@ export default function MySessions() {
     setAutoRestAfterSet(settings?.autoRestAfterSet !== false)
     setSoundEnabled(settings?.soundEnabled !== false)
     setVoiceEnabled(settings?.voiceEnabled === true)
+    setVoiceCoachEnabled(settings?.voiceCoachEnabled === true)
     setWeightUnit(settings?.weightUnit === 'lbs' ? 'lbs' : 'kg')
   }, [])
 
@@ -431,6 +459,7 @@ export default function MySessions() {
       setAutoRestAfterSet(settings?.autoRestAfterSet !== false)
       setSoundEnabled(settings?.soundEnabled !== false)
       setVoiceEnabled(settings?.voiceEnabled === true)
+      setVoiceCoachEnabled(settings?.voiceCoachEnabled === true)
       if (nextUnit === weightUnit) return
       setExerciseInputs((prev) => {
         const updated: ExerciseInputs = {}
@@ -452,6 +481,27 @@ export default function MySessions() {
       window.removeEventListener('storage', handleSettingsChange)
     }
   }, [weightUnit])
+
+  useEffect(() => {
+    if (!workout) return
+    if (isAutomationContext()) return
+    const key = recoveryCheckinKey()
+    const saved = localStorage.getItem(key)
+    if (!saved) {
+      setRecoveryCheckinOpen(true)
+      return
+    }
+    try {
+      const parsed = JSON.parse(saved) as { sleep?: number; fatigue?: number; pain?: number }
+      setRecoveryCheckin({
+        sleep: Number(parsed.sleep) || 7,
+        fatigue: Number(parsed.fatigue) || 3,
+        pain: Number(parsed.pain) || 1,
+      })
+    } catch {
+      setRecoveryCheckinOpen(true)
+    }
+  }, [workout?.id])
 
   const workoutId = workout?.id
   useEffect(() => {
@@ -634,13 +684,14 @@ export default function MySessions() {
     })()
 
     if (!existsSameSessionToday) {
+      const completedAt = new Date().toISOString()
       history.push({
         id: `${workout.id}-${todayKey}-${history.length + 1}`,
         workoutId: workout.id,
         workoutName: workout.name,
         programId: workout.programId,
         programName: workout.programName,
-        date: new Date().toISOString(),
+        date: completedAt,
         duration: workout.duration,
         calories: caloriesBurned,
         volume: Math.round(sessionVolume),
@@ -652,7 +703,10 @@ export default function MySessions() {
           notes: exerciseNotes[exercise.id] || '',
           sets: exerciseInputs[exercise.id] || [],
         })),
+        sessionMood: null,
+        sessionNote: '',
       })
+      setLastCompletedSessionDate(completedAt)
       const cappedHistory = applyHistoryLimit(history as WorkoutHistoryItem[], getEntitlement())
       writeLocalHistory(cappedHistory)
       if (user?.id) {
@@ -691,6 +745,8 @@ export default function MySessions() {
       muscleUsage,
       bestPrKg: Math.round(Math.max(...exerciseRecords.map((item) => item.bestOneRm || 0), 0)),
     })
+    setSummaryMood('ok')
+    setSummaryNote('')
     setShowSummary(true)
     push(`Séance terminée !`, 'success')
   }
@@ -710,6 +766,24 @@ export default function MySessions() {
     push('Séance reprise.', 'success')
   }
 
+  const handleSaveRecoveryCheckin = () => {
+    localStorage.setItem(recoveryCheckinKey(), JSON.stringify(recoveryCheckin))
+    setRecoveryCheckinOpen(false)
+  }
+
+  const handleApplyRecoveryMode = () => {
+    if (!workout) return
+    if (recoveryModeApplied) return
+    const adjusted = workout.exercises.map((exercise) => ({
+      ...exercise,
+      reps: Math.max(3, Math.round(exercise.reps * 0.85)),
+      rest: Math.round(exercise.rest * 1.2),
+    }))
+    updateWorkoutExercises(adjusted)
+    setRecoveryModeApplied(true)
+    push('Mode récupération appliqué: volume réduit et repos augmenté.', 'info')
+  }
+
   const handleCancelWorkout = () => {
     if (!workout) return
     const confirmed = window.confirm('Annuler la séance en cours ? La progression non terminée sera perdue.')
@@ -725,6 +799,29 @@ export default function MySessions() {
     }
     push('Séance annulée.', 'info')
     router.push('/dashboard?view=feed')
+  }
+
+  const saveSummaryJournal = () => {
+    if (!lastCompletedSessionDate || !workout) return
+    const current = readLocalHistory() as any[]
+    const next = current.map((item) => {
+      if (item.date === lastCompletedSessionDate && item.workoutName === workout.name) {
+        return {
+          ...item,
+          sessionMood: summaryMood,
+          sessionNote: summaryNote.trim(),
+        }
+      }
+      return item
+    })
+    const capped = applyHistoryLimit(next as WorkoutHistoryItem[], getEntitlement())
+    writeLocalHistory(capped as WorkoutHistoryItem[])
+    if (user?.id) {
+      void persistHistoryForUser(user.id, capped as WorkoutHistoryItem[])
+    }
+    setSavedJournal(true)
+    setTimeout(() => setSavedJournal(false), 1500)
+    push('Journal de séance enregistré.', 'success')
   }
 
   const updateWorkoutExercises = (nextExercises: Exercise[]) => {
@@ -936,6 +1033,13 @@ export default function MySessions() {
     return `${min}-${max}`
   }, [currentExercise?.reps, currentInputs])
 
+  useEffect(() => {
+    if (!voiceCoachEnabled) return
+    if (!currentExercise) return
+    if (sessionPaused) return
+    speak(`Exercice ${currentExerciseIndex + 1}: ${currentExercise.name}`)
+  }, [currentExercise?.id, currentExerciseIndex, sessionPaused, voiceCoachEnabled])
+
   function toggleSetCompleted(setIndex: number, checked: boolean) {
     if (!currentExercise) return
     if (sessionPaused) return
@@ -977,6 +1081,9 @@ export default function MySessions() {
     toggleSetCompleted(nextIndex, true)
     setSetPulse(true)
     setTimeout(() => setSetPulse(false), 180)
+    if (voiceCoachEnabled) {
+      speak(`Série ${nextIndex + 1} validée`)
+    }
     push(`Série ${nextIndex + 1} validée`, 'success')
   }
 
@@ -988,6 +1095,16 @@ export default function MySessions() {
       if (event.key === 'Enter') {
         event.preventDefault()
         markNextSetCompleted()
+      } else if (event.key.toLowerCase() === 'n') {
+        event.preventDefault()
+        markNextSetCompleted()
+      } else if (event.key.toLowerCase() === 'p') {
+        event.preventDefault()
+        if (sessionPaused) handleResumeSession()
+        else handlePauseSession()
+      } else if (event.key.toLowerCase() === 'r') {
+        event.preventDefault()
+        handleResetTimer()
       } else if (event.key === 'ArrowRight') {
         event.preventDefault()
         if (isLastExercise) {
@@ -1099,6 +1216,34 @@ export default function MySessions() {
                 <div>Poids total : <span className="font-semibold text-gray-900">{lastSummary.volume} {weightUnit}</span></div>
                 <div>Calories : <span className="font-semibold text-gray-900">{lastSummary.calories} kcal</span></div>
               </div>
+              <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="text-sm font-semibold text-gray-900">Journal post-séance</div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {(['low', 'ok', 'great'] as const).map((mood) => (
+                    <button
+                      key={mood}
+                      type="button"
+                      onClick={() => setSummaryMood(mood)}
+                      className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                        summaryMood === mood ? 'border-primary-600 bg-primary-100 text-primary-700' : 'border-gray-300 text-gray-600'
+                      }`}
+                    >
+                      {mood === 'low' ? 'Fatigué' : mood === 'ok' ? 'Correct' : 'Très bien'}
+                    </button>
+                  ))}
+                </div>
+                <textarea
+                  value={summaryNote}
+                  onChange={(event) => setSummaryNote(event.target.value)}
+                  rows={3}
+                  placeholder="Note rapide sur ta séance..."
+                  className="mt-2 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+                <button type="button" onClick={saveSummaryJournal} className="mt-2 btn-secondary px-3 py-2 text-xs">
+                  Enregistrer le journal
+                </button>
+                {savedJournal && <p className="mt-1 text-xs text-emerald-700">Journal sauvegardé.</p>}
+              </div>
             </div>
 
             <div className="card-soft">
@@ -1169,6 +1314,63 @@ export default function MySessions() {
 
   return (
     <div className="page-wrap panel-stack" data-testid="session-root">
+      {recoveryCheckinOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900">Check-in récupération</h3>
+            <p className="text-sm text-gray-500 mt-1">Ajuste ta séance selon ta forme du jour.</p>
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm text-gray-700">
+                Sommeil (heures): {recoveryCheckin.sleep}
+                <input
+                  type="range"
+                  min={3}
+                  max={10}
+                  value={recoveryCheckin.sleep}
+                  onChange={(event) =>
+                    setRecoveryCheckin((prev) => ({ ...prev, sleep: Number(event.target.value) }))
+                  }
+                  className="mt-1 w-full accent-primary-600"
+                />
+              </label>
+              <label className="block text-sm text-gray-700">
+                Fatigue (1-10): {recoveryCheckin.fatigue}
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={recoveryCheckin.fatigue}
+                  onChange={(event) =>
+                    setRecoveryCheckin((prev) => ({ ...prev, fatigue: Number(event.target.value) }))
+                  }
+                  className="mt-1 w-full accent-primary-600"
+                />
+              </label>
+              <label className="block text-sm text-gray-700">
+                Douleur (1-10): {recoveryCheckin.pain}
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  value={recoveryCheckin.pain}
+                  onChange={(event) =>
+                    setRecoveryCheckin((prev) => ({ ...prev, pain: Number(event.target.value) }))
+                  }
+                  className="mt-1 w-full accent-primary-600"
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="btn-secondary px-3 py-2 text-xs" onClick={() => setRecoveryCheckinOpen(false)}>
+                Ignorer
+              </button>
+              <button type="button" className="btn-primary px-3 py-2 text-xs" onClick={handleSaveRecoveryCheckin}>
+                Enregistrer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {!showSummary && !trainingMode && (
         <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-gray-50/95 backdrop-blur border-b border-gray-200 lg:hidden">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
@@ -1247,6 +1449,19 @@ export default function MySessions() {
             <div className="mt-1">{sessionHint.body}</div>
           </div>
         )}
+        {(recoveryCheckin.fatigue >= 7 || recoveryCheckin.pain >= 6 || recoveryCheckin.sleep <= 5) && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Récupération limitée détectée (sommeil/fatigue/douleur). 
+            <button
+              type="button"
+              onClick={handleApplyRecoveryMode}
+              disabled={recoveryModeApplied}
+              className="ml-2 font-semibold underline underline-offset-2 disabled:opacity-60"
+            >
+              {recoveryModeApplied ? 'Mode récupération appliqué' : 'Appliquer le mode récupération'}
+            </button>
+          </div>
+        )}
         <div className="mt-4">
           <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
             <div
@@ -1256,6 +1471,9 @@ export default function MySessions() {
           </div>
           <div className="text-sm text-gray-600 mt-2">
             Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            Raccourcis: N = série suivante · P = pause/reprise · R = reset timer
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -1290,6 +1508,32 @@ export default function MySessions() {
         </div>
         {editWorkout && (
           <div className="mt-4 card-soft border-dashed border-primary-200 bg-primary-50/40 space-y-3">
+            <div className="rounded-lg border border-primary-200 bg-white p-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-primary-700 mb-2">
+                Templates de séance
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {workoutTemplates.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => {
+                      const next = template.exercises.map((exercise, idx) => ({
+                        id: `${workout.id}-tpl-${template.id}-${idx}`,
+                        name: exercise.name,
+                        sets: exercise.sets,
+                        reps: exercise.reps,
+                        rest: exercise.rest,
+                      }))
+                      updateWorkoutExercises(next)
+                    }}
+                    className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700"
+                  >
+                    {template.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             {workout.exercises.map((exercise, index) => (
               <div key={exercise.id} className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="flex items-center justify-between">

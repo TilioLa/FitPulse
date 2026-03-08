@@ -60,18 +60,18 @@ export default function Hero() {
             </div>
           </div>
 
-          <div className="mt-10 grid grid-cols-3 gap-3 max-w-2xl mx-auto reveal reveal-3">
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto reveal reveal-3">
             <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-4">
-              <div className="text-2xl font-bold">10k+</div>
-              <div className="text-xs text-primary-100 mt-1">Utilisateurs actifs</div>
+              <div className="text-sm font-semibold">Sans matériel obligatoire</div>
+              <div className="text-xs text-primary-100 mt-1">Programmes faisables chez soi ou en salle</div>
             </div>
             <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-4">
-              <div className="text-2xl font-bold">4.8/5</div>
-              <div className="text-xs text-primary-100 mt-1">Satisfaction moyenne</div>
+              <div className="text-sm font-semibold">Progression guidée</div>
+              <div className="text-xs text-primary-100 mt-1">Séries, répétitions et repos déjà structurés</div>
             </div>
             <div className="rounded-xl border border-white/20 bg-white/10 px-3 py-4">
-              <div className="text-2xl font-bold">26 min</div>
-              <div className="text-xs text-primary-100 mt-1">Durée médiane séance</div>
+              <div className="text-sm font-semibold">Ajustements en direct</div>
+              <div className="text-xs text-primary-100 mt-1">Adapte la séance selon ton ressenti du jour</div>
             </div>
           </div>
         </div>
