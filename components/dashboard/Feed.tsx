@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer } from 'lucide-react'
-import { WorkoutHistoryItem } from '@/lib/history'
+import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
@@ -49,6 +49,11 @@ type OnboardingStep = {
 export default function Feed() {
   const { push } = useToast()
   const [items, setItems] = useState<FeedItem[]>([])
+  const [globalStats, setGlobalStats] = useState({
+    streak: 0,
+    totalWorkouts: 0,
+    totalMinutes: 0,
+  })
   const [monthly, setMonthly] = useState({
     headline: 'Mois en cours',
     monthLabel: '',
@@ -183,6 +188,12 @@ export default function Feed() {
       try {
         const rawHistory = readLocalHistory() as WorkoutHistoryItem[]
         const stored = applyHistoryLimit(rawHistory, getEntitlement())
+        const { streak, totalWorkouts, totalMinutes } = computeHistoryStats(stored)
+        setGlobalStats({
+          streak,
+          totalWorkouts,
+          totalMinutes,
+        })
         const list = stored
           .slice()
           .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -449,6 +460,11 @@ export default function Feed() {
         }
       } catch {
         setItems([])
+        setGlobalStats({
+          streak: 0,
+          totalWorkouts: 0,
+          totalMinutes: 0,
+        })
         setMonthly({
           headline: 'Mois en cours',
           monthLabel: '',
@@ -654,6 +670,36 @@ export default function Feed() {
           </div>
         </div>
       )}
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal reveal-1">
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Streak actuel</div>
+              <div className="text-2xl font-bold text-gray-900">{globalStats.streak} j</div>
+            </div>
+            <Flame className="h-5 w-5 text-orange-500" />
+          </div>
+        </div>
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Séances totales</div>
+              <div className="text-2xl font-bold text-gray-900">{globalStats.totalWorkouts}</div>
+            </div>
+            <Activity className="h-5 w-5 text-primary-500" />
+          </div>
+        </div>
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Minutes totales</div>
+              <div className="text-2xl font-bold text-gray-900">{globalStats.totalMinutes}</div>
+            </div>
+            <Clock className="h-5 w-5 text-emerald-600" />
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 reveal reveal-1">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
