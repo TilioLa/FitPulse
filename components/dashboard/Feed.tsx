@@ -703,15 +703,46 @@ export default function Feed() {
       : recovery.score >= 60
       ? 'bg-amber-100 text-amber-700'
       : 'bg-rose-100 text-rose-700'
+  const quickSummary =
+    remainingWeeklySessions === 0
+      ? 'Objectif hebdo atteint. Tu peux consolider avec une séance légère ou mobilité.'
+      : consistency.score >= 80 && recovery.score >= 80
+      ? 'Très bonne dynamique: garde ce rythme et priorise la qualité d’exécution.'
+      : recovery.score < 60
+      ? 'Charge élevée détectée: privilégie une reprise progressive et une récupération active.'
+      : `Il reste ${remainingWeeklySessions} séance(s) pour atteindre ton objectif hebdomadaire.`
+  const todayLabel = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: '2-digit',
+    month: 'long',
+  })
 
   return (
     <div className="page-wrap">
       <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="section-title">Home</h1>
-          <p className="text-sm text-gray-500 mt-1">{monthly.headline} · {monthly.monthLabel}</p>
+          <h1 className="section-title">Tableau de bord</h1>
+          <p className="text-sm text-gray-500 mt-1">{todayLabel} · {monthly.headline} · {monthly.monthLabel}</p>
         </div>
         <div className="text-xs text-gray-500">Dernière mise à jour automatique</div>
+      </div>
+      <div className="mb-8 rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 to-white px-5 py-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Résumé du jour</div>
+        <p className="mt-1 text-sm text-primary-900">{quickSummary}</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/dashboard?view=session" className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm">
+            <Play className="h-4 w-4" />
+            Démarrer une séance
+          </Link>
+          <Link href="/dashboard?view=history" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
+            <Calendar className="h-4 w-4" />
+            Voir l’historique
+          </Link>
+          <Link href="/programmes" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
+            <Activity className="h-4 w-4" />
+            Explorer les programmes
+          </Link>
+        </div>
       </div>
       {!hasProAccess(entitlement) && (
         <div className="mb-8 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
@@ -888,6 +919,7 @@ export default function Feed() {
               const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
               return (
                 <div key={day.day} className="flex flex-col items-center gap-1">
+                  <span className="text-[10px] text-gray-500">{day.sessions}</span>
                   <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
                     <div
                       className="w-full bg-primary-600 rounded-t"
