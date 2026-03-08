@@ -46,13 +46,39 @@ type OnboardingStep = {
   cta: string
 }
 
+const toDayKey = (value: string) => value.slice(0, 10)
+
+const computeBestStreak = (dates: string[]) => {
+  if (dates.length === 0) return 0
+  const ordered = Array.from(new Set(dates.map(toDayKey)))
+    .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+
+  let best = 1
+  let current = 1
+  for (let index = 1; index < ordered.length; index += 1) {
+    const previous = new Date(ordered[index - 1]).getTime()
+    const next = new Date(ordered[index]).getTime()
+    const diffDays = Math.round((next - previous) / (24 * 60 * 60 * 1000))
+    if (diffDays === 1) {
+      current += 1
+      best = Math.max(best, current)
+    } else {
+      current = 1
+    }
+  }
+  return best
+}
+
 export default function Feed() {
   const { push } = useToast()
   const [items, setItems] = useState<FeedItem[]>([])
   const [globalStats, setGlobalStats] = useState({
     streak: 0,
+    bestStreak: 0,
     totalWorkouts: 0,
     totalMinutes: 0,
+    weeklySessions: 0,
+    avgDuration: 0,
   })
   const [monthly, setMonthly] = useState({
     headline: 'Mois en cours',
@@ -188,11 +214,17 @@ export default function Feed() {
       try {
         const rawHistory = readLocalHistory() as WorkoutHistoryItem[]
         const stored = applyHistoryLimit(rawHistory, getEntitlement())
-        const { streak, totalWorkouts, totalMinutes } = computeHistoryStats(stored)
+        const { deduped, streak, totalWorkouts, totalMinutes } = computeHistoryStats(stored)
+        const weekAgoTs = Date.now() - 7 * 24 * 60 * 60 * 1000
+        const weeklySessions = deduped.filter((item) => new Date(item.date).getTime() >= weekAgoTs).length
+        const avgDuration = totalWorkouts > 0 ? Math.round(totalMinutes / totalWorkouts) : 0
         setGlobalStats({
           streak,
+          bestStreak: computeBestStreak(deduped.map((item) => item.date)),
           totalWorkouts,
           totalMinutes,
+          weeklySessions,
+          avgDuration,
         })
         const list = stored
           .slice()
@@ -462,8 +494,11 @@ export default function Feed() {
         setItems([])
         setGlobalStats({
           streak: 0,
+          bestStreak: 0,
           totalWorkouts: 0,
           totalMinutes: 0,
+          weeklySessions: 0,
+          avgDuration: 0,
         })
         setMonthly({
           headline: 'Mois en cours',
@@ -697,6 +732,36 @@ export default function Feed() {
               <div className="text-2xl font-bold text-gray-900">{globalStats.totalMinutes}</div>
             </div>
             <Clock className="h-5 w-5 text-emerald-600" />
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal reveal-1">
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Meilleure streak</div>
+              <div className="text-2xl font-bold text-gray-900">{globalStats.bestStreak} j</div>
+            </div>
+            <Trophy className="h-5 w-5 text-amber-500" />
+          </div>
+        </div>
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Moyenne / séance</div>
+              <div className="text-2xl font-bold text-gray-900">{globalStats.avgDuration} min</div>
+            </div>
+            <Timer className="h-5 w-5 text-primary-500" />
+          </div>
+        </div>
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Séances (7j)</div>
+              <div className="text-2xl font-bold text-gray-900">{globalStats.weeklySessions}</div>
+            </div>
+            <Calendar className="h-5 w-5 text-indigo-500" />
           </div>
         </div>
       </div>
