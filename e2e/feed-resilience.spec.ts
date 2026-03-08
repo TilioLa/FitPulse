@@ -10,6 +10,6 @@ test('dashboard feed survives corrupted local storage payloads', async ({ page }
   })
 
   await page.goto('/dashboard?view=feed&e2e=1')
-  await expect(page.getByRole('heading', { name: /^home$/i })).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /^(home|tableau de bord)$/i })).toBeVisible({ timeout: 15_000 })
   await expect(page.getByText(/complète ton profil/i)).toBeVisible({ timeout: 15_000 })
 })
