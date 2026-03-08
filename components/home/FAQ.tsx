@@ -1,13 +1,3 @@
-<<<<<<< HEAD
-//
-//  FAQ.tsx
-//  
-//
-//  Created by Tilio Lave on 18/01/2026.
-//
-
-=======
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 'use client'
 
 import { useState } from 'react'
@@ -28,11 +18,7 @@ const faqs = [
   },
   {
     question: "Y a-t-il un engagement minimum ?",
-<<<<<<< HEAD
-    answer: "Non, aucun engagement ! Vous pouvez annuler votre abonnement à tout moment. L'abonnement gratuit vous donne accès à un programme complet de base, et les versions payantes offrent plus de fonctionnalités."
-=======
     answer: "Non. FitPulse est actuellement gratuit, sans engagement, et vous avez accès à toutes les fonctionnalités."
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   },
   {
     question: "Les programmes sont-ils adaptés aux débutants ?",
@@ -40,11 +26,7 @@ const faqs = [
   },
   {
     question: "Comment suivre mes progrès ?",
-<<<<<<< HEAD
-    answer: "Le dashboard vous permet de suivre vos séances complétées, vos streaks, vos statistiques de force et de condition physique. Vous pouvez voir votre évolution jour après jour avec des graphiques clairs et motivants."
-=======
     answer: "Le dashboard affiche vos séances, votre streak et vos minutes totales. Vous voyez vite si vous progressez."
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }
 ]
 
@@ -69,13 +51,6 @@ export default function FAQ() {
 
         <div className="space-y-4">
           {faqs.map((faq, index) => (
-<<<<<<< HEAD
-            <div key={index} className="card cursor-pointer" onClick={() => toggleFAQ(index)}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900 pr-8">
-                  {faq.question}
-                </h3>
-=======
             <div key={index} className="card">
               <button
                 type="button"
@@ -87,21 +62,14 @@ export default function FAQ() {
                 <span className="text-lg font-semibold text-gray-900 pr-8">
                   {faq.question}
                 </span>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                 {openIndex === index ? (
                   <ChevronUp className="h-5 w-5 text-primary-600 flex-shrink-0" />
                 ) : (
                   <ChevronDown className="h-5 w-5 text-primary-600 flex-shrink-0" />
                 )}
-<<<<<<< HEAD
-              </div>
-              {openIndex === index && (
-                <p className="mt-4 text-gray-600 leading-relaxed">
-=======
               </button>
               {openIndex === index && (
                 <p id={`faq-panel-${index}`} className="mt-4 text-gray-600 leading-relaxed">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   {faq.answer}
                 </p>
               )}

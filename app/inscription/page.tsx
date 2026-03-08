@@ -1,27 +1,5 @@
 'use client'
 
-<<<<<<< HEAD
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import { parseJsonWithFallback } from '@/lib/safeStorage'
-import type { StoredUser } from '@/lib/types'
-import { UserPlus, Mail, Lock, User } from 'lucide-react'
-
-const isStoredUser = (value: unknown): value is StoredUser => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.email === 'string' &&
-    typeof record.name === 'string' &&
-    typeof record.createdAt === 'string' &&
-    typeof record.password === 'string'
-  )
-}
-=======
 import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -33,29 +11,15 @@ import { programs } from '@/data/programs'
 import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
 import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 export default function InscriptionPage() {
   const router = useRouter()
   const [name, setName] = useState('')
-<<<<<<< HEAD
-=======
   const [phone, setPhone] = useState('')
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [error, setError] = useState('')
-<<<<<<< HEAD
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    const normalizedEmail = email.trim().toLowerCase()
-
-    if (password !== confirmPassword) {
-      setError('Les mots de passe ne correspondent pas')
-=======
   const [weight, setWeight] = useState('')
   const [height, setHeight] = useState('')
   const [goals, setGoals] = useState<string[]>(['Cardio'])
@@ -86,57 +50,11 @@ export default function InscriptionPage() {
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas')
       setIsSubmitting(false)
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
       return
     }
 
     if (password.length < 6) {
       setError('Le mot de passe doit contenir au moins 6 caractères')
-<<<<<<< HEAD
-      return
-    }
-
-    const users = parseJsonWithFallback<StoredUser[]>(
-      localStorage.getItem('fitpulse_users'),
-      [],
-      (value): value is StoredUser[] => Array.isArray(value) && value.every(isStoredUser)
-    )
-    const existingUser = users.find((u) => u.email.toLowerCase() === normalizedEmail)
-
-    if (existingUser) {
-      setError('Un compte existe déjà avec cet email')
-      return
-    }
-
-    const newUser: StoredUser = {
-      id: Date.now().toString(),
-      name: name || normalizedEmail.split('@')[0],
-      email: normalizedEmail,
-      password,
-      createdAt: new Date().toISOString(),
-    }
-
-    users.push(newUser)
-    localStorage.setItem('fitpulse_users', JSON.stringify(users))
-    localStorage.setItem(
-      'fitpulse_user',
-      JSON.stringify({
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        createdAt: newUser.createdAt,
-      })
-    )
-
-    localStorage.setItem(
-      'fitpulse_settings',
-      JSON.stringify({
-        level: 'debutant',
-        goals: [],
-        equipment: [],
-      })
-    )
-=======
       setIsSubmitting(false)
       return
     }
@@ -224,23 +142,12 @@ export default function InscriptionPage() {
       setIsSubmitting(false)
       return
     }
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
     router.push('/dashboard')
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-<<<<<<< HEAD
-      <Navbar />
-      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="text-center mb-8">
-              <UserPlus className="h-12 w-12 text-primary-600 mx-auto mb-4" />
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Créer un compte</h1>
-              <p className="text-gray-600">Commencez votre parcours fitness dès aujourd&apos;hui</p>
-=======
       <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
           <div className="card-soft">
@@ -252,16 +159,11 @@ export default function InscriptionPage() {
               <p className="text-gray-600">
                 Commencez votre parcours fitness dès aujourd&apos;hui
               </p>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-<<<<<<< HEAD
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-=======
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   {error}
                 </div>
               )}
@@ -302,8 +204,6 @@ export default function InscriptionPage() {
               </div>
 
               <div>
-<<<<<<< HEAD
-=======
                 <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Numéro de téléphone (optionnel)
                 </label>
@@ -318,7 +218,6 @@ export default function InscriptionPage() {
               </div>
 
               <div>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Mot de passe *
                 </label>
@@ -356,10 +255,6 @@ export default function InscriptionPage() {
                 </div>
               </div>
 
-<<<<<<< HEAD
-              <button type="submit" className="w-full btn-primary py-3">
-                Créer mon compte
-=======
               <div className="border-t pt-6 space-y-4">
                 <h2 className="text-lg font-semibold text-gray-900">Profil fitness</h2>
 
@@ -553,7 +448,6 @@ export default function InscriptionPage() {
                 className="w-full btn-primary py-3"
               >
                 {isSubmitting ? 'Création du compte...' : 'Créer mon compte'}
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               </button>
             </form>
 

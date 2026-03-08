@@ -1,98 +1,7 @@
-<<<<<<< HEAD
-//
-//  page.tsx
-//  
-//
-//  Created by Tilio Lave on 18/01/2026.
-//
-
-=======
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-<<<<<<< HEAD
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import { parseJsonWithFallback } from '@/lib/safeStorage'
-import type { PublicUser, WorkoutHistoryEntry, WorkoutStats } from '@/lib/types'
-import { User, Calendar, Trophy, TrendingUp, Clock } from 'lucide-react'
-
-const isPublicUser = (value: unknown): value is PublicUser => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.email === 'string' &&
-    typeof record.name === 'string' &&
-    typeof record.createdAt === 'string'
-  )
-}
-
-const isWorkoutStats = (value: unknown): value is WorkoutStats => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return typeof record.streak === 'number' && typeof record.completedWorkouts === 'number'
-}
-
-const isWorkoutHistoryEntry = (value: unknown): value is WorkoutHistoryEntry => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.workoutId === 'string' &&
-    typeof record.workoutName === 'string' &&
-    typeof record.date === 'string' &&
-    typeof record.duration === 'number'
-  )
-}
-
-export default function ProfilPage() {
-  const router = useRouter()
-  const [user, setUser] = useState<PublicUser | null>(null)
-  const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
-
-  useEffect(() => {
-    const userData = localStorage.getItem('fitpulse_user')
-    if (!userData) {
-      router.push('/connexion')
-      return
-    }
-    const parsedUser = parseJsonWithFallback<PublicUser | null>(
-      userData,
-      null,
-      isPublicUser
-    )
-    if (!parsedUser) {
-      localStorage.removeItem('fitpulse_user')
-      router.push('/connexion')
-      return
-    }
-    setUser(parsedUser)
-
-    // Charger les statistiques
-    const storedStats = parseJsonWithFallback(localStorage.getItem('fitpulse_stats'), {
-      streak: 0,
-      completedWorkouts: 0,
-    }, isWorkoutStats)
-    const history = parseJsonWithFallback<WorkoutHistoryEntry[]>(
-      localStorage.getItem('fitpulse_history'),
-      [],
-      (value): value is WorkoutHistoryEntry[] =>
-        Array.isArray(value) && value.every(isWorkoutHistoryEntry)
-    )
-    const totalMinutes = history.reduce((sum, w) => sum + w.duration, 0)
-    setStats({
-      streak: storedStats.streak || 0,
-      completedWorkouts: storedStats.completedWorkouts || 0,
-      totalMinutes,
-    })
-  }, [router])
-
-  if (!user) {
-    return null
-=======
 import Footer from '@/components/Footer'
 import { User, Calendar, Trophy, TrendingUp, Clock } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
@@ -139,37 +48,20 @@ export default function ProfilPage() {
         Redirection vers la connexion...
       </div>
     )
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-<<<<<<< HEAD
-      <Navbar />
-      <main className="flex-grow py-12">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-=======
       <WithSidebar active="settings">
         <main className="flex-grow py-12">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="card-soft mb-8">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
             <div className="flex items-center space-x-6">
               <div className="bg-primary-100 rounded-full p-6">
                 <User className="h-16 w-16 text-primary-600" />
               </div>
               <div className="flex-1">
-<<<<<<< HEAD
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {user.name || 'Utilisateur FitPulse'}
-                </h1>
-                <p className="text-gray-600 mb-1">{user.email}</p>
-                <p className="text-sm text-gray-500">
-                  Membre depuis {new Date(user.createdAt || Date.now()).toLocaleDateString('fr-FR', {
-=======
                 <h1 className="section-title mb-2">
                   {user?.name || 'Utilisateur FitPulse'}
                 </h1>
@@ -179,7 +71,6 @@ export default function ProfilPage() {
                 )}
                 <p className="text-sm text-gray-500">
                   Membre depuis {(user?.createdAt ? new Date(user.createdAt) : new Date()).toLocaleDateString('fr-FR', {
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                     year: 'numeric',
                     month: 'long',
                   })}
@@ -198,11 +89,7 @@ export default function ProfilPage() {
 
           {/* Statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-<<<<<<< HEAD
-            <div className="card bg-gradient-to-br from-primary-50 to-primary-100">
-=======
             <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Streak actuel</div>
@@ -213,11 +100,7 @@ export default function ProfilPage() {
               </div>
             </div>
 
-<<<<<<< HEAD
-            <div className="card bg-gradient-to-br from-orange-50 to-orange-100">
-=======
             <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Séances complétées</div>
@@ -228,11 +111,7 @@ export default function ProfilPage() {
               </div>
             </div>
 
-<<<<<<< HEAD
-            <div className="card bg-gradient-to-br from-green-50 to-green-100">
-=======
             <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Temps total</div>
@@ -244,8 +123,6 @@ export default function ProfilPage() {
             </div>
           </div>
 
-<<<<<<< HEAD
-=======
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="card">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Objectif de la semaine</h3>
@@ -266,7 +143,6 @@ export default function ProfilPage() {
             </div>
           </div>
 
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
           {/* Historique récent */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -275,35 +151,16 @@ export default function ProfilPage() {
             </h2>
             <HistoryList />
           </div>
-<<<<<<< HEAD
-        </div>
-      </main>
-=======
 
           </div>
         </main>
       </WithSidebar>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
       <Footer />
     </div>
   )
 }
 
 function HistoryList() {
-<<<<<<< HEAD
-  const [history, setHistory] = useState<WorkoutHistoryEntry[]>([])
-
-  useEffect(() => {
-    const storedHistory = parseJsonWithFallback<WorkoutHistoryEntry[]>(
-      localStorage.getItem('fitpulse_history'),
-      [],
-      (value): value is WorkoutHistoryEntry[] =>
-        Array.isArray(value) && value.every(isWorkoutHistoryEntry)
-    )
-    setHistory(storedHistory.sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    ).slice(0, 5))
-=======
   const [history, setHistory] = useState<any[]>([])
 
   useEffect(() => {
@@ -321,7 +178,6 @@ function HistoryList() {
         setHistory([])
       }
     })
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }, [])
 
   if (history.length === 0) {

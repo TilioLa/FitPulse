@@ -1,35 +1,5 @@
 'use client'
 
-<<<<<<< HEAD
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import Sidebar from '@/components/dashboard/Sidebar'
-import MySessions from '@/components/dashboard/MySessions'
-import History from '@/components/dashboard/History'
-import RecommendedPrograms from '@/components/dashboard/RecommendedPrograms'
-import Settings from '@/components/dashboard/Settings'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-
-type DashboardSection = 'sessions' | 'history' | 'programs' | 'settings'
-
-export default function DashboardPage() {
-  const router = useRouter()
-  const [activeSection, setActiveSection] = useState<DashboardSection>('sessions')
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    const user = localStorage.getItem('fitpulse_user')
-    if (!user) {
-      router.push('/connexion')
-      return
-    }
-    setIsLoggedIn(true)
-  }, [router])
-
-  if (!isLoggedIn) {
-    return null
-=======
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -215,23 +185,10 @@ function DashboardPageContent() {
         Redirection vers la connexion...
       </div>
     )
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }
 
   const renderSection = () => {
     switch (activeSection) {
-<<<<<<< HEAD
-      case 'sessions':
-        return <MySessions />
-      case 'history':
-        return <History />
-      case 'programs':
-        return <RecommendedPrograms />
-      case 'settings':
-        return <Settings />
-      default:
-        return <MySessions />
-=======
       case 'feed':
         return <Feed />
       case 'history':
@@ -248,24 +205,16 @@ function DashboardPageContent() {
         return <div />
       default:
         return <Feed />
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
     }
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-<<<<<<< HEAD
-      <Navbar />
-      <div className="flex flex-grow">
-        <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
-        <main className="flex-grow p-6 lg:p-8">{renderSection()}</main>
-=======
       <div className="flex flex-col lg:flex-row flex-grow">
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
           {renderSection()}
         </main>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
       </div>
       <Footer />
     </div>

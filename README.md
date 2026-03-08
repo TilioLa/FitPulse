@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-# FitPulse - SaaS de Sport
-=======
 # FitPulse - SaaS de sport
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 Ébauche complète d'un SaaS de sport avec toutes les fonctionnalités de base.
 
@@ -14,21 +10,6 @@
 - Footer avec mentions légales, contact et réseaux sociaux
 
 ### Pages disponibles
-<<<<<<< HEAD
-- **Page d'accueil** : Hero section, avantages, témoignages, aperçu des programmes, FAQ
-- **Dashboard** : Mes séances, Historique, Programmes recommandés, Paramètres
-- **Programmes** : Liste complète avec filtres (niveau, matériel, zone du corps)
-- **Profil** : Informations personnelles, statistiques, historique
-- **Pricing** : Plans Freemium / Pro / Pro+ avec switch interactif
-- **Connexion / Inscription** : Authentification simulée
-
-### Fonctionnalités techniques
-- Navigation complète fonctionnelle
-- Authentification simulée avec localStorage
-- Dashboard dynamique avec séances, timer, historique
-- Base de données simple (localStorage)
-- Design responsive et moderne
-=======
 - **Page d'accueil** : section Hero, avantages, témoignages, aperçu des programmes, FAQ
 - **Dashboard** : Mes séances, Historique, Programmes recommandés, Paramètres
 - **Programmes** : Liste complète avec filtres (niveau, matériel, zone du corps)
@@ -44,7 +25,6 @@
 - Dashboard dynamique avec séances, minuteur, historique
 - Données d'entraînement stockées en `localStorage`
 - Design responsive moderne
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 - Palette de couleurs dynamiques
 
 ## 🛠️ Installation
@@ -59,15 +39,6 @@ npm run dev
 
 Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
-<<<<<<< HEAD
-## 📦 Technologies utilisées
-
-- **Next.js 14** : Framework React avec App Router
-- **TypeScript** : Typage statique
-- **Tailwind CSS** : Styling moderne et responsive
-- **Lucide React** : Icônes modernes
-- **localStorage** : Stockage local pour simulation de base de données
-=======
 ## ✅ Tests E2E (Playwright)
 
 ```bash
@@ -218,7 +189,6 @@ Le client essaie d’abord le lien court persistant (`/share?id=...`) et garde u
 - **API Next.js** : endpoint Stripe checkout
 - **Toasts** : notifications locales pour le feedback utilisateur
 - **Supabase Auth** : authentification et réinitialisation du mot de passe
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 ## 📁 Structure du projet
 
@@ -227,15 +197,9 @@ FitPulse/
 ├── app/                    # Pages Next.js
 │   ├── dashboard/         # Dashboard avec menu latéral
 │   ├── pricing/           # Page tarifs
-<<<<<<< HEAD
-│   ├── connexion/         # Page connexion
-│   ├── inscription/       # Page inscription
-│   ├── profil/            # Page profil
-=======
 │   ├── connexion/         # Page de connexion
 │   ├── inscription/       # Page d'inscription
 │   ├── profil/            # Page de profil
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 │   └── programmes/        # Liste des programmes
 ├── components/            # Composants React
 │   ├── home/             # Composants page d'accueil
@@ -247,19 +211,6 @@ FitPulse/
 
 ## 🎨 Design
 
-<<<<<<< HEAD
-- Palette de couleurs : Bleu primary, accent violet/rose
-- Typographie : Inter (Google Fonts)
-- Style : Moderne, épuré, mobile-friendly
-- Icônes : Lucide React pour cohérence visuelle
-
-## 📝 Notes
-
-- L'authentification est simulée avec localStorage (pas de vraie base de données)
-- Les paiements sont simulés (pas de transaction réelle)
-- Les données sont stockées localement dans le navigateur
-- Parfait pour prototyper et tester l'expérience utilisateur
-=======
 - Palette de couleurs : bleu principal, accent violet/rose
 - Typographie : Inter (Google Fonts)
 - Style : moderne, épuré, mobile-friendly
@@ -274,19 +225,10 @@ FitPulse/
 - Les pages légales et la page contact sont statiques dans cette version
 - Le sitemap et `robots.txt` utilisent `https://fitpulse.fr` comme URL de base (à adapter pour la prod)
 - Un champ `phone` est disponible pour le profil utilisateur
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 ## 🚧 Prochaines étapes
 
 - Connecter à une vraie base de données (PostgreSQL, MongoDB)
-<<<<<<< HEAD
-- Implémenter un système d'authentification réel (NextAuth.js)
 - Ajouter un système de paiement (Stripe)
 - Intégrer des vidéos réelles pour les exercices
 - Ajouter plus de programmes et exercices
-
-=======
-- Ajouter un système de paiement (Stripe)
-- Intégrer des vidéos réelles pour les exercices
-- Ajouter plus de programmes et exercices
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b

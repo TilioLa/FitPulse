@@ -1,12 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-<<<<<<< HEAD
-}
-
-module.exports = nextConfig
-
-=======
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   async headers() {
     const scriptSrc =
@@ -58,4 +52,3 @@ module.exports = nextConfig
 }
 
 module.exports = nextConfig
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b

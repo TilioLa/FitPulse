@@ -1,18 +1,3 @@
-<<<<<<< HEAD
-//
-//  MySessions.tsx
-//  
-//
-//  Created by Tilio Lave on 18/01/2026.
-//
-
-'use client'
-
-import { useState, useEffect, useCallback } from 'react'
-import { parseJsonWithFallback } from '@/lib/safeStorage'
-import type { WorkoutHistoryEntry, WorkoutStats } from '@/lib/types'
-import { Play, Pause, RotateCcw, Clock, Flame, Trophy } from 'lucide-react'
-=======
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
@@ -39,7 +24,6 @@ import {
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 import { encodeSharedSession } from '@/lib/session-share'
 import { slugify } from '@/lib/slug'
-import { buildAuthenticatedJsonHeaders } from '@/lib/api-auth-headers'
 
 const playBeep = () => {
   try {
@@ -74,7 +58,6 @@ const speak = (text: string) => {
     // ignore
   }
 }
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 interface Exercise {
   id: string
@@ -82,71 +65,17 @@ interface Exercise {
   sets: number
   reps: number
   rest: number // en secondes
-<<<<<<< HEAD
-}
-
-=======
   videoUrl?: string
 }
 
 type SetInput = { weight: number; reps: number; completed?: boolean }
 type ExerciseInputs = Record<string, SetInput[]>
 
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 interface Workout {
   id: string
   name: string
   duration: number // en minutes
   exercises: Exercise[]
-<<<<<<< HEAD
-}
-
-const isExercise = (value: unknown): value is Exercise => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.name === 'string' &&
-    typeof record.sets === 'number' &&
-    typeof record.reps === 'number' &&
-    typeof record.rest === 'number'
-  )
-}
-
-const isWorkout = (value: unknown): value is Workout => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.name === 'string' &&
-    typeof record.duration === 'number' &&
-    Array.isArray(record.exercises) &&
-    record.exercises.every(isExercise)
-  )
-}
-
-const isWorkoutStats = (value: unknown): value is WorkoutStats => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return typeof record.streak === 'number' && typeof record.completedWorkouts === 'number'
-}
-
-const isWorkoutHistoryEntry = (value: unknown): value is WorkoutHistoryEntry => {
-  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false
-  const record = value as Record<string, unknown>
-  return (
-    typeof record.id === 'string' &&
-    typeof record.workoutId === 'string' &&
-    typeof record.workoutName === 'string' &&
-    typeof record.date === 'string' &&
-    typeof record.duration === 'number'
-  )
-}
-
-export default function MySessions() {
-  const [workout, setWorkout] = useState<Workout | null>(null)
-  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
-=======
   programId?: string
   programName?: string
   equipment?: string
@@ -179,60 +108,10 @@ export default function MySessions() {
   const [workout, setWorkout] = useState<Workout | null>(null)
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0)
   const [equipment, setEquipment] = useState<string>('Poids du corps')
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   const [isRunning, setIsRunning] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState(0) // en secondes
   const [streak, setStreak] = useState(0)
   const [completedWorkouts, setCompletedWorkouts] = useState(0)
-<<<<<<< HEAD
-
-  useEffect(() => {
-    const defaultWorkout: Workout = {
-      id: '1',
-      name: 'Séance du jour - Full Body',
-      duration: 30,
-      exercises: [
-        { id: '1', name: 'Pompes', sets: 3, reps: 12, rest: 60 },
-        { id: '2', name: 'Squats', sets: 3, reps: 15, rest: 60 },
-        { id: '3', name: 'Planche', sets: 3, reps: 30, rest: 45 },
-        { id: '4', name: 'Fentes', sets: 3, reps: 12, rest: 60 },
-        { id: '5', name: 'Gainage', sets: 3, reps: 45, rest: 60 },
-      ],
-    }
-
-    // Charger la séance du jour
-    const storedWorkout = localStorage.getItem('fitpulse_current_workout')
-    if (storedWorkout) {
-      const parsedWorkout = parseJsonWithFallback<Workout | null>(storedWorkout, null, isWorkout)
-      if (parsedWorkout) {
-        setWorkout(parsedWorkout)
-      } else {
-        setWorkout(defaultWorkout)
-        localStorage.setItem('fitpulse_current_workout', JSON.stringify(defaultWorkout))
-      }
-    } else {
-      // Séance par défaut
-      setWorkout(defaultWorkout)
-      localStorage.setItem('fitpulse_current_workout', JSON.stringify(defaultWorkout))
-    }
-
-    // Charger les statistiques
-    const stats = parseJsonWithFallback(localStorage.getItem('fitpulse_stats'), {
-      streak: 0,
-      completedWorkouts: 0,
-    }, isWorkoutStats)
-    setStreak(stats.streak || 0)
-    setCompletedWorkouts(stats.completedWorkouts || 0)
-  }, [])
-
-  const handleNextExercise = useCallback(() => {
-    if (workout && currentExerciseIndex < workout.exercises.length - 1) {
-      setCurrentExerciseIndex(currentExerciseIndex + 1)
-      setTimeRemaining(0)
-      setIsRunning(false)
-    }
-  }, [currentExerciseIndex, workout])
-=======
   const [sessionsPerWeek, setSessionsPerWeek] = useState<number | null>(null)
   const [programTotalSessions, setProgramTotalSessions] = useState<number | null>(null)
   const [programCompletedSessions, setProgramCompletedSessions] = useState<number | null>(null)
@@ -563,7 +442,6 @@ export default function MySessions() {
       setSupersetMap({})
     }
   }, [workoutId])
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null
@@ -572,10 +450,6 @@ export default function MySessions() {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
             setIsRunning(false)
-<<<<<<< HEAD
-            // Passer à l'exercice suivant
-            handleNextExercise()
-=======
             if (soundEnabled) {
               playBeep()
             }
@@ -586,7 +460,6 @@ export default function MySessions() {
               handleNextExercise()
             }
             setTimerKind(null)
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
             return 0
           }
           return prev - 1
@@ -596,11 +469,6 @@ export default function MySessions() {
     return () => {
       if (interval) clearInterval(interval)
     }
-<<<<<<< HEAD
-  }, [handleNextExercise, isRunning, timeRemaining])
-
-  const handleStartTimer = (restTime: number) => {
-=======
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning, timeRemaining, timerKind, soundEnabled, voiceEnabled])
 
@@ -655,57 +523,10 @@ export default function MySessions() {
   function handleStartTimer(restTime: number, kind: 'set' | 'exercise') {
     if (sessionPaused) return
     setTimerKind(kind)
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
     setTimeRemaining(restTime)
     setIsRunning(true)
   }
 
-<<<<<<< HEAD
-  const handlePauseTimer = () => {
-    setIsRunning(false)
-  }
-
-  const handleResetTimer = () => {
-    setTimeRemaining(0)
-    setIsRunning(false)
-  }
-
-  const handleCompleteWorkout = () => {
-    if (!workout) return
-
-    // Mettre à jour les statistiques
-    const stats = parseJsonWithFallback(localStorage.getItem('fitpulse_stats'), {
-      streak: 0,
-      completedWorkouts: 0,
-    }, isWorkoutStats)
-    stats.streak = (stats.streak || 0) + 1
-    stats.completedWorkouts = (stats.completedWorkouts || 0) + 1
-    localStorage.setItem('fitpulse_stats', JSON.stringify(stats))
-
-    // Ajouter à l'historique
-    const history = parseJsonWithFallback<WorkoutHistoryEntry[]>(
-      localStorage.getItem('fitpulse_history'),
-      [],
-      (value): value is WorkoutHistoryEntry[] =>
-        Array.isArray(value) && value.every(isWorkoutHistoryEntry)
-    )
-    history.push({
-      id: Date.now().toString(),
-      workoutId: workout.id,
-      workoutName: workout.name,
-      date: new Date().toISOString(),
-      duration: workout.duration,
-    })
-    localStorage.setItem('fitpulse_history', JSON.stringify(history))
-
-    // Réinitialiser
-    setStreak(stats.streak)
-    setCompletedWorkouts(stats.completedWorkouts)
-    setCurrentExerciseIndex(0)
-    setTimeRemaining(0)
-    setIsRunning(false)
-    alert('Séance terminée ! Félicitations ! 🎉')
-=======
   function handlePauseTimer() {
     setIsRunning(false)
   }
@@ -947,7 +768,6 @@ export default function MySessions() {
     if (currentExerciseIndex >= next.length) {
       setCurrentExerciseIndex(Math.max(next.length - 1, 0))
     }
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }
 
   const formatTime = (seconds: number) => {
@@ -956,19 +776,6 @@ export default function MySessions() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-<<<<<<< HEAD
-  if (!workout) {
-    return <div className="text-center text-gray-600">Chargement de la séance...</div>
-  }
-
-  const currentExercise = workout.exercises[currentExerciseIndex]
-  const isLastExercise = currentExerciseIndex === workout.exercises.length - 1
-
-  return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{workout.name}</h1>
-=======
   const estimateOneRm = (weight: number, reps: number) => {
     if (weight <= 0 || reps <= 0) return 0
     return Math.round(weight * (1 + reps / 30))
@@ -1026,7 +833,7 @@ export default function MySessions() {
     try {
       const response = await fetch('/api/share/create', {
         method: 'POST',
-        headers: await buildAuthenticatedJsonHeaders(),
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ session: payload }),
       })
       if (response.ok) {
@@ -1380,29 +1187,11 @@ export default function MySessions() {
             )}
           </div>
         </div>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
         <div className="flex items-center space-x-6">
           <div className="flex items-center space-x-2 text-gray-600">
             <Clock className="h-5 w-5" />
             <span>Durée : {workout.duration} min</span>
           </div>
-<<<<<<< HEAD
-          <div className="flex items-center space-x-2 text-orange-600">
-            <Flame className="h-5 w-5" />
-            <span>Streak : {streak} jours</span>
-          </div>
-          <div className="flex items-center space-x-2 text-primary-600">
-            <Trophy className="h-5 w-5" />
-            <span>Séances complétées : {completedWorkouts}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Exercice actuel */}
-        <div className="lg:col-span-2">
-          <div className="card bg-gradient-to-br from-primary-50 to-accent-50">
-=======
           <EquipmentBadge equipment={equipment} />
         </div>
           <div className="mt-4 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-800">
@@ -1555,7 +1344,6 @@ export default function MySessions() {
         {/* Exercice actuel */}
         <div className="lg:col-span-2">
           <div className="card bg-gradient-to-br from-primary-50 to-accent-50 shadow-sm">
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
             <div className="mb-6">
               <span className="text-sm text-gray-600">
                 Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
@@ -1563,20 +1351,6 @@ export default function MySessions() {
               <h2 className="text-3xl font-bold text-gray-900 mt-2">
                 {currentExercise.name}
               </h2>
-<<<<<<< HEAD
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-white rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-primary-600">{currentExercise.sets}</div>
-                <div className="text-sm text-gray-600">Séries</div>
-              </div>
-              <div className="bg-white rounded-lg p-4 text-center">
-                <div className="text-2xl font-bold text-primary-600">{currentExercise.reps}</div>
-                <div className="text-sm text-gray-600">Répétitions</div>
-              </div>
-            </div>
-=======
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <SupersetToggle
                   storageKey={supersetKey}
@@ -1752,7 +1526,6 @@ export default function MySessions() {
                 Séance en pause. Reprenez pour continuer.
               </div>
             )}
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
             {/* Timer */}
             <div className="mb-6">
@@ -1762,20 +1535,6 @@ export default function MySessions() {
                 </div>
                 <div className="text-gray-600">Temps de repos</div>
               </div>
-<<<<<<< HEAD
-              <div className="flex justify-center space-x-4">
-                {!isRunning && timeRemaining === 0 && (
-                  <button
-                    onClick={() => handleStartTimer(currentExercise.rest)}
-                    className="btn-primary flex items-center space-x-2"
-                  >
-                    <Play className="h-5 w-5" />
-                    <span>Démarrer le repos</span>
-                  </button>
-                )}
-                {isRunning && (
-                  <button onClick={handlePauseTimer} className="btn-secondary flex items-center space-x-2">
-=======
               <div className="flex flex-col sm:flex-row justify-center gap-3">
                 {!isRunning && timeRemaining === 0 && (
                   <button
@@ -1793,21 +1552,16 @@ export default function MySessions() {
                     disabled={sessionPaused}
                     className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                     <Pause className="h-5 w-5" />
                     <span>Pause</span>
                   </button>
                 )}
                 {timeRemaining > 0 && (
-<<<<<<< HEAD
-                  <button onClick={handleResetTimer} className="btn-secondary flex items-center space-x-2">
-=======
                   <button
                     onClick={handleResetTimer}
                     disabled={sessionPaused}
                     className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                     <RotateCcw className="h-5 w-5" />
                     <span>Reset</span>
                   </button>
@@ -1815,12 +1569,6 @@ export default function MySessions() {
               </div>
             </div>
 
-<<<<<<< HEAD
-            {/* Navigation */}
-            <div className="flex justify-between">
-              <button
-                onClick={() => {
-=======
             <div className="mb-6 flex flex-col sm:flex-row gap-3">
               {!sessionPaused ? (
                 <button
@@ -1852,31 +1600,18 @@ export default function MySessions() {
               <button
                 onClick={() => {
                   if (sessionPaused) return
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   if (currentExerciseIndex > 0) {
                     setCurrentExerciseIndex(currentExerciseIndex - 1)
                     setTimeRemaining(0)
                     setIsRunning(false)
                   }
                 }}
-<<<<<<< HEAD
-                disabled={currentExerciseIndex === 0}
-                className="px-4 py-2 text-gray-600 hover:text-primary-600 disabled:opacity-50 disabled:cursor-not-allowed"
-=======
                 disabled={sessionPaused || currentExerciseIndex === 0}
                 className="min-h-14 px-4 py-3 rounded-xl border border-gray-200 text-gray-700 text-base font-semibold hover:text-primary-700 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed w-full"
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               >
                 ← Précédent
               </button>
               {isLastExercise ? (
-<<<<<<< HEAD
-                <button onClick={handleCompleteWorkout} className="btn-primary">
-                  Terminer la séance
-                </button>
-              ) : (
-                <button onClick={handleNextExercise} className="btn-primary">
-=======
                 <button
                   onClick={handleCompleteWorkout}
                   data-testid="complete-workout"
@@ -1891,7 +1626,6 @@ export default function MySessions() {
                   disabled={sessionPaused}
                   className="btn-primary min-h-14 text-base font-semibold rounded-xl w-full disabled:opacity-50 disabled:cursor-not-allowed"
                 >
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   Suivant →
                 </button>
               )}
@@ -1914,10 +1648,7 @@ export default function MySessions() {
                     : ''
                 }`}
                 onClick={() => {
-<<<<<<< HEAD
-=======
                   if (sessionPaused) return
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   setCurrentExerciseIndex(index)
                   setTimeRemaining(0)
                   setIsRunning(false)
@@ -1929,8 +1660,6 @@ export default function MySessions() {
                     <div className="text-sm text-gray-600">
                       {exercise.sets} séries × {exercise.reps} reps
                     </div>
-<<<<<<< HEAD
-=======
                     <div className="mt-2">
                       <SupersetToggle
                         storageKey={supersetKey}
@@ -1949,7 +1678,6 @@ export default function MySessions() {
                     >
                       Voir stats 1RM
                     </button>
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   </div>
                   {index === currentExerciseIndex && (
                     <div className="w-3 h-3 bg-primary-600 rounded-full"></div>
@@ -1963,8 +1691,6 @@ export default function MySessions() {
           </div>
         </div>
       </div>
-<<<<<<< HEAD
-=======
 
       {selectedExercise && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
@@ -2104,7 +1830,6 @@ export default function MySessions() {
           restSeconds={effectiveRest}
         />
       )}
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
     </div>
   )
 }

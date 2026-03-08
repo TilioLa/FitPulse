@@ -58,7 +58,7 @@ export default function RecommendedPrograms() {
     const program = programs.find(p => p.id === programId)
     if (program) {
       const workout = {
-        id: Date.now().toString(),
+        id: `workout-${program.id}`,
         name: program.name,
         duration: 30,
         exercises: [
