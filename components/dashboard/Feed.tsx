@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer } from 'lucide-react'
-import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
+import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target } from 'lucide-react'
+import { computeHistoryStats, toLocalDateKey, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
@@ -80,6 +80,8 @@ export default function Feed() {
     weeklySessions: 0,
     avgDuration: 0,
   })
+  const [weeklyGoal, setWeeklyGoal] = useState({ target: 3, completed: 0 })
+  const [weekTrend, setWeekTrend] = useState<{ day: string; sessions: number; minutes: number }[]>([])
   const [monthly, setMonthly] = useState({
     headline: 'Mois en cours',
     monthLabel: '',
@@ -248,6 +250,24 @@ export default function Feed() {
           equipment?: string[]
           sessionsPerWeek?: number
         }
+        const targetSessionsPerWeek = Math.max(1, Math.min(7, Number(settings.sessionsPerWeek) || 3))
+        const sevenDaySeries = Array.from({ length: 7 }, (_, index) => {
+          const date = new Date()
+          date.setDate(date.getDate() - (6 - index))
+          const dayKey = toLocalDateKey(date)
+          const dayEntries = stored.filter((item) => toLocalDateKey(item.date) === dayKey)
+          return {
+            day: date.toLocaleDateString('fr-FR', { weekday: 'short' }),
+            sessions: dayEntries.length,
+            minutes: dayEntries.reduce((sum, item) => sum + (Number(item.duration) || 0), 0),
+          }
+        })
+        setWeekTrend(sevenDaySeries)
+        setWeeklyGoal({
+          target: targetSessionsPerWeek,
+          completed: sevenDaySeries.reduce((sum, day) => sum + day.sessions, 0),
+        })
+
         const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
         const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
         const recommendedPick = recommendProgram(programs, {
@@ -500,6 +520,8 @@ export default function Feed() {
           weeklySessions: 0,
           avgDuration: 0,
         })
+        setWeekTrend([])
+        setWeeklyGoal({ target: 3, completed: 0 })
         setMonthly({
           headline: 'Mois en cours',
           monthLabel: '',
@@ -592,6 +614,13 @@ export default function Feed() {
       minute: '2-digit',
     })
   }
+
+  const maxWeeklySessions = Math.max(1, ...weekTrend.map((item) => item.sessions))
+  const weeklyGoalPercent = Math.min(
+    100,
+    Math.round((weeklyGoal.completed / Math.max(1, weeklyGoal.target)) * 100)
+  )
+  const remainingWeeklySessions = Math.max(0, weeklyGoal.target - weeklyGoal.completed)
 
   return (
     <div className="page-wrap">
@@ -763,6 +792,51 @@ export default function Feed() {
             </div>
             <Calendar className="h-5 w-5 text-indigo-500" />
           </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 reveal reveal-2">
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Tendance 7 jours</div>
+            <Activity className="h-5 w-5 text-primary-500" />
+          </div>
+          <div className="grid grid-cols-7 gap-2 items-end h-24">
+            {weekTrend.map((day) => {
+              const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
+              return (
+                <div key={day.day} className="flex flex-col items-center gap-1">
+                  <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
+                    <div
+                      className="w-full bg-primary-600 rounded-t"
+                      style={{ height: `${barHeight}%` }}
+                      title={`${day.sessions} séance(s), ${day.minutes} min`}
+                    />
+                  </div>
+                  <span className="text-[10px] text-gray-500 uppercase">{day.day.replace('.', '')}</span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="mt-3 text-xs text-gray-500">Barres basées sur le nombre de séances par jour.</p>
+        </div>
+
+        <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Objectif hebdo</div>
+            <Target className="h-5 w-5 text-emerald-600" />
+          </div>
+          <div className="text-2xl font-bold text-gray-900">
+            {Math.min(weeklyGoal.completed, weeklyGoal.target)} / {weeklyGoal.target} séances
+          </div>
+          <div className="mt-3 h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+            <div className="h-full bg-emerald-600" style={{ width: `${weeklyGoalPercent}%` }} />
+          </div>
+          <p className="mt-3 text-sm text-gray-600">
+            {remainingWeeklySessions === 0
+              ? 'Objectif atteint cette semaine.'
+              : `Il reste ${remainingWeeklySessions} séance(s) pour atteindre ton objectif.`}
+          </p>
         </div>
       </div>
 
