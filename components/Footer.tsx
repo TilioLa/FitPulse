@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //
 //  footer.tsx
 //  
@@ -7,6 +8,10 @@
 
 import Link from 'next/link'
 import { Activity, Facebook, Twitter, Instagram, Linkedin } from 'lucide-react'
+=======
+import Link from 'next/link'
+import { Activity } from 'lucide-react'
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 export default function Footer() {
   return (
@@ -44,8 +49,13 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+<<<<<<< HEAD
                 <Link href="/pricing" className="hover:text-primary-400 transition-colors">
                   Tarifs
+=======
+                <Link href="/exercices" className="hover:text-primary-400 transition-colors">
+                  Exercices
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                 </Link>
               </li>
             </ul>
@@ -76,13 +86,18 @@ export default function Footer() {
           {/* Contact & Social */}
           <div>
             <h3 className="text-white font-semibold mb-4">Contact</h3>
+<<<<<<< HEAD
             <ul className="space-y-2 mb-4">
+=======
+            <ul className="space-y-2">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <li>
                 <Link href="/contact" className="hover:text-primary-400 transition-colors">
                   Nous contacter
                 </Link>
               </li>
               <li className="text-sm text-gray-400">
+<<<<<<< HEAD
                 contact@fitpulse.fr
               </li>
             </ul>
@@ -100,6 +115,11 @@ export default function Footer() {
                 <Linkedin className="h-5 w-5" />
               </a>
             </div>
+=======
+                fitpulset@gmail.com
+              </li>
+            </ul>
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
           </div>
         </div>
 

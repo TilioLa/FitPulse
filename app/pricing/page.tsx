@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import PricingPlans from '@/components/pricing/PricingPlans'
@@ -29,4 +30,10 @@ export default function PricingPage() {
       <Footer />
     </div>
   )
+=======
+import { redirect } from 'next/navigation'
+
+export default function PricingPage() {
+  redirect('/programmes')
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 }

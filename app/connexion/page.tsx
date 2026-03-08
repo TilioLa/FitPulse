@@ -1,5 +1,6 @@
 'use client'
 
+<<<<<<< HEAD
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -52,11 +53,106 @@ export default function ConnexionPage() {
       router.push('/dashboard')
     } else {
       setError('Email ou mot de passe incorrect')
+=======
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import Footer from '@/components/Footer'
+import { LogIn, Mail, Lock } from 'lucide-react'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+
+export default function ConnexionPage() {
+  const router = useRouter()
+  const { status } = useAuth()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [signupStatus, setSignupStatus] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      router.replace('/dashboard')
+    }
+  }, [status, router])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    setSignupStatus(params.get('signup'))
+    const errorCode = params.get('error_code') || params.get('error')
+    const errorDescription = params.get('error_description')
+
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''))
+    const hashErrorCode = hashParams.get('error_code') || hashParams.get('error')
+    const hashErrorDescription = hashParams.get('error_description')
+
+    const normalizedErrorCode = (hashErrorCode || errorCode || '').toLowerCase()
+    const normalizedErrorDescription = decodeURIComponent(hashErrorDescription || errorDescription || '').toLowerCase()
+
+    if (normalizedErrorCode || normalizedErrorDescription) {
+      if (
+        normalizedErrorCode.includes('otp_expired') ||
+        normalizedErrorDescription.includes('expired') ||
+        normalizedErrorDescription.includes('has expired')
+      ) {
+        setError('Lien expiré. Demande un nouvel email de confirmation puis réessaie.')
+      } else if (
+        normalizedErrorCode.includes('access_denied') ||
+        normalizedErrorDescription.includes('invalid') ||
+        normalizedErrorDescription.includes('already used')
+      ) {
+        setError('Lien de connexion invalide ou déjà utilisé.')
+      } else {
+        setError('Impossible de finaliser la connexion depuis le lien email. Réessaie depuis cette page.')
+      }
+    }
+  }, [])
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setIsSubmitting(true)
+
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail || !password) {
+      setError('Email ou mot de passe incorrect')
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      const supabase = getSupabaseBrowserClient()
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password,
+      })
+      if (signInError) {
+        const message = (signInError.message || '').toLowerCase()
+        if (message.includes('email not confirmed') || message.includes('email_not_confirmed')) {
+          setError('Email non confirmé. Vérifie ton email puis reconnecte-toi.')
+          return
+        }
+        setError('Email ou mot de passe incorrect')
+        return
+      }
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
+      }
+      router.replace('/dashboard')
+    } catch {
+      setError('Impossible de se connecter pour le moment. Réessaie dans quelques secondes.')
+    } finally {
+      setIsSubmitting(false)
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
     }
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+<<<<<<< HEAD
       <Navbar />
       <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full">
@@ -70,6 +166,29 @@ export default function ConnexionPage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+=======
+      <main className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full">
+          <div className="card-soft">
+            <div className="text-center mb-8">
+              <LogIn className="h-12 w-12 text-primary-600 mx-auto mb-4" />
+              <h1 className="text-3xl font-semibold tracking-tight text-gray-900 mb-2">
+                Connexion
+              </h1>
+              <p className="text-gray-600">
+                Connectez-vous à votre compte FitPulse
+              </p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {signupStatus === 'check-email' && (
+                <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-lg">
+                  Compte créé. Vérifie ton email pour confirmer ton compte, puis connecte-toi.
+                </div>
+              )}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg" role="alert">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                   {error}
                 </div>
               )}
@@ -110,8 +229,17 @@ export default function ConnexionPage() {
                 </div>
               </div>
 
+<<<<<<< HEAD
               <button type="submit" className="w-full btn-primary py-3">
                 Se connecter
+=======
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full btn-primary py-3"
+              >
+                {isSubmitting ? 'Connexion...' : 'Se connecter'}
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               </button>
             </form>
 
@@ -125,7 +253,11 @@ export default function ConnexionPage() {
             </div>
 
             <div className="mt-4 text-center">
+<<<<<<< HEAD
               <Link href="#" className="text-sm text-primary-600 hover:text-primary-700">
+=======
+              <Link href="/reset" className="text-sm text-primary-600 hover:text-primary-700">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                 Mot de passe oublié ?
               </Link>
             </div>

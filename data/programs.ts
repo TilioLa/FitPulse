@@ -1,0 +1,765 @@
+import { slugify } from '@/lib/slug'
+
+export type Program = {
+  id: string
+  slug: string
+  name: string
+  duration: string
+  level: string
+  equipment: string
+  bodyParts: string[]
+  description: string
+  exercises: number
+  color: string
+  recommended?: boolean
+  goals: string[]
+  sessionsPerWeek: number
+  sessions: {
+    id: string
+    name: string
+    focus: string
+    duration: number
+    exercises: {
+      name: string
+      sets: number
+      reps: number
+      rest: number
+      videoUrl?: string
+    }[]
+  }[]
+}
+
+const rawPrograms: Omit<Program, 'slug'>[] = [
+  {
+    id: '1',
+    name: 'Débutant - Poids du corps',
+    duration: '6 semaines',
+    level: 'Débutant',
+    equipment: 'Poids du corps',
+    bodyParts: ['Tout le corps'],
+    description: 'Programme complet pour commencer la musculation sans équipement. Idéal pour les débutants.',
+    exercises: 20,
+    color: 'from-blue-500 to-blue-600',
+    recommended: true,
+    goals: ['Force', 'Tonification'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '1-a',
+        name: 'Jour 1 - Full body',
+        focus: 'Mouvements de base',
+        duration: 35,
+        exercises: [
+          { name: 'Pompes', sets: 3, reps: 10, rest: 60, videoUrl: 'https://www.youtube.com/embed/IODxDxX7oi4' },
+          { name: 'Squats', sets: 3, reps: 12, rest: 60, videoUrl: 'https://www.youtube.com/embed/aclHkVaku9U' },
+          { name: 'Fentes', sets: 3, reps: 10, rest: 60, videoUrl: 'https://www.youtube.com/embed/QOVaHwm-Q6U' },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45, videoUrl: 'https://www.youtube.com/embed/pSHjTRCQxIw' },
+          { name: 'Gainage', sets: 3, reps: 45, rest: 45, videoUrl: 'https://www.youtube.com/embed/ASdvN_XEl_c' },
+        ],
+      },
+      {
+        id: '1-b',
+        name: 'Jour 2 - Bas du corps',
+        focus: 'Jambes et stabilité',
+        duration: 30,
+        exercises: [
+          { name: 'Squats tempo', sets: 3, reps: 10, rest: 60 },
+          { name: 'Fentes arrière', sets: 3, reps: 10, rest: 60 },
+          { name: 'Pont fessier', sets: 3, reps: 12, rest: 60 },
+          { name: 'Mollets debout', sets: 3, reps: 15, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '1-c',
+        name: 'Jour 3 - Haut du corps',
+        focus: 'Push / Pull',
+        duration: 30,
+        exercises: [
+          { name: 'Pompes sur genoux', sets: 3, reps: 12, rest: 60 },
+          { name: 'Dips entre deux chaises', sets: 3, reps: 8, rest: 60 },
+          { name: 'Superman', sets: 3, reps: 12, rest: 45 },
+          { name: 'Planche dynamique', sets: 3, reps: 20, rest: 45 },
+          { name: 'Crunchs', sets: 3, reps: 15, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '2',
+    name: 'Intermédiaire - Élastiques',
+    duration: '8 semaines',
+    level: 'Intermédiaire',
+    equipment: 'Élastiques',
+    bodyParts: ['Haut du corps', 'Bras'],
+    description: 'Gagnez en force et en masse musculaire avec des élastiques de résistance.',
+    exercises: 25,
+    color: 'from-purple-500 to-purple-600',
+    recommended: true,
+    goals: ['Hypertrophie', 'Force'],
+    sessionsPerWeek: 4,
+    sessions: [
+      {
+        id: '2-a',
+        name: 'Jour 1 - Dos + Biceps',
+        focus: 'Tirage élastiques',
+        duration: 40,
+        exercises: [
+          { name: 'Rowing élastique', sets: 4, reps: 12, rest: 60 },
+          { name: 'Tirage vertical élastique', sets: 3, reps: 12, rest: 60 },
+          { name: 'Face pull élastique', sets: 3, reps: 15, rest: 45 },
+          { name: 'Curl biceps élastique', sets: 3, reps: 15, rest: 45 },
+          { name: 'Curl marteau élastique', sets: 3, reps: 12, rest: 45 },
+        ],
+      },
+      {
+        id: '2-b',
+        name: 'Jour 2 - Jambes',
+        focus: 'Force bas du corps',
+        duration: 40,
+        exercises: [
+          { name: 'Squat avec élastique', sets: 4, reps: 12, rest: 60 },
+          { name: 'Soulevé de terre élastique', sets: 3, reps: 12, rest: 60 },
+          { name: 'Fentes élastique', sets: 3, reps: 10, rest: 60 },
+          { name: 'Abduction élastique', sets: 3, reps: 15, rest: 45 },
+          { name: 'Mollets élastique', sets: 3, reps: 15, rest: 45 },
+        ],
+      },
+      {
+        id: '2-c',
+        name: 'Jour 3 - Poitrine + Triceps',
+        focus: 'Poussée élastiques',
+        duration: 40,
+        exercises: [
+          { name: 'Presse poitrine élastique', sets: 4, reps: 10, rest: 60 },
+          { name: 'Écarté élastique', sets: 3, reps: 12, rest: 60 },
+          { name: 'Développé épaules élastique', sets: 3, reps: 12, rest: 60 },
+          { name: 'Extensions triceps élastique', sets: 3, reps: 12, rest: 45 },
+          { name: 'Kickback élastique', sets: 3, reps: 12, rest: 45 },
+        ],
+      },
+      {
+        id: '2-d',
+        name: 'Jour 4 - Abdominaux',
+        focus: 'Stabilité et gainage',
+        duration: 30,
+        exercises: [
+          { name: 'Planche avec élastique', sets: 3, reps: 30, rest: 45 },
+          { name: 'Rotation russe élastique', sets: 3, reps: 12, rest: 45 },
+          { name: 'Pallof press', sets: 3, reps: 12, rest: 45 },
+          { name: 'Dead bug', sets: 3, reps: 12, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '3',
+    name: 'Avancé - Machines',
+    duration: '12 semaines',
+    level: 'Avancé',
+    equipment: 'Machines',
+    bodyParts: ['Tout le corps'],
+    description: 'Programme intensif pour maximiser vos gains en salle de sport.',
+    exercises: 30,
+    color: 'from-orange-500 to-orange-600',
+    recommended: true,
+    goals: ['Force', 'Hypertrophie'],
+    sessionsPerWeek: 4,
+    sessions: [
+      {
+        id: '3-a',
+        name: 'Jour 1 - Pecs + Triceps',
+        focus: 'Poussée machines',
+        duration: 50,
+        exercises: [
+          { name: 'Développé couche machine', sets: 4, reps: 8, rest: 90 },
+          { name: 'Pec deck', sets: 3, reps: 12, rest: 75 },
+          { name: 'Shoulder press machine', sets: 3, reps: 10, rest: 75 },
+          { name: 'Extension triceps machine', sets: 3, reps: 12, rest: 60 },
+          { name: 'Dips assistés', sets: 3, reps: 10, rest: 60 },
+        ],
+      },
+      {
+        id: '3-b',
+        name: 'Jour 2 - Dos + Biceps',
+        focus: 'Tirage machines',
+        duration: 50,
+        exercises: [
+          { name: 'Tirage vertical machine', sets: 4, reps: 10, rest: 90 },
+          { name: 'Tirage horizontal machine', sets: 4, reps: 10, rest: 90 },
+          { name: 'Rowing machine', sets: 3, reps: 12, rest: 75 },
+          { name: 'Curl biceps machine', sets: 3, reps: 12, rest: 60 },
+          { name: 'Face pull machine', sets: 3, reps: 12, rest: 60 },
+        ],
+      },
+      {
+        id: '3-c',
+        name: 'Jour 3 - Jambes',
+        focus: 'Force bas du corps',
+        duration: 55,
+        exercises: [
+          { name: 'Presse à cuisses', sets: 4, reps: 10, rest: 90 },
+          { name: 'Hack squat', sets: 3, reps: 10, rest: 90 },
+          { name: 'Leg extension', sets: 3, reps: 12, rest: 75 },
+          { name: 'Leg curl', sets: 3, reps: 12, rest: 75 },
+          { name: 'Mollets machine', sets: 4, reps: 12, rest: 60 },
+        ],
+      },
+      {
+        id: '3-d',
+        name: 'Jour 4 - Full body',
+        focus: 'Circuit machines',
+        duration: 45,
+        exercises: [
+          { name: 'Shoulder press machine', sets: 3, reps: 10, rest: 60 },
+          { name: 'Rowing machine', sets: 3, reps: 12, rest: 60 },
+          { name: 'Presse à cuisses', sets: 3, reps: 12, rest: 60 },
+          { name: 'Ab crunch machine', sets: 3, reps: 15, rest: 45 },
+          { name: 'Extensions lombaires machine', sets: 3, reps: 12, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '4',
+    name: 'Cardio & Perte de poids',
+    duration: '4 semaines',
+    level: 'Tous niveaux',
+    equipment: 'Poids du corps',
+    bodyParts: ['Cardio', 'Tout le corps'],
+    description: 'Programme cardio intense pour brûler des calories et perdre du poids.',
+    exercises: 15,
+    color: 'from-green-500 to-green-600',
+    recommended: true,
+    goals: ['Cardio', 'Perte de poids'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '4-a',
+        name: 'Jour 1 - HIIT',
+        focus: 'Cardio intense',
+        duration: 30,
+        exercises: [
+          { name: 'Burpees', sets: 3, reps: 10, rest: 45, videoUrl: 'https://www.youtube.com/embed/TU8QYVW0gDU' },
+          { name: 'Mountain climbers', sets: 3, reps: 30, rest: 45, videoUrl: 'https://www.youtube.com/embed/cnyTQDSE884' },
+          { name: 'Jumping jacks', sets: 3, reps: 40, rest: 30 },
+          { name: 'Squats sautés', sets: 3, reps: 12, rest: 45 },
+          { name: 'Planche dynamique', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '4-b',
+        name: 'Jour 2 - Cardio abdominaux',
+        focus: 'Gainage cardio',
+        duration: 25,
+        exercises: [
+          { name: 'Sprint sur place', sets: 4, reps: 30, rest: 30 },
+          { name: 'Planche', sets: 3, reps: 40, rest: 45 },
+          { name: 'Skaters', sets: 3, reps: 20, rest: 30 },
+          { name: 'Crunchs', sets: 3, reps: 15, rest: 30 },
+          { name: 'Jump squats', sets: 3, reps: 12, rest: 30 },
+        ],
+      },
+      {
+        id: '4-c',
+        name: 'Jour 3 - Endurance',
+        focus: 'Cardio continu',
+        duration: 35,
+        exercises: [
+          { name: 'Marche rapide', sets: 1, reps: 20, rest: 30 },
+          { name: 'Squats', sets: 3, reps: 15, rest: 45 },
+          { name: 'Fentes', sets: 3, reps: 12, rest: 45 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '5',
+    name: 'Développement du haut du corps',
+    duration: '6 semaines',
+    level: 'Intermédiaire',
+    equipment: 'Poids du corps',
+    bodyParts: ['Haut du corps', 'Bras'],
+    description: 'Concentrez-vous sur le développement des muscles du haut du corps.',
+    exercises: 18,
+    color: 'from-red-500 to-red-600',
+    goals: ['Force', 'Haut du corps'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '5-a',
+        name: 'Jour 1 - Push',
+        focus: 'Pecs épaules triceps',
+        duration: 35,
+        exercises: [
+          { name: 'Pompes déclinées', sets: 3, reps: 10, rest: 60 },
+          { name: 'Pompes diamants', sets: 3, reps: 8, rest: 60 },
+          { name: 'Dips entre deux chaises', sets: 3, reps: 8, rest: 60 },
+          { name: 'Pike push-up', sets: 3, reps: 8, rest: 60 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '5-b',
+        name: 'Jour 2 - Pull',
+        focus: 'Dos et biceps',
+        duration: 35,
+        exercises: [
+          { name: 'Superman', sets: 3, reps: 12, rest: 45 },
+          { name: 'Rowing inverse (table)', sets: 3, reps: 8, rest: 60 },
+          { name: 'Curl isométrique', sets: 3, reps: 20, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Extensions lombaires', sets: 3, reps: 12, rest: 45 },
+        ],
+      },
+      {
+        id: '5-c',
+        name: 'Jour 3 - Bras & abdominaux',
+        focus: 'Bras et stabilité',
+        duration: 30,
+        exercises: [
+          { name: 'Pompes prises serrées', sets: 3, reps: 10, rest: 60 },
+          { name: 'Dips assistés', sets: 3, reps: 8, rest: 60 },
+          { name: 'Planche dynamique', sets: 3, reps: 20, rest: 45 },
+          { name: 'Crunchs', sets: 3, reps: 15, rest: 45 },
+          { name: 'Hollow hold', sets: 3, reps: 20, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '6',
+    name: 'Renforcement jambes et fessiers',
+    duration: '8 semaines',
+    level: 'Intermédiaire',
+    equipment: 'Poids du corps',
+    bodyParts: ['Jambes', 'Fessiers'],
+    description: 'Programme spécialisé pour tonifier et renforcer les jambes et les fessiers.',
+    exercises: 22,
+    color: 'from-pink-500 to-pink-600',
+    goals: ['Jambes', 'Fessiers'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '6-a',
+        name: 'Jour 1 - Fessiers',
+        focus: 'Activation glutes',
+        duration: 40,
+        exercises: [
+          { name: 'Hip thrust au sol', sets: 4, reps: 12, rest: 60 },
+          { name: 'Pont fessier une jambe', sets: 3, reps: 10, rest: 60 },
+          { name: 'Fentes marchees', sets: 3, reps: 12, rest: 60 },
+          { name: 'Squat sumo', sets: 3, reps: 12, rest: 60 },
+          { name: 'Step-ups', sets: 3, reps: 12, rest: 60 },
+        ],
+      },
+      {
+        id: '6-b',
+        name: 'Jour 2 - Jambes',
+        focus: 'Quadriceps ischios',
+        duration: 40,
+        exercises: [
+          { name: 'Squats tempo', sets: 4, reps: 10, rest: 60 },
+          { name: 'Fentes arrière', sets: 3, reps: 10, rest: 60 },
+          { name: 'Wall sit', sets: 3, reps: 30, rest: 60 },
+          { name: 'Mollets debout', sets: 3, reps: 15, rest: 45 },
+          { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '6-c',
+        name: 'Jour 3 - Endurance bas du corps',
+        focus: 'Volume',
+        duration: 35,
+        exercises: [
+          { name: 'Squats', sets: 3, reps: 15, rest: 45 },
+          { name: 'Fentes latérales', sets: 3, reps: 12, rest: 45 },
+          { name: 'Pont fessier', sets: 3, reps: 15, rest: 45 },
+          { name: 'Step-ups', sets: 3, reps: 12, rest: 45 },
+          { name: 'Mollets', sets: 3, reps: 20, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '7',
+    name: 'Gainage & Abdominaux',
+    duration: '4 semaines',
+    level: 'Tous niveaux',
+    equipment: 'Poids du corps',
+    bodyParts: ['Abdos', 'Abdominaux'],
+    description: 'Séances courtes et efficaces pour renforcer la sangle abdominale.',
+    exercises: 14,
+    color: 'from-amber-500 to-amber-600',
+    goals: ['Abdominaux', 'Stabilité'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '7-a',
+        name: 'Jour 1 - Gainage',
+        focus: 'Stabilité',
+        duration: 25,
+        exercises: [
+          { name: 'Planche', sets: 3, reps: 40, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Hollow hold', sets: 3, reps: 20, rest: 45 },
+          { name: 'Dead bug', sets: 3, reps: 12, rest: 45 },
+          { name: 'Bird dog', sets: 3, reps: 10, rest: 45 },
+        ],
+      },
+      {
+        id: '7-b',
+        name: 'Jour 2 - Abdominaux dynamiques',
+        focus: 'Rotation et controle',
+        duration: 25,
+        exercises: [
+          { name: 'Crunchs', sets: 3, reps: 15, rest: 45 },
+          { name: 'Rotation russe', sets: 3, reps: 12, rest: 45 },
+          { name: 'Planche dynamique', sets: 3, reps: 20, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Superman', sets: 3, reps: 12, rest: 45 },
+        ],
+      },
+      {
+        id: '7-c',
+        name: 'Jour 3 - Endurance abdominaux',
+        focus: 'Volume',
+        duration: 25,
+        exercises: [
+          { name: 'Planche', sets: 3, reps: 45, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 35, rest: 45 },
+          { name: 'Hollow hold', sets: 3, reps: 25, rest: 45 },
+          { name: 'Dead bug', sets: 3, reps: 12, rest: 45 },
+          { name: 'Bird dog', sets: 3, reps: 10, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '8',
+    name: 'HIIT Express',
+    duration: '3 semaines',
+    level: 'Intermédiaire',
+    equipment: 'Poids du corps',
+    bodyParts: ['Cardio', 'Tout le corps'],
+    description: 'Sessions HIIT rapides pour maximiser la dépense calorique.',
+    exercises: 16,
+    color: 'from-yellow-500 to-yellow-600',
+    goals: ['Cardio', 'Explosivité'],
+    sessionsPerWeek: 4,
+    sessions: [
+      {
+        id: '8-a',
+        name: 'Jour 1 - Sprint',
+        focus: 'Vitesse',
+        duration: 25,
+        exercises: [
+          { name: 'Sprint sur place', sets: 4, reps: 30, rest: 30 },
+          { name: 'Burpees', sets: 4, reps: 8, rest: 30, videoUrl: 'https://www.youtube.com/embed/TU8QYVW0gDU' },
+          { name: 'Jump squats', sets: 4, reps: 12, rest: 30 },
+          { name: 'Mountain climbers', sets: 4, reps: 30, rest: 30, videoUrl: 'https://www.youtube.com/embed/cnyTQDSE884' },
+          { name: 'Planche dynamique', sets: 3, reps: 20, rest: 30 },
+        ],
+      },
+      {
+        id: '8-b',
+        name: 'Jour 2 - Cardio full',
+        focus: 'Explosivité',
+        duration: 25,
+        exercises: [
+          { name: 'Jumping jacks', sets: 4, reps: 40, rest: 30 },
+          { name: 'Skaters', sets: 4, reps: 20, rest: 30 },
+          { name: 'Fentes sautees', sets: 4, reps: 10, rest: 30 },
+          { name: 'Burpees', sets: 4, reps: 8, rest: 30 },
+          { name: 'Gainage', sets: 3, reps: 30, rest: 30 },
+        ],
+      },
+      {
+        id: '8-c',
+        name: 'Jour 3 - Abdominaux HIIT',
+        focus: 'Cardio + abdos',
+        duration: 25,
+        exercises: [
+          { name: 'Mountain climbers', sets: 4, reps: 30, rest: 30 },
+          { name: 'Planche', sets: 3, reps: 40, rest: 30 },
+          { name: 'Crunchs', sets: 3, reps: 15, rest: 30 },
+          { name: 'Jump squats', sets: 4, reps: 12, rest: 30 },
+          { name: 'Burpees', sets: 4, reps: 8, rest: 30 },
+        ],
+      },
+      {
+        id: '8-d',
+        name: 'Jour 4 - Endurance',
+        focus: 'Cardio continu',
+        duration: 30,
+        exercises: [
+          { name: 'Marche rapide', sets: 1, reps: 20, rest: 30 },
+          { name: 'Squats', sets: 3, reps: 15, rest: 45 },
+          { name: 'Fentes', sets: 3, reps: 12, rest: 45 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '9',
+    name: 'Force & Hypertrophie',
+    duration: '10 semaines',
+    level: 'Avancé',
+    equipment: 'Haltères',
+    bodyParts: ['Tout le corps'],
+    description: 'Programme structure pour gagner en force et en volume musculaire.',
+    exercises: 28,
+    color: 'from-slate-600 to-slate-700',
+    goals: ['Hypertrophie', 'Force'],
+    sessionsPerWeek: 4,
+    sessions: [
+      {
+        id: '9-a',
+        name: 'Jour 1 - Haut du corps',
+        focus: 'Pecs dos',
+        duration: 50,
+        exercises: [
+          { name: 'Développé couche haltères', sets: 4, reps: 8, rest: 90 },
+          { name: 'Rowing haltères', sets: 4, reps: 10, rest: 90 },
+          { name: 'Développé épaules haltères', sets: 3, reps: 10, rest: 75 },
+          { name: 'Curl biceps haltères', sets: 3, reps: 12, rest: 60 },
+          { name: 'Extensions triceps haltères', sets: 3, reps: 12, rest: 60 },
+        ],
+      },
+      {
+        id: '9-b',
+        name: 'Jour 2 - Bas du corps',
+        focus: 'Jambes',
+        duration: 50,
+        exercises: [
+          { name: 'Squat goblet', sets: 4, reps: 10, rest: 90 },
+          { name: 'Fentes avec haltères', sets: 3, reps: 10, rest: 90 },
+          { name: 'Soulevé de terre haltères', sets: 3, reps: 10, rest: 90 },
+          { name: 'Mollets haltères', sets: 3, reps: 15, rest: 60 },
+          { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '9-c',
+        name: 'Jour 3 - Dos + biceps',
+        focus: 'Tirage',
+        duration: 45,
+        exercises: [
+          { name: 'Rowing haltères', sets: 4, reps: 10, rest: 90 },
+          { name: 'Pull over haltere', sets: 3, reps: 12, rest: 75 },
+          { name: 'Curl incline haltères', sets: 3, reps: 12, rest: 60 },
+          { name: 'Curl marteau haltères', sets: 3, reps: 12, rest: 60 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '9-d',
+        name: 'Jour 4 - Pecs + triceps',
+        focus: 'Pousse',
+        duration: 45,
+        exercises: [
+          { name: 'Développé incline haltères', sets: 4, reps: 8, rest: 90 },
+          { name: 'Écarté haltères', sets: 3, reps: 12, rest: 75 },
+          { name: 'Pompes sur haltères', sets: 3, reps: 10, rest: 60 },
+          { name: 'Extension triceps au-dessus', sets: 3, reps: 12, rest: 60 },
+          { name: 'Dips entre bancs', sets: 3, reps: 10, rest: 60 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '10',
+    name: 'Mobilité & Souplesse',
+    duration: '5 semaines',
+    level: 'Tous niveaux',
+    equipment: 'Aucun matériel',
+    bodyParts: ['Mobilité', 'Tout le corps'],
+    description: 'Améliorez votre mobilité avec des routines guidées et progressives.',
+    exercises: 12,
+    color: 'from-teal-500 to-teal-600',
+    goals: ['Mobilité', 'Souplesse'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '10-a',
+        name: 'Jour 1 - Hanches',
+        focus: 'Ouverture hanches',
+        duration: 25,
+        exercises: [
+          { name: 'Étirements hanches', sets: 2, reps: 40, rest: 20 },
+          { name: 'Rotation thoracique', sets: 2, reps: 12, rest: 20 },
+          { name: 'Mobilité chevilles', sets: 2, reps: 12, rest: 20 },
+          { name: 'Ouverture des épaules', sets: 2, reps: 12, rest: 20 },
+          { name: 'Étirements ischios', sets: 2, reps: 40, rest: 20 },
+        ],
+      },
+      {
+        id: '10-b',
+        name: 'Jour 2 - Colonne',
+        focus: 'Souplesse dos',
+        duration: 25,
+        exercises: [
+          { name: 'Chat-vache', sets: 2, reps: 10, rest: 20 },
+          { name: 'Rotation thoracique', sets: 2, reps: 12, rest: 20 },
+          { name: 'Étirement lombaire', sets: 2, reps: 40, rest: 20 },
+          { name: 'Ouverture poitrine', sets: 2, reps: 12, rest: 20 },
+          { name: 'Respiration diaphragme', sets: 2, reps: 40, rest: 20 },
+        ],
+      },
+      {
+        id: '10-c',
+        name: 'Jour 3 - Full mobility',
+        focus: 'Routine complète',
+        duration: 25,
+        exercises: [
+          { name: 'Étirements hanches', sets: 2, reps: 40, rest: 20 },
+          { name: 'Mobilité chevilles', sets: 2, reps: 12, rest: 20 },
+          { name: 'Ouverture épaules', sets: 2, reps: 12, rest: 20 },
+          { name: 'Étirements ischios', sets: 2, reps: 40, rest: 20 },
+          { name: 'Rotation thoracique', sets: 2, reps: 12, rest: 20 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '11',
+    name: 'Full Body Power',
+    duration: '6 semaines',
+    level: 'Intermédiaire',
+    equipment: 'Haltères',
+    bodyParts: ['Tout le corps'],
+    description: 'Travaillez puissance et explosivite avec des circuits complets.',
+    exercises: 20,
+    color: 'from-indigo-500 to-indigo-600',
+    goals: ['Puissance', 'Full body'],
+    sessionsPerWeek: 3,
+    sessions: [
+      {
+        id: '11-a',
+        name: 'Jour 1 - Puissance',
+        focus: 'Explosivité',
+        duration: 45,
+        exercises: [
+          { name: 'Thrusters haltères', sets: 4, reps: 10, rest: 75 },
+          { name: 'Soulevé de terre haltères', sets: 4, reps: 8, rest: 90 },
+          { name: 'Rowing haltères', sets: 3, reps: 12, rest: 75 },
+          { name: 'Fentes bulgares haltères', sets: 3, reps: 10, rest: 75 },
+          { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '11-b',
+        name: 'Jour 2 - Force',
+        focus: 'Charge contrôlée',
+        duration: 45,
+        exercises: [
+          { name: 'Développé incline haltères', sets: 4, reps: 8, rest: 90 },
+          { name: 'Rowing haltères', sets: 4, reps: 10, rest: 90 },
+          { name: 'Squat goblet', sets: 4, reps: 10, rest: 90 },
+          { name: 'Développé épaules haltères', sets: 3, reps: 10, rest: 75 },
+          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+        ],
+      },
+      {
+        id: '11-c',
+        name: 'Jour 3 - Conditioning',
+        focus: 'Circuit full body',
+        duration: 40,
+        exercises: [
+          { name: 'Thrusters haltères', sets: 3, reps: 12, rest: 60 },
+          { name: 'Fentes avec haltères', sets: 3, reps: 12, rest: 60 },
+          { name: 'Rowing haltères', sets: 3, reps: 12, rest: 60 },
+          { name: 'Développé épaules haltères', sets: 3, reps: 10, rest: 60 },
+          { name: 'Crunchs', sets: 3, reps: 15, rest: 45 },
+        ],
+      },
+    ],
+  },
+  {
+    id: '12',
+    name: 'Upper/Lower Split',
+    duration: '8 semaines',
+    level: 'Avancé',
+    equipment: 'Machines',
+    bodyParts: ['Haut du corps', 'Jambes'],
+    description: 'Split haut/bas pour maximiser la récupération et les progrès.',
+    exercises: 26,
+    color: 'from-fuchsia-500 to-fuchsia-600',
+    goals: ['Force', 'Hypertrophie'],
+    sessionsPerWeek: 4,
+    sessions: [
+      {
+        id: '12-a',
+        name: 'Jour 1 - Haut du corps',
+        focus: 'Pecs dos épaules',
+        duration: 50,
+        exercises: [
+          { name: 'Développé couche machine', sets: 4, reps: 8, rest: 90 },
+          { name: 'Tirage vertical machine', sets: 4, reps: 10, rest: 90 },
+          { name: 'Shoulder press machine', sets: 3, reps: 10, rest: 75 },
+          { name: 'Pec deck', sets: 3, reps: 12, rest: 75 },
+          { name: 'Rowing machine', sets: 3, reps: 12, rest: 75 },
+        ],
+      },
+      {
+        id: '12-b',
+        name: 'Jour 2 - Bas du corps',
+        focus: 'Quadriceps ischios',
+        duration: 55,
+        exercises: [
+          { name: 'Presse à cuisses', sets: 4, reps: 10, rest: 90 },
+          { name: 'Leg extension', sets: 3, reps: 12, rest: 75 },
+          { name: 'Leg curl', sets: 3, reps: 12, rest: 75 },
+          { name: 'Hack squat', sets: 3, reps: 10, rest: 90 },
+          { name: 'Mollets machine', sets: 4, reps: 12, rest: 60 },
+        ],
+      },
+      {
+        id: '12-c',
+        name: 'Jour 3 - Haut du corps',
+        focus: 'Dos bras',
+        duration: 50,
+        exercises: [
+          { name: 'Tirage horizontal machine', sets: 4, reps: 10, rest: 90 },
+          { name: 'Rowing machine', sets: 3, reps: 12, rest: 75 },
+          { name: 'Curl biceps machine', sets: 3, reps: 12, rest: 60 },
+          { name: 'Extension triceps machine', sets: 3, reps: 12, rest: 60 },
+          { name: 'Face pull machine', sets: 3, reps: 12, rest: 60 },
+        ],
+      },
+      {
+        id: '12-d',
+        name: 'Jour 4 - Bas du corps',
+        focus: 'Volume jambes',
+        duration: 50,
+        exercises: [
+          { name: 'Presse à cuisses', sets: 4, reps: 12, rest: 90 },
+          { name: 'Leg extension', sets: 3, reps: 12, rest: 75 },
+          { name: 'Leg curl', sets: 3, reps: 12, rest: 75 },
+          { name: 'Mollets machine', sets: 4, reps: 12, rest: 60 },
+          { name: 'Ab crunch machine', sets: 3, reps: 15, rest: 45 },
+        ],
+      },
+    ],
+  },
+]
+
+export const programs: Program[] = rawPrograms.map((program) => ({
+  ...program,
+  slug: slugify(program.name),
+}))
+
+export const programsBySlug = programs.reduce<Record<string, Program>>((acc, program) => {
+  acc[program.slug] = program
+  return acc
+}, {})
+
+export const programsById = programs.reduce<Record<string, Program>>((acc, program) => {
+  acc[program.id] = program
+  return acc
+}, {})

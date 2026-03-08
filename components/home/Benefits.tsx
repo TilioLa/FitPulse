@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //
 //  Benefits.tsx
 //  
@@ -5,6 +6,8 @@
 //  Created by Tilio Lave on 18/01/2026.
 //
 
+=======
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 import { CheckCircle, Clock, Users, Award, Zap, Heart } from 'lucide-react'
 
 const benefits = [
@@ -20,8 +23,13 @@ const benefits = [
   },
   {
     icon: <Users className="h-10 w-10 text-primary-600" />,
+<<<<<<< HEAD
     title: "Suivi expert",
     description: "Accompagnement par nos coachs et ajustements de programme selon vos progrès."
+=======
+    title: "Suivi intelligent",
+    description: "Votre progression est lisible, vos séances restent cohérentes."
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   },
   {
     icon: <Award className="h-10 w-10 text-primary-600" />,
@@ -45,17 +53,32 @@ export default function Benefits() {
     <section className="py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
+<<<<<<< HEAD
           <h2 className="text-4xl font-bold text-gray-900 mb-4">
             Pourquoi choisir FitPulse ?
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+=======
+          <h2 className="text-4xl font-bold text-gray-900 mb-4 reveal">
+            Pourquoi choisir FitPulse ?
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto reveal reveal-1">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
             Tout ce dont vous avez besoin pour transformer votre corps et atteindre vos objectifs sportifs.
           </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {benefits.map((benefit, index) => (
+<<<<<<< HEAD
             <div key={index} className="card hover:border-primary-300 border-2 border-transparent">
+=======
+            <div
+              key={index}
+              className="card hover:border-primary-300 border-2 border-transparent reveal"
+              style={{ animationDelay: `${index * 70}ms` }}
+            >
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="mb-4">{benefit.icon}</div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">
                 {benefit.title}

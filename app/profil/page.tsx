@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 //
 //  page.tsx
 //  
@@ -5,10 +6,13 @@
 //  Created by Tilio Lave on 18/01/2026.
 //
 
+=======
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+<<<<<<< HEAD
 import Navbar from '@/components/Navbar'
 import Footer from '@/components/Footer'
 import { parseJsonWithFallback } from '@/lib/safeStorage'
@@ -88,26 +92,94 @@ export default function ProfilPage() {
 
   if (!user) {
     return null
+=======
+import Footer from '@/components/Footer'
+import { User, Calendar, Trophy, TrendingUp, Clock } from 'lucide-react'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
+import WithSidebar from '@/components/layouts/WithSidebar'
+
+export default function ProfilPage() {
+  const router = useRouter()
+  const { user, status } = useAuth()
+  const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/connexion')
+      return
+    }
+
+    queueMicrotask(() => {
+      try {
+        const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+        const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
+        setStats({
+          streak,
+          completedWorkouts: totalWorkouts,
+          totalMinutes,
+        })
+      } catch {
+        setStats({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+      }
+    })
+  }, [router, status])
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Chargement du profil...
+      </div>
+    )
+  }
+
+  if (status === 'unauthenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Redirection vers la connexion...
+      </div>
+    )
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
+<<<<<<< HEAD
       <Navbar />
       <main className="flex-grow py-12">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+=======
+      <WithSidebar active="settings">
+        <main className="flex-grow py-12">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="card-soft mb-8">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
             <div className="flex items-center space-x-6">
               <div className="bg-primary-100 rounded-full p-6">
                 <User className="h-16 w-16 text-primary-600" />
               </div>
               <div className="flex-1">
+<<<<<<< HEAD
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
                   {user.name || 'Utilisateur FitPulse'}
                 </h1>
                 <p className="text-gray-600 mb-1">{user.email}</p>
                 <p className="text-sm text-gray-500">
                   Membre depuis {new Date(user.createdAt || Date.now()).toLocaleDateString('fr-FR', {
+=======
+                <h1 className="section-title mb-2">
+                  {user?.name || 'Utilisateur FitPulse'}
+                </h1>
+                <p className="text-gray-600 mb-1">{user?.email}</p>
+                {user?.phone && (
+                  <p className="text-gray-600 mb-1">{user.phone}</p>
+                )}
+                <p className="text-sm text-gray-500">
+                  Membre depuis {(user?.createdAt ? new Date(user.createdAt) : new Date()).toLocaleDateString('fr-FR', {
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
                     year: 'numeric',
                     month: 'long',
                   })}
@@ -126,7 +198,11 @@ export default function ProfilPage() {
 
           {/* Statistiques */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<<<<<<< HEAD
             <div className="card bg-gradient-to-br from-primary-50 to-primary-100">
+=======
+            <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Streak actuel</div>
@@ -137,7 +213,11 @@ export default function ProfilPage() {
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="card bg-gradient-to-br from-orange-50 to-orange-100">
+=======
+            <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Séances complétées</div>
@@ -148,7 +228,11 @@ export default function ProfilPage() {
               </div>
             </div>
 
+<<<<<<< HEAD
             <div className="card bg-gradient-to-br from-green-50 to-green-100">
+=======
+            <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm text-gray-600 mb-1">Temps total</div>
@@ -160,6 +244,29 @@ export default function ProfilPage() {
             </div>
           </div>
 
+<<<<<<< HEAD
+=======
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <div className="card">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Objectif de la semaine</h3>
+              <p className="text-gray-600 mb-4">3 séances pour garder le rythme.</p>
+              <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary-600"
+                  style={{ width: `${Math.min((stats.completedWorkouts / 3) * 100, 100)}%` }}
+                />
+              </div>
+              <p className="text-sm text-gray-600 mt-2">
+                {Math.min(stats.completedWorkouts, 3)} / 3 séances
+              </p>
+            </div>
+            <div className="card bg-gradient-to-br from-accent-50 to-primary-50">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Prochaine étape</h3>
+              <p className="text-gray-600">Planifie ta prochaine séance pour garder ta streak.</p>
+            </div>
+          </div>
+
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
           {/* Historique récent */}
           <div className="bg-white rounded-xl shadow-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
@@ -168,14 +275,22 @@ export default function ProfilPage() {
             </h2>
             <HistoryList />
           </div>
+<<<<<<< HEAD
         </div>
       </main>
+=======
+
+          </div>
+        </main>
+      </WithSidebar>
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
       <Footer />
     </div>
   )
 }
 
 function HistoryList() {
+<<<<<<< HEAD
   const [history, setHistory] = useState<WorkoutHistoryEntry[]>([])
 
   useEffect(() => {
@@ -188,6 +303,25 @@ function HistoryList() {
     setHistory(storedHistory.sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     ).slice(0, 5))
+=======
+  const [history, setHistory] = useState<any[]>([])
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      try {
+        const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
+        const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
+        setHistory(
+          deduped
+            .slice()
+            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .slice(0, 5)
+        )
+      } catch {
+        setHistory([])
+      }
+    })
+>>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
   }, [])
 
   if (history.length === 0) {
