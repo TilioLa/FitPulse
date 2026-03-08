@@ -101,6 +101,42 @@ type SessionHint = {
 
 const lastExerciseKey = (workoutId: string) => `fitpulse_last_exercise_index_${workoutId}`
 
+const clampPositiveInt = (value: number, fallback = 1) => {
+  if (!Number.isFinite(value)) return fallback
+  return Math.max(1, Math.round(value))
+}
+
+const buildInputsForExercises = (exercises: Exercise[], source?: ExerciseInputs): ExerciseInputs => {
+  const inputs: ExerciseInputs = {}
+  exercises.forEach((exercise) => {
+    const existingRows = source?.[exercise.id] || []
+    const targetSets = clampPositiveInt(exercise.sets, 1)
+    const targetReps = clampPositiveInt(exercise.reps, 1)
+    inputs[exercise.id] = Array.from({ length: targetSets }).map((_, idx) => {
+      const row = existingRows[idx]
+      const rowReps = Number(row?.reps)
+      return {
+        weight: row?.weight ?? 0,
+        reps: Number.isFinite(rowReps) && rowReps > 0 ? rowReps : targetReps,
+        completed: row?.completed ?? false,
+      }
+    })
+  })
+  return inputs
+}
+
+const getRepsLabel = (sets: SetInput[] | undefined, fallback: number) => {
+  const safeFallback = clampPositiveInt(fallback, 1)
+  const repsValues = (sets || [])
+    .map((set) => Number(set.reps))
+    .filter((value) => Number.isFinite(value) && value > 0)
+  if (repsValues.length === 0) return `${safeFallback}`
+  const min = Math.min(...repsValues)
+  const max = Math.max(...repsValues)
+  if (min === max) return `${min}`
+  return `${min}-${max}`
+}
+
 export default function MySessions() {
   const { push } = useToast()
   const { user } = useAuth()
@@ -195,14 +231,8 @@ export default function MySessions() {
       setWorkout(parsed)
       const parsedDraft = parsed?.draft
       if (parsed?.exercises?.length) {
-        const inputs: ExerciseInputs = {}
-        parsed.exercises.forEach((exercise: Exercise) => {
-          inputs[exercise.id] = Array.from({ length: exercise.sets }).map(() => ({
-            weight: 0,
-            reps: exercise.reps,
-          }))
-        })
-        setExerciseInputs(parsedDraft?.exerciseInputs || inputs)
+        const inputs = buildInputsForExercises(parsed.exercises, parsedDraft?.exerciseInputs)
+        setExerciseInputs(inputs)
       }
       if (parsedDraft?.exerciseNotes) {
         setExerciseNotes(parsedDraft.exerciseNotes)
@@ -259,14 +289,7 @@ export default function MySessions() {
       }
       setWorkout(defaultWorkout)
       writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
-      const inputs: ExerciseInputs = {}
-      defaultWorkout.exercises.forEach((exercise) => {
-        inputs[exercise.id] = Array.from({ length: exercise.sets }).map(() => ({
-          weight: 0,
-          reps: exercise.reps,
-        }))
-      })
-      setExerciseInputs(inputs)
+      setExerciseInputs(buildInputsForExercises(defaultWorkout.exercises))
     }
 
     // Charger les statistiques depuis l'historique
@@ -704,7 +727,12 @@ export default function MySessions() {
     router.push('/dashboard?view=feed')
   }
 
-  const updateWorkoutExercises = (nextExercises: Exercise[]) => {
+  const updateWorkoutExercises = (
+    nextExercises: Exercise[],
+    options?: {
+      resetRepsForExerciseId?: string
+    }
+  ) => {
     if (!workout) return
     const updated = { ...workout, exercises: nextExercises }
     setWorkout(updated)
@@ -713,22 +741,32 @@ export default function MySessions() {
       void persistCurrentWorkoutForUser(user.id, updated as unknown as Record<string, unknown>)
     }
     setExerciseInputs((prev) => {
-      const next: ExerciseInputs = {}
-      nextExercises.forEach((exercise, index) => {
-        const previousExercise = workout.exercises[index]
-        const existing =
-          (previousExercise && previousExercise.id === exercise.id && prev[exercise.id]) || prev[exercise.id] || []
-        next[exercise.id] = Array.from({ length: exercise.sets }).map((_, idx) => {
-          const row = (existing as SetInput[])[idx]
-          return {
-            weight: row?.weight ?? 0,
-            reps: row?.reps ?? exercise.reps,
-            completed: row?.completed ?? false,
-          }
-        })
-      })
-      return next
+      const next = buildInputsForExercises(nextExercises, prev)
+      const exerciseId = options?.resetRepsForExerciseId
+      if (!exerciseId) return next
+      const matchingExercise = nextExercises.find((exercise) => exercise.id === exerciseId)
+      if (!matchingExercise) return next
+      return {
+        ...next,
+        [exerciseId]: (next[exerciseId] || []).map((row) => ({
+          ...row,
+          reps: clampPositiveInt(matchingExercise.reps, 1),
+        })),
+      }
     })
+  }
+
+  const updateCurrentExerciseSetCount = (nextSetCount: number) => {
+    if (!workout) return
+    const current = workout.exercises[currentExerciseIndex]
+    if (!current) return
+    const safeSetCount = clampPositiveInt(nextSetCount, 1)
+    const nextExercises = [...workout.exercises]
+    nextExercises[currentExerciseIndex] = {
+      ...current,
+      sets: safeSetCount,
+    }
+    updateWorkoutExercises(nextExercises)
   }
 
   const replaceExerciseAt = (index: number, name: string) => {
@@ -896,6 +934,8 @@ export default function MySessions() {
   }, [exerciseRestOverride, isSupersetWithNext])
 
   const currentInputs = currentExercise ? (exerciseInputs[currentExercise.id] || []) : []
+  const currentSetCount = currentExercise ? currentInputs.length || clampPositiveInt(currentExercise.sets, 1) : 0
+  const currentRepsLabel = currentExercise ? getRepsLabel(currentInputs, currentExercise.reps) : '0'
   const currentVolume = currentInputs.reduce((sum, set) => sum + set.weight * set.reps, 0)
   const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
   const isLastExercise = workout ? currentExerciseIndex === workout.exercises.length - 1 : false
@@ -1300,7 +1340,7 @@ export default function MySessions() {
                       onChange={(e) => {
                         const next = [...workout.exercises]
                         next[index] = { ...next[index], reps: Number(e.target.value) || 1 }
-                        updateWorkoutExercises(next)
+                        updateWorkoutExercises(next, { resetRepsForExerciseId: exercise.id })
                       }}
                       className="rounded-lg border border-gray-200 px-2 py-1 text-sm"
                     />
@@ -1368,11 +1408,11 @@ export default function MySessions() {
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="card-soft text-center transition-all hover:-translate-y-0.5 hover:shadow-md">
-              <div className="text-2xl font-bold text-primary-600">{currentExercise.sets}</div>
+              <div className="text-2xl font-bold text-primary-600">{currentSetCount}</div>
               <div className="text-sm text-gray-600">Séries</div>
             </div>
             <div className="card-soft text-center transition-all hover:-translate-y-0.5 hover:shadow-md">
-              <div className="text-2xl font-bold text-primary-600">{currentExercise.reps}</div>
+              <div className="text-2xl font-bold text-primary-600">{currentRepsLabel}</div>
               <div className="text-sm text-gray-600">Répétitions</div>
             </div>
           </div>
@@ -1460,15 +1500,7 @@ export default function MySessions() {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setExerciseInputs((prev) => ({
-                    ...prev,
-                    [currentExercise.id]: [
-                      ...(prev[currentExercise.id] || []),
-                      { weight: 0, reps: currentExercise.reps },
-                    ],
-                  }))
-                }
+                onClick={() => updateCurrentExerciseSetCount(currentInputs.length + 1)}
                 disabled={sessionPaused}
                 className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1476,12 +1508,7 @@ export default function MySessions() {
               </button>
               <button
                 type="button"
-                onClick={() =>
-                  setExerciseInputs((prev) => ({
-                    ...prev,
-                    [currentExercise.id]: (prev[currentExercise.id] || []).slice(0, -1),
-                  }))
-                }
+                onClick={() => updateCurrentExerciseSetCount(currentInputs.length - 1)}
                 disabled={sessionPaused || (currentInputs?.length || 0) <= 1}
                 className="min-h-11 text-xs font-semibold px-4 py-2 rounded-full border border-gray-200 text-gray-600 hover:border-primary-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -1637,57 +1664,62 @@ export default function MySessions() {
         <div>
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Exercices</h3>
           <div className="space-y-3">
-            {workout.exercises.map((exercise, index) => (
-              <div
-                key={exercise.id}
-                className={`card cursor-pointer transition-all ${
-                  index === currentExerciseIndex
-                    ? 'border-2 border-primary-600 bg-primary-50'
-                    : index < currentExerciseIndex
-                    ? 'bg-gray-100 opacity-75'
-                    : ''
-                }`}
-                onClick={() => {
-                  if (sessionPaused) return
-                  setCurrentExerciseIndex(index)
-                  setTimeRemaining(0)
-                  setIsRunning(false)
-                }}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-semibold text-gray-900">{exercise.name}</div>
-                    <div className="text-sm text-gray-600">
-                      {exercise.sets} séries × {exercise.reps} reps
+            {workout.exercises.map((exercise, index) => {
+              const exerciseRows = exerciseInputs[exercise.id] || []
+              const displaySets = exerciseRows.length || clampPositiveInt(exercise.sets, 1)
+              const displayReps = getRepsLabel(exerciseRows, exercise.reps)
+              return (
+                <div
+                  key={exercise.id}
+                  className={`card cursor-pointer transition-all ${
+                    index === currentExerciseIndex
+                      ? 'border-2 border-primary-600 bg-primary-50'
+                      : index < currentExerciseIndex
+                      ? 'bg-gray-100 opacity-75'
+                      : ''
+                  }`}
+                  onClick={() => {
+                    if (sessionPaused) return
+                    setCurrentExerciseIndex(index)
+                    setTimeRemaining(0)
+                    setIsRunning(false)
+                  }}
+                >
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <div className="font-semibold text-gray-900">{exercise.name}</div>
+                      <div className="text-sm text-gray-600">
+                        {displaySets} séries × {displayReps} reps
+                      </div>
+                      <div className="mt-2">
+                        <SupersetToggle
+                          storageKey={supersetKey}
+                          exerciseId={exercise.id}
+                          nextExerciseId={workout.exercises[index + 1]?.id}
+                          onChange={(map) => setSupersetMap(map)}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation()
+                          setSelectedExerciseId(exercise.id)
+                        }}
+                        className="mt-2 text-xs font-semibold text-primary-600 hover:text-primary-700"
+                      >
+                        Voir stats 1RM
+                      </button>
                     </div>
-                    <div className="mt-2">
-                      <SupersetToggle
-                        storageKey={supersetKey}
-                        exerciseId={exercise.id}
-                        nextExerciseId={workout.exercises[index + 1]?.id}
-                        onChange={(map) => setSupersetMap(map)}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation()
-                        setSelectedExerciseId(exercise.id)
-                      }}
-                      className="mt-2 text-xs font-semibold text-primary-600 hover:text-primary-700"
-                    >
-                      Voir stats 1RM
-                    </button>
+                    {index === currentExerciseIndex && (
+                      <div className="w-3 h-3 bg-primary-600 rounded-full"></div>
+                    )}
+                    {index < currentExerciseIndex && (
+                      <div className="text-green-600 text-2xl">✓</div>
+                    )}
                   </div>
-                  {index === currentExerciseIndex && (
-                    <div className="w-3 h-3 bg-primary-600 rounded-full"></div>
-                  )}
-                  {index < currentExerciseIndex && (
-                    <div className="text-green-600 text-2xl">✓</div>
-                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
