@@ -247,6 +247,7 @@ export default function MySessions() {
   const [sessionCheckIn, setSessionCheckIn] = useState<SessionCheckIn>(() => defaultSessionCheckIn())
   const [lastCompletedSet, setLastCompletedSet] = useState<LastCompletedSet | null>(null)
   const timerRef = useRef<HTMLDivElement | null>(null)
+  const exerciseTopRef = useRef<HTMLDivElement | null>(null)
   const lastCloudPersistRef = useRef(0)
   const wasOnlineRef = useRef(true)
   const reconnectSyncInFlightRef = useRef(false)
@@ -591,6 +592,13 @@ export default function MySessions() {
     if (!workout?.id) return
     localStorage.setItem(lastExerciseKey(workout.id), String(currentExerciseIndex))
   }, [workout?.id, currentExerciseIndex])
+
+  useEffect(() => {
+    if (!workout) return
+    requestAnimationFrame(() => {
+      exerciseTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [currentExerciseIndex, workout])
 
   useEffect(() => {
     const saveNow = () => {
@@ -1736,10 +1744,10 @@ export default function MySessions() {
         {/* Exercice actuel */}
         <div className="lg:col-span-2">
           <div className="card bg-gradient-to-br from-primary-50 to-accent-50 shadow-sm">
-            <div className="mb-6">
-              <span className="text-sm text-gray-600">
-                Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
-              </span>
+          <div ref={exerciseTopRef} className="mb-6">
+            <span className="text-sm text-gray-600">
+              Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
+            </span>
               <h2 className="text-3xl font-bold text-gray-900 mt-2">
                 {currentExercise.name}
               </h2>
