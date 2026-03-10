@@ -7,8 +7,8 @@ test('home page loads and has CTA', async ({ page }) => {
   await expect(page.getByRole('link', { name: /Commencez gratuitement/i })).toBeVisible({ timeout: 15_000 })
 })
 
-test('pricing page is not available', async ({ page }) => {
+test('pricing page is available', async ({ page }) => {
   const response = await page.goto('/pricing')
-  expect(response?.status()).toBe(404)
-  await expect(page.getByRole('heading', { name: /Page introuvable/i })).toBeVisible({ timeout: 15_000 })
+  expect(response?.status()).toBe(200)
+  await expect(page.getByRole('heading', { name: /Tarifs|Pricing|Offres/i })).toBeVisible({ timeout: 15_000 })
 })
