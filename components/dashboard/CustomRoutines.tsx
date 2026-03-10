@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { PlusCircle, Dumbbell, Play } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { PlusCircle, Dumbbell, Play, Copy, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/ToastProvider'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
@@ -28,6 +28,7 @@ type Routine = {
   sessionsPerWeek: number
   exercises: RoutineExercise[]
   createdAt: string
+  updatedAt?: string
 }
 
 const templates = [
@@ -92,6 +93,9 @@ export default function CustomRoutines() {
   const [editingRoutineId, setEditingRoutineId] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
+  const [query, setQuery] = useState('')
+  const [equipmentFilter, setEquipmentFilter] = useState('Tous')
+  const [sessionsFilter, setSessionsFilter] = useState('Tous')
 
   useEffect(() => {
     const apply = () => setRoutines(loadRoutines())
@@ -123,6 +127,11 @@ export default function CustomRoutines() {
       push('Donne un nom à ta routine.', 'error')
       return
     }
+    const cleanedExercises = exercises.filter((ex) => ex.name.trim())
+    if (cleanedExercises.length === 0) {
+      push('Ajoute au moins un exercice.', 'error')
+      return
+    }
     if (editingRoutineId) {
       const existing = routines.find((routine) => routine.id === editingRoutineId)
       const updated: Routine = {
@@ -130,8 +139,9 @@ export default function CustomRoutines() {
         name: name.trim(),
         equipment,
         sessionsPerWeek,
-        exercises: exercises.filter((ex) => ex.name.trim()),
+        exercises: cleanedExercises,
         createdAt: existing?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       }
       const next = routines.map((routine) => (routine.id === editingRoutineId ? updated : routine))
       setRoutines(next)
@@ -153,8 +163,9 @@ export default function CustomRoutines() {
       name: name.trim(),
       equipment,
       sessionsPerWeek,
-      exercises: exercises.filter((ex) => ex.name.trim()),
+      exercises: cleanedExercises,
       createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     }
     const next = [routine, ...routines]
     setRoutines(next)
@@ -170,6 +181,7 @@ export default function CustomRoutines() {
   }
 
   const handleDelete = (id: string) => {
+    if (!window.confirm('Supprimer cette routine ?')) return
     const next = routines.filter((routine) => routine.id !== id)
     setRoutines(next)
     saveRoutines(next)
@@ -196,6 +208,47 @@ export default function CustomRoutines() {
     router.push('/dashboard?view=session')
   }
 
+  const duplicateRoutine = (routine: Routine) => {
+    const cloned: Routine = {
+      ...routine,
+      id: `${Date.now()}`,
+      name: `${routine.name} (copie)`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }
+    const next = [cloned, ...routines]
+    setRoutines(next)
+    saveRoutines(next)
+    if (user?.id) {
+      void persistCustomRoutinesForUser(user.id, next as unknown as Record<string, unknown>[])
+    }
+    push('Routine dupliquée.', 'success')
+  }
+
+  const totals = useMemo(() => {
+    const totalRoutines = routines.length
+    const totalExercises = routines.reduce((sum, routine) => sum + routine.exercises.length, 0)
+    const totalWeeklySessions = routines.reduce((sum, routine) => sum + routine.sessionsPerWeek, 0)
+    const avgDuration = totalRoutines === 0
+      ? 0
+      : Math.round(routines.reduce((sum, routine) => sum + Math.max(20, routine.exercises.length * 6), 0) / totalRoutines)
+    return { totalRoutines, totalExercises, totalWeeklySessions, avgDuration }
+  }, [routines])
+
+  const visibleRoutines = useMemo(() => {
+    const normalized = query.trim().toLowerCase()
+    return routines.filter((routine) => {
+      const matchesQuery =
+        normalized.length === 0 ||
+        routine.name.toLowerCase().includes(normalized) ||
+        routine.exercises.some((exercise) => exercise.name.toLowerCase().includes(normalized))
+      const matchesEquipment = equipmentFilter === 'Tous' || routine.equipment === equipmentFilter
+      const matchesSessions =
+        sessionsFilter === 'Tous' || routine.sessionsPerWeek === Number(sessionsFilter)
+      return matchesQuery && matchesEquipment && matchesSessions
+    })
+  }, [equipmentFilter, query, routines, sessionsFilter])
+
   return (
     <div className="page-wrap panel-stack">
       <div className="mb-8">
@@ -205,18 +258,103 @@ export default function CustomRoutines() {
         </p>
       </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-8">
+        <div className="card-compact">
+          <div className="text-[11px] uppercase tracking-wide text-gray-500">Routines</div>
+          <div className="text-2xl font-bold text-gray-900">{totals.totalRoutines}</div>
+        </div>
+        <div className="card-compact">
+          <div className="text-[11px] uppercase tracking-wide text-gray-500">Exercices</div>
+          <div className="text-2xl font-bold text-gray-900">{totals.totalExercises}</div>
+        </div>
+        <div className="card-compact">
+          <div className="text-[11px] uppercase tracking-wide text-gray-500">Séances / semaine</div>
+          <div className="text-2xl font-bold text-gray-900">{totals.totalWeeklySessions}</div>
+        </div>
+        <div className="card-compact">
+          <div className="text-[11px] uppercase tracking-wide text-gray-500">Durée moyenne</div>
+          <div className="text-2xl font-bold text-gray-900">{totals.avgDuration} min</div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-4">
-          {routines.length === 0 && (
-            <div className="card-soft text-center text-gray-600">Aucune routine créée.</div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[220px]">
+              <Search className="h-4 w-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-9 py-2 text-sm"
+                placeholder="Rechercher une routine ou un exercice"
+              />
+            </div>
+            <select
+              value={equipmentFilter}
+              onChange={(e) => setEquipmentFilter(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+            >
+              {['Tous', 'Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines'].map((item) => (
+                <option key={item}>{item}</option>
+              ))}
+            </select>
+            <select
+              value={sessionsFilter}
+              onChange={(e) => setSessionsFilter(e.target.value)}
+              className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
+            >
+              {['Tous', '1', '2', '3', '4', '5', '6', '7'].map((value) => (
+                <option key={value} value={value}>
+                  {value === 'Tous' ? 'Toutes fréquences' : `${value} / semaine`}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {visibleRoutines.length === 0 && (
+            <div className="card-soft text-center text-gray-600">
+              Aucune routine trouvée.
+            </div>
           )}
-          {routines.map((routine) => (
+          {routines.length === 0 && (
+            <div className="card-soft bg-gradient-to-br from-primary-50 to-white">
+              <div className="text-sm font-semibold text-primary-700">Démarrer rapidement</div>
+              <p className="mt-1 text-sm text-gray-700">
+                Choisis un template et personnalise-le en quelques secondes.
+              </p>
+              <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {templates.map((tpl) => (
+                  <button
+                    key={tpl.name}
+                    onClick={() => {
+                      setName(tpl.name)
+                      setEquipment(tpl.equipment)
+                      setSessionsPerWeek(tpl.sessionsPerWeek)
+                      setExercises(tpl.exercises)
+                    }}
+                    className="rounded-xl border border-primary-200 bg-white px-3 py-3 text-left hover:shadow-sm"
+                  >
+                    <div className="text-sm font-semibold text-gray-900">{tpl.name}</div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {tpl.equipment} · {tpl.sessionsPerWeek} / semaine
+                    </div>
+                    <div className="mt-2 text-xs text-primary-700 font-semibold">Utiliser</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {visibleRoutines.map((routine) => (
             <div key={routine.id} className="card-soft">
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-xl font-semibold text-gray-900">{routine.name}</h3>
                   <div className="text-sm text-gray-600 mt-1">
                     Matériel : {routine.equipment} · {routine.sessionsPerWeek} séances / semaine · {routine.exercises.length} exercices
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    Durée estimée : {Math.max(20, routine.exercises.length * 6)} min ·
+                    Dernière mise à jour : {new Date(routine.updatedAt || routine.createdAt).toLocaleDateString('fr-FR')}
                   </div>
                 </div>
                 <button
@@ -227,11 +365,16 @@ export default function CustomRoutines() {
                 </button>
               </div>
               <div className="mt-4 flex flex-wrap gap-2">
-                {routine.exercises.map((exercise) => (
+                {routine.exercises.slice(0, 6).map((exercise) => (
                   <span key={exercise.name} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
                     {exercise.name}
                   </span>
                 ))}
+                {routine.exercises.length > 6 && (
+                  <span className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
+                    +{routine.exercises.length - 6}
+                  </span>
+                )}
               </div>
               <div className="mt-4 flex flex-wrap gap-2 justify-end">
                 <button
@@ -245,6 +388,13 @@ export default function CustomRoutines() {
                   className="btn-secondary"
                 >
                   Modifier
+                </button>
+                <button
+                  onClick={() => duplicateRoutine(routine)}
+                  className="btn-secondary inline-flex items-center gap-2"
+                >
+                  <Copy className="h-4 w-4" />
+                  Dupliquer
                 </button>
                 <button
                   onClick={() => startRoutine(routine)}
