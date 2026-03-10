@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { Mail, Phone, MapPin } from 'lucide-react'
 import WithSidebar from '@/components/layouts/WithSidebar'
@@ -94,6 +95,9 @@ export default function ContactPage() {
                 <p className="text-gray-600">
                   Notre équipe répond généralement sous 24 à 48 heures ouvrées.
                 </p>
+                <Link href="/tickets" className="mt-4 inline-flex btn-secondary">
+                  Ouvrir un ticket
+                </Link>
               </div>
             </div>
           </div>

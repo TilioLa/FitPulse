@@ -75,6 +75,11 @@ export default function Footer() {
                   Nous contacter
                 </Link>
               </li>
+              <li>
+                <Link href="/tickets" className="hover:text-primary-400 transition-colors">
+                  Tickets support
+                </Link>
+              </li>
               <li className="text-sm text-gray-400">
                 fitpulset@gmail.com
               </li>
