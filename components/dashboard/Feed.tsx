@@ -843,14 +843,38 @@ export default function Feed() {
           <h1 className="section-title">Tableau de bord</h1>
           <p className="text-sm text-gray-500 mt-1">{todayLabel} · {monthly.headline} · {monthly.monthLabel}</p>
         </div>
-        <div className="flex items-center gap-2 text-xs text-gray-500">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
           {resumeSessionHref && (
             <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">Séance en cours</span>
           )}
+          <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1">
+            <span className="text-gray-700 font-semibold">Objectif</span>
+            <span className="text-gray-600">{Math.min(weeklyGoal.completed, weeklyGoal.target)}/{weeklyGoal.target}</span>
+            <div className="h-1.5 w-16 rounded-full bg-gray-200 overflow-hidden">
+              <div className="h-full bg-emerald-600" style={{ width: `${weeklyGoalPercent}%` }} />
+            </div>
+          </div>
           <span>Dernière mise à jour automatique</span>
         </div>
       </div>
-      <div className="mb-8 rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 to-white px-5 py-4">
+      <div className="mb-6 flex flex-wrap items-center gap-2 text-xs">
+        <a href="#resume-jour" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Résumé
+        </a>
+        <a href="#kpis" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Indicateurs
+        </a>
+        <a href="#tendance" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Tendance
+        </a>
+        <a href="#progression-exos" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Progression
+        </a>
+        <a href="#seances-recentes" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Dernières séances
+        </a>
+      </div>
+      <div id="resume-jour" className="mb-8 rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 to-white px-5 py-4 scroll-mt-6">
         <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Résumé du jour</div>
         <p className="mt-1 text-sm text-primary-900">{quickSummary}</p>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -972,7 +996,7 @@ export default function Feed() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal reveal-1">
+      <div id="kpis" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal reveal-1 scroll-mt-6">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
@@ -1032,7 +1056,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 reveal reveal-2">
+      <div id="tendance" className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 reveal reveal-2 scroll-mt-6">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between mb-3">
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Tendance 7 jours</div>
@@ -1092,7 +1116,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="card-compact mb-8">
+      <div id="progression-exos" className="card-compact mb-8 scroll-mt-6">
         <div className="flex items-center justify-between">
           <div className="text-[11px] uppercase tracking-wide text-gray-500">Progression par exercice</div>
           <Link href="/dashboard?view=session" className="text-xs font-semibold text-primary-700 underline underline-offset-2">
@@ -1100,7 +1124,19 @@ export default function Feed() {
           </Link>
         </div>
         {exerciseProgress.length === 0 ? (
-          <div className="mt-3 text-sm text-gray-500">Pas assez de données pour analyser la progression.</div>
+          <div className="mt-3 text-sm text-gray-500">
+            Pas assez de données pour analyser la progression.
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Link href={primarySessionHref} className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-xs">
+                <Play className="h-4 w-4" />
+                {primarySessionLabel}
+              </Link>
+              <Link href="/programmes" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-xs">
+                <Activity className="h-4 w-4" />
+                Explorer les programmes
+              </Link>
+            </div>
+          </div>
         ) : (
           <div className="mt-3 grid grid-cols-1 lg:grid-cols-2 gap-3">
             {exerciseProgress.map((exercise) => (
@@ -1308,13 +1344,23 @@ export default function Feed() {
         )}
       </div>
 
-      <div className="flex items-center justify-between mb-4">
+      <div id="seances-recentes" className="flex items-center justify-between mb-4 scroll-mt-6">
         <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Dernières séances</h2>
         <span className="text-xs text-gray-500">Clique pour ouvrir le détail</span>
       </div>
       {items.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-gray-600">Aucune séance enregistrée.</p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            <Link href={primarySessionHref} className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm">
+              <Play className="h-4 w-4" />
+              {primarySessionLabel}
+            </Link>
+            <Link href="/programmes" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
+              <Activity className="h-4 w-4" />
+              Explorer les programmes
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
