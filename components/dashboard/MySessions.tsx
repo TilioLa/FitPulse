@@ -1736,7 +1736,7 @@ export default function MySessions() {
         {/* Exercice actuel */}
         <div className="lg:col-span-2">
           <div className="card bg-gradient-to-br from-primary-50 to-accent-50 shadow-sm">
-            <div ref={timerRef} className="mb-6">
+            <div className="mb-6">
               <span className="text-sm text-gray-600">
                 Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
               </span>
@@ -1913,7 +1913,7 @@ export default function MySessions() {
             )}
 
             {/* Timer */}
-            <div className="mb-6">
+            <div ref={timerRef} className="mb-6">
               <div className="text-center mb-4">
                 <div className="text-6xl font-bold text-primary-600 mb-2">
                   {formatTime(timeRemaining)}
