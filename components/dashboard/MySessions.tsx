@@ -5,7 +5,6 @@ import { Play, Pause, RotateCcw, Clock, Flame, Trophy, Dumbbell } from 'lucide-r
 import TrainingModeView from '@/components/dashboard/TrainingModeView'
 import { useToast } from '@/components/ui/ToastProvider'
 import DashboardCalendar from '@/components/dashboard/Calendar'
-import ExerciseMedia from '@/components/exercises/ExerciseMedia'
 import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import SupersetToggle from '@/components/exercises/SupersetToggle'
 import { computeHistoryStats, WorkoutHistoryItem, toLocalDateKey } from '@/lib/history'
@@ -1772,9 +1771,6 @@ export default function MySessions() {
 
           <div className="mb-4 text-xs text-gray-500">
             Auto‑passage actif après le repos entre exercices.
-          </div>
-          <div className="mb-6">
-            <ExerciseMedia name={currentExercise.name} videoUrl={currentExercise.videoUrl} />
           </div>
 
           <div className="mb-6">
