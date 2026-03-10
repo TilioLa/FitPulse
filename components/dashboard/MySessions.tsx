@@ -247,6 +247,7 @@ export default function MySessions() {
   const [sessionHint, setSessionHint] = useState<SessionHint | null>(null)
   const [sessionCheckIn, setSessionCheckIn] = useState<SessionCheckIn>(() => defaultSessionCheckIn())
   const [lastCompletedSet, setLastCompletedSet] = useState<LastCompletedSet | null>(null)
+  const timerRef = useRef<HTMLDivElement | null>(null)
   const lastCloudPersistRef = useRef(0)
   const wasOnlineRef = useRef(true)
   const reconnectSyncInFlightRef = useRef(false)
@@ -616,6 +617,9 @@ export default function MySessions() {
     setTimerKind(kind)
     setTimeRemaining(restTime)
     setIsRunning(true)
+    requestAnimationFrame(() => {
+      timerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    })
   }
 
   function handlePauseTimer() {
@@ -1733,7 +1737,7 @@ export default function MySessions() {
         {/* Exercice actuel */}
         <div className="lg:col-span-2">
           <div className="card bg-gradient-to-br from-primary-50 to-accent-50 shadow-sm">
-            <div className="mb-6">
+            <div ref={timerRef} className="mb-6">
               <span className="text-sm text-gray-600">
                 Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
               </span>
