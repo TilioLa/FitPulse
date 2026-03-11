@@ -224,14 +224,14 @@ function ExercicesPageContent() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_360px] gap-8">
-            <div className="card min-h-[560px]">
+          <div className="space-y-6">
+            <div className="card">
               {selected ? (
-                <div className="max-w-2xl w-full">
+                <div className="max-w-4xl w-full">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center">
-                          <Dumbbell className="h-6 w-6 text-gray-500" />
+                      <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center">
+                        <Dumbbell className="h-6 w-6 text-gray-500" />
                       </div>
                       <div>
                         <h2 className="text-2xl font-semibold text-gray-900">{selected.name}</h2>
@@ -363,23 +363,22 @@ function ExercicesPageContent() {
                   )}
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center text-center py-12">
+                <div className="flex flex-col items-center justify-center text-center py-10">
                   <div className="flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 text-gray-500 mb-4">
                     <Dumbbell className="h-6 w-6" />
                   </div>
                   <h2 className="text-xl font-semibold text-gray-900">Sélectionne un exercice</h2>
                   <p className="text-sm text-gray-500 mt-2">
-                    Clique sur un exercice à droite pour voir ses statistiques.
+                    Clique sur un exercice dans la bibliothèque pour voir ses statistiques.
                   </p>
                 </div>
               )}
             </div>
 
-            <div className="space-y-4 xl:sticky xl:top-6">
-              <div className="card p-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">Library</h3>
-                  <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="card p-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Library</h3>
+                <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Dumbbell className="h-4 w-4" />
                     Exercices
                   </div>
@@ -448,17 +447,17 @@ function ExercicesPageContent() {
                       className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
                     />
                   </div>
-                </div>
+              </div>
 
-                <div className="mt-4 rounded-2xl border border-gray-200 bg-white">
-                  <div className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
-                    Tous les exercices
-                  </div>
-                  <div className="max-h-[520px] overflow-y-auto pb-2">
-                    {filtered.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => setSelected(item)}
+              <div className="mt-4 rounded-2xl border border-gray-200 bg-white">
+                <div className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+                  Tous les exercices
+                </div>
+                <div className="max-h-[70vh] overflow-y-auto pb-2">
+                  {filtered.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelected(item)}
                         className={`w-full text-left px-4 py-2 transition-colors ${
                           selected?.id === item.id ? 'bg-gray-100' : 'hover:bg-gray-50'
                         }`}
@@ -479,10 +478,8 @@ function ExercicesPageContent() {
                     {filtered.length === 0 && (
                       <div className="px-4 py-3 text-sm text-gray-500">Aucun exercice trouvé.</div>
                     )}
-                  </div>
                 </div>
               </div>
-            </div>
           </div>
         </main>
       </div>

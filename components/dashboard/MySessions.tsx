@@ -643,6 +643,11 @@ export default function MySessions() {
   }
 
   function handleSkipTimer() {
+    if (timerKind === 'exercise') {
+      handleResetTimer()
+      handleNextExercise()
+      return
+    }
     handleResetTimer()
   }
 
@@ -2029,7 +2034,7 @@ export default function MySessions() {
                     className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <SkipForward className="h-5 w-5" />
-                    <span>Passer</span>
+                    <span>Passer le repos</span>
                   </button>
                 )}
               </div>
