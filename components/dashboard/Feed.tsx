@@ -53,6 +53,13 @@ type Badge = {
   earned: boolean
 }
 
+type QuickStart = {
+  title: string
+  body: string
+  cta: string
+  href: string
+}
+
 type OnboardingStep = {
   id: 'profile' | 'first_session_started' | 'first_session_done'
   label: string
@@ -192,6 +199,7 @@ export default function Feed() {
   const [reminderCard, setReminderCard] = useState<ReminderCard | null>(null)
   const [badges, setBadges] = useState<Badge[]>([])
   const [nextBadge, setNextBadge] = useState<Badge | null>(null)
+  const [quickStart, setQuickStart] = useState<QuickStart | null>(null)
   const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
   const [weeklyCatchUpDays, setWeeklyCatchUpDays] = useState<string[]>([])
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
@@ -384,6 +392,24 @@ export default function Feed() {
           historyProgramIds,
           recentProgramId: historyProgramIds[0] || null,
         })?.program
+        const quickStartHref =
+          hasInProgressWorkout ? resumeHref :
+          recommendedPick?.slug && recommendedPick.sessions?.[0]?.id
+            ? `/programmes/${recommendedPick.slug}/seances/${recommendedPick.sessions[0].id}`
+            : '/dashboard?view=session'
+        const quickStartTitle = hasInProgressWorkout ? 'Reprendre rapidement' : 'Démarrage rapide'
+        const quickStartBody = hasInProgressWorkout
+          ? 'Ta séance est en pause. Reprends en un clic.'
+          : recommendedPick
+          ? `Séance recommandée: ${recommendedPick.name}.`
+          : 'Lance une séance en un clic.'
+        const quickStartCta = hasInProgressWorkout ? 'Reprendre' : 'Démarrer'
+        setQuickStart({
+          title: quickStartTitle,
+          body: quickStartBody,
+          cta: quickStartCta,
+          href: quickStartHref,
+        })
         const hasProfile =
           Boolean(settings.level) &&
           Array.isArray(settings.goals) &&
@@ -971,6 +997,16 @@ export default function Feed() {
           </Link>
         </div>
       </div>
+      {quickStart && (
+        <div className="mb-8 rounded-2xl border border-gray-200 bg-white px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Quick start</div>
+          <div className="mt-1 text-base font-semibold text-gray-900">{quickStart.title}</div>
+          <div className="mt-1 text-sm text-gray-600">{quickStart.body}</div>
+          <Link href={quickStart.href} className="mt-3 inline-flex btn-primary">
+            {quickStart.cta}
+          </Link>
+        </div>
+      )}
       {reminderCard && (
         <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
           <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Rappel</div>

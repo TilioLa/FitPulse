@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Calendar, Clock, TrendingUp, Trophy, Download, FileText } from 'lucide-react'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import DashboardCalendar from '@/components/dashboard/Calendar'
@@ -19,6 +19,7 @@ interface WorkoutHistory {
   calories?: number
   volume?: number
   muscleUsage?: { id: string; percent: number }[]
+  exercises?: { sets?: { weight: number; reps: number }[] }[]
 }
 
 export default function History() {
@@ -26,6 +27,8 @@ export default function History() {
   const [stats, setStats] = useState({ total: 0, streak: 0, totalMinutes: 0, totalWeight: 0 })
   const [locale, setLocale] = useState('fr')
   const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
+  const [fromDate, setFromDate] = useState('')
+  const [toDate, setToDate] = useState('')
   const { t } = useI18n()
 
   const loadHistory = () => {
@@ -139,10 +142,43 @@ export default function History() {
     return items.map((item, idx) => ({ id: item.id, percent: withRemainder[idx] }))
   }
 
+  const filteredHistory = useMemo(() => {
+    if (!fromDate && !toDate) return history
+    const fromTs = fromDate ? new Date(`${fromDate}T00:00:00`).getTime() : null
+    const toTs = toDate ? new Date(`${toDate}T23:59:59`).getTime() : null
+    return history.filter((workout) => {
+      const ts = new Date(workout.date).getTime()
+      if (fromTs != null && ts < fromTs) return false
+      if (toTs != null && ts > toTs) return false
+      return true
+    })
+  }, [fromDate, toDate, history])
+
+  const filteredStats = useMemo(() => {
+    const { streak, totalMinutes, totalWorkouts } = computeHistoryStats(filteredHistory as WorkoutHistoryItem[])
+    const totalWeight = filteredHistory.reduce((sum, workout) => {
+      const workoutWeight = (workout.exercises || []).reduce((exerciseSum, exercise) => {
+        const setsWeight = (exercise.sets || []).reduce((setSum, set) => {
+          const weight = Number(set.weight) || 0
+          const reps = Number(set.reps) || 0
+          return setSum + weight * reps
+        }, 0)
+        return exerciseSum + setsWeight
+      }, 0)
+      return sum + workoutWeight
+    }, 0)
+    return {
+      total: totalWorkouts,
+      streak,
+      totalMinutes,
+      totalWeight: Math.round(totalWeight),
+    }
+  }, [filteredHistory])
+
   const exportCsv = () => {
     const rows = [
       ['date', 'workout', 'duration_min', 'volume_kg', 'calories'],
-      ...history.map((workout) => [
+      ...filteredHistory.map((workout) => [
         workout.date,
         workout.workoutName,
         String(workout.duration || 0),
@@ -165,7 +201,7 @@ export default function History() {
   const exportPdf = () => {
     const popup = window.open('', '_blank', 'width=900,height=700')
     if (!popup) return
-    const rows = history
+    const rows = filteredHistory
       .map(
         (workout) => `
           <tr>
@@ -214,6 +250,19 @@ export default function History() {
     popup.print()
   }
 
+  const applyPreset = (days: number | 'all') => {
+    if (days === 'all') {
+      setFromDate('')
+      setToDate('')
+      return
+    }
+    const end = new Date()
+    const start = new Date()
+    start.setDate(end.getDate() - (days - 1))
+    setFromDate(start.toISOString().slice(0, 10))
+    setToDate(end.toISOString().slice(0, 10))
+  }
+
   return (
     <div className="page-wrap">
       <h1 className="section-title mb-8 reveal">{t('sessionHistory')}</h1>
@@ -229,6 +278,38 @@ export default function History() {
         </div>
       )}
       <div className="mb-6 flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-xs font-semibold text-gray-500">Période</div>
+          <button onClick={() => applyPreset(7)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+            7 jours
+          </button>
+          <button onClick={() => applyPreset(30)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+            30 jours
+          </button>
+          <button onClick={() => applyPreset(90)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+            90 jours
+          </button>
+          <button onClick={() => applyPreset('all')} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+            Tout
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            value={fromDate}
+            onChange={(e) => setFromDate(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs"
+            aria-label="Date de début"
+          />
+          <span className="text-xs text-gray-400">→</span>
+          <input
+            type="date"
+            value={toDate}
+            onChange={(e) => setToDate(e.target.value)}
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs"
+            aria-label="Date de fin"
+          />
+        </div>
         <button onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
           <Download className="h-4 w-4" />
           Export CSV
@@ -244,7 +325,7 @@ export default function History() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm text-gray-600 mb-1">{t('totalSessions')}</div>
-              <div className="text-3xl font-bold text-primary-600">{stats.total}</div>
+              <div className="text-3xl font-bold text-primary-600">{filteredStats.total}</div>
             </div>
             <Calendar className="h-10 w-10 text-primary-600" />
           </div>
@@ -254,7 +335,7 @@ export default function History() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm text-gray-600 mb-1">{t('currentStreak')}</div>
-              <div className="text-3xl font-bold text-orange-600">{stats.streak}</div>
+              <div className="text-3xl font-bold text-orange-600">{filteredStats.streak}</div>
             </div>
             <TrendingUp className="h-10 w-10 text-orange-600" />
           </div>
@@ -264,7 +345,7 @@ export default function History() {
           <div className="flex items-center justify-between">
             <div>
               <div className="text-sm text-gray-600 mb-1">{t('totalMinutes')}</div>
-              <div className="text-3xl font-bold text-green-600">{stats.totalMinutes}</div>
+              <div className="text-3xl font-bold text-green-600">{filteredStats.totalMinutes}</div>
             </div>
             <Trophy className="h-10 w-10 text-green-600" />
           </div>
@@ -275,7 +356,7 @@ export default function History() {
             <div>
               <div className="text-sm text-gray-600 mb-1">{t('totalWeight')}</div>
               <div className="text-3xl font-bold text-slate-700">
-                {stats.totalWeight} kg
+                {filteredStats.totalWeight} kg
               </div>
             </div>
             <Trophy className="h-10 w-10 text-slate-700" />
@@ -289,7 +370,7 @@ export default function History() {
           <DashboardCalendar />
         </div>
         <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4">{t('recentSessionsTitle')}</h2>
-        {history.length === 0 ? (
+        {filteredHistory.length === 0 ? (
           <div className="card text-center py-12">
             <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 text-lg mb-2">{t('noSessions')}</p>
@@ -297,7 +378,7 @@ export default function History() {
           </div>
         ) : (
           <div className="space-y-4">
-            {history.map((workout) => {
+            {filteredHistory.map((workout) => {
               const program = (workout as any).programId ? programsById[(workout as any).programId] : undefined
               const href =
                 program && (workout as any).workoutId

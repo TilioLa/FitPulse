@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Play, Pause, RotateCcw, Clock, Flame, Trophy, Dumbbell } from 'lucide-react'
+import { Play, Pause, RotateCcw, Clock, Flame, Trophy, Dumbbell, ChevronDown, ChevronUp, Info } from 'lucide-react'
 import TrainingModeView from '@/components/dashboard/TrainingModeView'
 import { useToast } from '@/components/ui/ToastProvider'
 import DashboardCalendar from '@/components/dashboard/Calendar'
@@ -240,6 +240,7 @@ export default function MySessions() {
     bestPrKg: number
   } | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
+  const [guideOpen, setGuideOpen] = useState(true)
   const [editWorkout, setEditWorkout] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
@@ -1777,23 +1778,51 @@ export default function MySessions() {
             <span className="text-sm text-gray-600">
               Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
             </span>
-              <h2 className="text-3xl font-bold text-gray-900 mt-2">
-                {currentExercise.name}
-              </h2>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
-                <SupersetToggle
-                  storageKey={supersetKey}
-                  exerciseId={currentExercise.id}
-                  nextExerciseId={workout.exercises[currentExerciseIndex + 1]?.id}
-                  onChange={(map) => setSupersetMap(map)}
-                />
-                {isSupersetWithNext && (
-                  <span className="text-xs text-red-600 font-semibold">
-                    Superset avec l’exercice suivant
-                  </span>
-                )}
-              </div>
+            <h2 className="text-3xl font-bold text-gray-900 mt-2">
+              {currentExercise.name}
+            </h2>
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <SupersetToggle
+                storageKey={supersetKey}
+                exerciseId={currentExercise.id}
+                nextExerciseId={workout.exercises[currentExerciseIndex + 1]?.id}
+                onChange={(map) => setSupersetMap(map)}
+              />
+              {isSupersetWithNext && (
+                <span className="text-xs text-red-600 font-semibold">
+                  Superset avec l’exercice suivant
+                </span>
+              )}
             </div>
+          </div>
+
+          <div className="mb-6 rounded-2xl border border-gray-200 bg-white px-4 py-3">
+            <button
+              type="button"
+              onClick={() => setGuideOpen((prev) => !prev)}
+              className="w-full flex items-center justify-between text-left"
+            >
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4 text-primary-600" />
+                <span className="text-sm font-semibold text-gray-900">Guide express</span>
+              </div>
+              {guideOpen ? (
+                <ChevronUp className="h-4 w-4 text-gray-400" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-400" />
+              )}
+            </button>
+            {guideOpen && (
+              <div className="mt-3 text-sm text-gray-600 space-y-2">
+                <div>1. Règle tes séries et répétitions avant de démarrer.</div>
+                <div>2. Lance le repos pour garder un rythme régulier.</div>
+                <div>3. Note tes sensations pour suivre ta progression.</div>
+                <div className="text-xs text-gray-500">
+                  Astuce: reste concentré sur la technique de {currentExercise.name}.
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="card-soft text-center transition-all hover:-translate-y-0.5 hover:shadow-md">
