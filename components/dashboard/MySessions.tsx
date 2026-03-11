@@ -297,76 +297,161 @@ export default function MySessions() {
   useEffect(() => {
     // Charger la séance du jour
     const storedWorkout = readLocalCurrentWorkout()
+    const history = readLocalHistory() as WorkoutHistoryItem[]
     if (storedWorkout) {
       const parsed = storedWorkout as unknown as Workout
-      setWorkout(parsed)
-      const parsedDraft = parsed?.draft
-      if (parsed?.exercises?.length) {
-        const inputs = buildInputsForExercises(parsed.exercises, parsedDraft?.exerciseInputs)
-        setExerciseInputs(inputs)
-      }
-      if (parsedDraft?.exerciseNotes) {
-        setExerciseNotes(parsedDraft.exerciseNotes)
-      }
-      setSessionCheckIn(parsedDraft?.checkIn || defaultSessionCheckIn())
-      const draftIndex = Number(parsedDraft?.currentExerciseIndex)
-      if (Number.isInteger(draftIndex)) {
-        const nextIndex = Math.max(0, Math.min(draftIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
-        setCurrentExerciseIndex(nextIndex)
-      } else if (parsed?.id) {
-        const savedIndex = Number(localStorage.getItem(lastExerciseKey(parsed.id)) || 0)
-        if (Number.isInteger(savedIndex)) {
-          const nextIndex = Math.max(0, Math.min(savedIndex, Math.max((parsed.exercises?.length || 1) - 1, 0)))
-          setCurrentExerciseIndex(nextIndex)
+      let activeWorkout: Workout | null = parsed
+      let activeDraft = parsed?.draft
+      if (parsed?.status !== 'in_progress') {
+        const programId = parsed?.programId
+        const program = programId ? allPrograms.find((item) => item.id === programId) : null
+        const completedIds = program
+          ? new Set(
+              history
+                .filter((item: any) => item.programId === program.id && item.workoutId)
+                .map((item: any) => item.workoutId)
+            )
+          : new Set<string>()
+        const nextSession =
+          program?.sessions.find((item) => !completedIds.has(item.id)) || program?.sessions[0] || null
+        if (program && nextSession) {
+          activeWorkout = {
+            id: nextSession.id,
+            name: `${program.name} - ${nextSession.name}`,
+            duration: nextSession.duration,
+            programId: program.id,
+            programName: program.name,
+            equipment: program.equipment,
+            status: 'default',
+            exercises: nextSession.exercises.map((exercise, index) => ({
+              id: `${nextSession.id}-${index + 1}`,
+              ...exercise,
+            })),
+          }
+          activeDraft = undefined
+          writeLocalCurrentWorkout(activeWorkout as unknown as Record<string, unknown>)
+          if (user?.id) {
+            void persistCurrentWorkoutForUser(user.id, activeWorkout as unknown as Record<string, unknown>)
+          }
         }
       }
-      const draftTimeRemaining = Number(parsedDraft?.timeRemaining)
-      if (Number.isFinite(draftTimeRemaining) && draftTimeRemaining > 0) {
-        setTimeRemaining(draftTimeRemaining)
-      }
-      if (parsedDraft?.timerKind === 'set' || parsedDraft?.timerKind === 'exercise') {
-        setTimerKind(parsedDraft.timerKind)
-      }
-      setSessionPaused(!!parsedDraft?.sessionPaused)
-      if (parsed?.equipment) setEquipment(parsed.equipment)
-      if (parsed?.programId) {
-        const program = allPrograms.find((item) => item.id === parsed.programId)
-        if (program) {
-          setProgramTotalSessions(program.sessions.length)
-          const scheduleKey = `fitpulse_sessions_per_week_${program.id}`
-          const savedSchedule = localStorage.getItem(scheduleKey)
-          const scheduleValue = Number(savedSchedule)
-          setSessionsPerWeek(
-            Number.isFinite(scheduleValue) && scheduleValue >= 1 && scheduleValue <= 7
-              ? scheduleValue
-              : program.sessionsPerWeek
+      if (activeWorkout) {
+        setWorkout(activeWorkout)
+        if (activeWorkout.exercises?.length) {
+          const inputs = buildInputsForExercises(activeWorkout.exercises, activeDraft?.exerciseInputs)
+          setExerciseInputs(inputs)
+        }
+        if (activeDraft?.exerciseNotes) {
+          setExerciseNotes(activeDraft.exerciseNotes)
+        } else {
+          setExerciseNotes({})
+        }
+        setSessionCheckIn(activeDraft?.checkIn || defaultSessionCheckIn())
+        const draftIndex = Number(activeDraft?.currentExerciseIndex)
+        if (Number.isInteger(draftIndex)) {
+          const nextIndex = Math.max(
+            0,
+            Math.min(draftIndex, Math.max((activeWorkout.exercises?.length || 1) - 1, 0))
           )
+          setCurrentExerciseIndex(nextIndex)
+        } else if (activeWorkout?.id) {
+          const savedIndex = Number(localStorage.getItem(lastExerciseKey(activeWorkout.id)) || 0)
+          if (Number.isInteger(savedIndex)) {
+            const nextIndex = Math.max(
+              0,
+              Math.min(savedIndex, Math.max((activeWorkout.exercises?.length || 1) - 1, 0))
+            )
+            setCurrentExerciseIndex(nextIndex)
+          }
+        }
+        const draftTimeRemaining = Number(activeDraft?.timeRemaining)
+        if (Number.isFinite(draftTimeRemaining) && draftTimeRemaining > 0) {
+          setTimeRemaining(draftTimeRemaining)
+        } else {
+          setTimeRemaining(0)
+        }
+        if (activeDraft?.timerKind === 'set' || activeDraft?.timerKind === 'exercise') {
+          setTimerKind(activeDraft.timerKind)
+        } else {
+          setTimerKind(null)
+        }
+        setSessionPaused(!!activeDraft?.sessionPaused)
+        if (activeWorkout?.equipment) setEquipment(activeWorkout.equipment)
+        if (activeWorkout?.programId) {
+          const program = allPrograms.find((item) => item.id === activeWorkout.programId)
+          if (program) {
+            setProgramTotalSessions(program.sessions.length)
+            const scheduleKey = `fitpulse_sessions_per_week_${program.id}`
+            const savedSchedule = localStorage.getItem(scheduleKey)
+            const scheduleValue = Number(savedSchedule)
+            setSessionsPerWeek(
+              Number.isFinite(scheduleValue) && scheduleValue >= 1 && scheduleValue <= 7
+                ? scheduleValue
+                : program.sessionsPerWeek
+            )
+          }
         }
       }
     } else {
-      // Séance par défaut
-      const defaultWorkout: Workout & { equipment?: string } = {
-        id: '1',
-        name: 'Séance du jour - Poids du corps',
-        duration: 35,
-        equipment: 'Poids du corps',
-        status: 'default',
-        exercises: [
-          { id: '1', name: 'Pompes', sets: 3, reps: 10, rest: 60 },
-          { id: '2', name: 'Squats', sets: 3, reps: 12, rest: 60 },
-          { id: '3', name: 'Fentes', sets: 3, reps: 10, rest: 60 },
-          { id: '4', name: 'Planche', sets: 3, reps: 30, rest: 45 },
-          { id: '5', name: 'Planche', sets: 3, reps: 45, rest: 45 },
-        ],
+      const latestProgramId = history
+        .slice()
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .find((item) => item.programId)?.programId
+      const program = latestProgramId
+        ? allPrograms.find((item) => item.id === latestProgramId)
+        : null
+      if (program) {
+        const completedIds = new Set(
+          history
+            .filter((item: any) => item.programId === program.id && item.workoutId)
+            .map((item: any) => item.workoutId)
+        )
+        const nextSession =
+          program.sessions.find((item) => !completedIds.has(item.id)) || program.sessions[0]
+        const nextWorkout: Workout = {
+          id: nextSession.id,
+          name: `${program.name} - ${nextSession.name}`,
+          duration: nextSession.duration,
+          programId: program.id,
+          programName: program.name,
+          equipment: program.equipment,
+          status: 'default',
+          exercises: nextSession.exercises.map((exercise, index) => ({
+            id: `${nextSession.id}-${index + 1}`,
+            ...exercise,
+          })),
+        }
+        setWorkout(nextWorkout)
+        writeLocalCurrentWorkout(nextWorkout as unknown as Record<string, unknown>)
+        if (user?.id) {
+          void persistCurrentWorkoutForUser(user.id, nextWorkout as unknown as Record<string, unknown>)
+        }
+        setExerciseInputs(buildInputsForExercises(nextWorkout.exercises))
+        setSessionCheckIn(defaultSessionCheckIn())
+      } else {
+        // Séance par défaut
+        const defaultWorkout: Workout & { equipment?: string } = {
+          id: '1',
+          name: 'Séance du jour - Poids du corps',
+          duration: 35,
+          equipment: 'Poids du corps',
+          status: 'default',
+          exercises: [
+            { id: '1', name: 'Pompes', sets: 3, reps: 10, rest: 60 },
+            { id: '2', name: 'Squats', sets: 3, reps: 12, rest: 60 },
+            { id: '3', name: 'Fentes', sets: 3, reps: 10, rest: 60 },
+            { id: '4', name: 'Planche', sets: 3, reps: 30, rest: 45 },
+            { id: '5', name: 'Planche', sets: 3, reps: 45, rest: 45 },
+          ],
+        }
+        setWorkout(defaultWorkout)
+        writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
+        setExerciseInputs(buildInputsForExercises(defaultWorkout.exercises))
+        setSessionCheckIn(defaultSessionCheckIn())
       }
-      setWorkout(defaultWorkout)
-      writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
-      setExerciseInputs(buildInputsForExercises(defaultWorkout.exercises))
-      setSessionCheckIn(defaultSessionCheckIn())
     }
 
     // Charger les statistiques depuis l'historique
-    const history = readLocalHistory()
     const { streak, totalWorkouts } = computeHistoryStats(history as WorkoutHistoryItem[])
     setStreak(streak)
     setCompletedWorkouts(totalWorkouts)
