@@ -64,7 +64,7 @@ const rules: Array<{
   { keys: ['mollets', 'calf'], muscles: [
     { id: 'calves', intensity: 3 },
   ] },
-  { keys: ['planche', 'gainage', 'core', 'crunch', 'hollow', 'dead bug', 'bird dog'], muscles: [
+  { keys: ['planche', 'core', 'crunch', 'hollow', 'dead bug', 'bird dog'], muscles: [
     { id: 'core', intensity: 3 },
     { id: 'shoulders', intensity: 1 },
   ] },

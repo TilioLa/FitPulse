@@ -54,7 +54,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Squats', sets: 3, reps: 12, rest: 60, videoUrl: 'https://www.youtube.com/embed/aclHkVaku9U' },
           { name: 'Fentes', sets: 3, reps: 10, rest: 60, videoUrl: 'https://www.youtube.com/embed/QOVaHwm-Q6U' },
           { name: 'Planche', sets: 3, reps: 30, rest: 45, videoUrl: 'https://www.youtube.com/embed/pSHjTRCQxIw' },
-          { name: 'Gainage', sets: 3, reps: 45, rest: 45, videoUrl: 'https://www.youtube.com/embed/ASdvN_XEl_c' },
+          { name: 'Planche', sets: 3, reps: 45, rest: 45, videoUrl: 'https://www.youtube.com/embed/ASdvN_XEl_c' },
         ],
       },
       {
@@ -67,7 +67,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Fentes arrière', sets: 3, reps: 10, rest: 60 },
           { name: 'Pont fessier', sets: 3, reps: 12, rest: 60 },
           { name: 'Mollets debout', sets: 3, reps: 15, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
         ],
       },
       {
@@ -141,14 +141,14 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       {
         id: '2-d',
         name: 'Jour 4 - Abdominaux',
-        focus: 'Stabilité et gainage',
+        focus: 'Stabilité du tronc',
         duration: 30,
         exercises: [
           { name: 'Planche avec élastique', sets: 3, reps: 30, rest: 45 },
           { name: 'Rotation russe élastique', sets: 3, reps: 12, rest: 45 },
           { name: 'Pallof press', sets: 3, reps: 12, rest: 45 },
           { name: 'Dead bug', sets: 3, reps: 12, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
         ],
       },
     ],
@@ -251,7 +251,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
       {
         id: '4-b',
         name: 'Jour 2 - Cardio abdominaux',
-        focus: 'Gainage cardio',
+        focus: 'Cardio abdos',
         duration: 25,
         exercises: [
           { name: 'Sprint sur place', sets: 4, reps: 30, rest: 30 },
@@ -271,7 +271,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Squats', sets: 3, reps: 15, rest: 45 },
           { name: 'Fentes', sets: 3, reps: 12, rest: 45 },
           { name: 'Planche', sets: 3, reps: 30, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
         ],
       },
     ],
@@ -311,7 +311,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Superman', sets: 3, reps: 12, rest: 45 },
           { name: 'Rowing inverse (table)', sets: 3, reps: 8, rest: 60 },
           { name: 'Curl isométrique', sets: 3, reps: 20, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
           { name: 'Extensions lombaires', sets: 3, reps: 12, rest: 45 },
         ],
       },
@@ -366,7 +366,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Fentes arrière', sets: 3, reps: 10, rest: 60 },
           { name: 'Wall sit', sets: 3, reps: 30, rest: 60 },
           { name: 'Mollets debout', sets: 3, reps: 15, rest: 45 },
-          { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45 },
         ],
       },
       {
@@ -386,7 +386,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
   },
   {
     id: '7',
-    name: 'Gainage & Abdominaux',
+    name: 'Abdominaux & Stabilité',
     duration: '4 semaines',
     level: 'Tous niveaux',
     equipment: 'Poids du corps',
@@ -399,12 +399,12 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
     sessions: [
       {
         id: '7-a',
-        name: 'Jour 1 - Gainage',
+        name: 'Jour 1 - Stabilité',
         focus: 'Stabilité',
         duration: 25,
         exercises: [
           { name: 'Planche', sets: 3, reps: 40, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
           { name: 'Hollow hold', sets: 3, reps: 20, rest: 45 },
           { name: 'Dead bug', sets: 3, reps: 12, rest: 45 },
           { name: 'Bird dog', sets: 3, reps: 10, rest: 45 },
@@ -419,7 +419,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Crunchs', sets: 3, reps: 15, rest: 45 },
           { name: 'Rotation russe', sets: 3, reps: 12, rest: 45 },
           { name: 'Planche dynamique', sets: 3, reps: 20, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
           { name: 'Superman', sets: 3, reps: 12, rest: 45 },
         ],
       },
@@ -430,7 +430,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
         duration: 25,
         exercises: [
           { name: 'Planche', sets: 3, reps: 45, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 35, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 35, rest: 45 },
           { name: 'Hollow hold', sets: 3, reps: 25, rest: 45 },
           { name: 'Dead bug', sets: 3, reps: 12, rest: 45 },
           { name: 'Bird dog', sets: 3, reps: 10, rest: 45 },
@@ -474,7 +474,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Skaters', sets: 4, reps: 20, rest: 30 },
           { name: 'Fentes sautees', sets: 4, reps: 10, rest: 30 },
           { name: 'Burpees', sets: 4, reps: 8, rest: 30 },
-          { name: 'Gainage', sets: 3, reps: 30, rest: 30 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 30 },
         ],
       },
       {
@@ -500,7 +500,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Squats', sets: 3, reps: 15, rest: 45 },
           { name: 'Fentes', sets: 3, reps: 12, rest: 45 },
           { name: 'Planche', sets: 3, reps: 30, rest: 45 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
         ],
       },
     ],
@@ -541,7 +541,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Fentes avec haltères', sets: 3, reps: 10, rest: 90 },
           { name: 'Soulevé de terre haltères', sets: 3, reps: 10, rest: 90 },
           { name: 'Mollets haltères', sets: 3, reps: 15, rest: 60 },
-          { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45 },
         ],
       },
       {
@@ -554,7 +554,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Pull over haltere', sets: 3, reps: 12, rest: 75 },
           { name: 'Curl incline haltères', sets: 3, reps: 12, rest: 60 },
           { name: 'Curl marteau haltères', sets: 3, reps: 12, rest: 60 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
         ],
       },
       {
@@ -649,7 +649,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Soulevé de terre haltères', sets: 4, reps: 8, rest: 90 },
           { name: 'Rowing haltères', sets: 3, reps: 12, rest: 75 },
           { name: 'Fentes bulgares haltères', sets: 3, reps: 10, rest: 75 },
-          { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche', sets: 3, reps: 30, rest: 45 },
         ],
       },
       {
@@ -662,7 +662,7 @@ const rawPrograms: Omit<Program, 'slug'>[] = [
           { name: 'Rowing haltères', sets: 4, reps: 10, rest: 90 },
           { name: 'Squat goblet', sets: 4, reps: 10, rest: 90 },
           { name: 'Développé épaules haltères', sets: 3, reps: 10, rest: 75 },
-          { name: 'Gainage latérale', sets: 3, reps: 30, rest: 45 },
+          { name: 'Planche latérale', sets: 3, reps: 30, rest: 45 },
         ],
       },
       {

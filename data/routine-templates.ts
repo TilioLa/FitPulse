@@ -14,7 +14,7 @@ export const routineTemplates: RoutineTemplate[] = [
       { name: 'Pompes', sets: 3, reps: 10, rest: 60 },
       { name: 'Squats', sets: 3, reps: 12, rest: 60 },
       { name: 'Fentes', sets: 3, reps: 10, rest: 60 },
-      { name: 'Gainage', sets: 3, reps: 30, rest: 45 },
+      { name: 'Planche', sets: 3, reps: 30, rest: 45 },
     ],
   },
   {
