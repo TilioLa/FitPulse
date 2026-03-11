@@ -693,12 +693,18 @@ export default function MySessions() {
 
     // Ajouter à l'historique (éviter doublons même jour + même séance)
     const history = readLocalHistory()
+    const now = Date.now()
     const todayKey = toLocalDateKey(new Date())
-    const existsSameSessionToday = history.some((item: any) =>
-      typeof item.date === 'string' &&
-      toLocalDateKey(item.date) === todayKey &&
-      (item.workoutId === workout.id || item.workoutName === workout.name)
-    )
+    const duplicateWindowMs = 10 * 60 * 1000
+    const isDuplicateRecently = history.some((item: any) => {
+      if (typeof item.date !== 'string') return false
+      const sameWorkout =
+        (item.workoutId && item.workoutId === workout.id) ||
+        (item.programId && item.programId === workout.programId)
+      if (!sameWorkout) return false
+      const itemTs = new Date(item.date).getTime()
+      return Number.isFinite(itemTs) && Math.abs(now - itemTs) < duplicateWindowMs
+    })
 
     const settings = readLocalSettings()
     const weightUnitSetting: 'kg' | 'lbs' = settings?.weightUnit === 'lbs' ? 'lbs' : 'kg'
@@ -747,7 +753,7 @@ export default function MySessions() {
       return withRemainder
     })()
 
-    if (!existsSameSessionToday) {
+    if (!isDuplicateRecently) {
       history.push({
         id: `${workout.id}-${todayKey}-${history.length + 1}`,
         workoutId: workout.id,
@@ -778,6 +784,8 @@ export default function MySessions() {
       if (!hasProAccess(getEntitlement()) && history.length > cappedHistory.length) {
         push('Plan gratuit: historique limité aux 10 dernières séances.', 'info')
       }
+    } else {
+      push('Séance déjà enregistrée récemment.', 'info')
     }
 
     // Réinitialiser
