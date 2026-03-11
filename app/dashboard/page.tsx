@@ -17,6 +17,9 @@ import {
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
 })
+const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
+  loading: () => <SectionSkeleton />,
+})
 const History = dynamic(() => import('@/components/dashboard/History'), {
   loading: () => <SectionSkeleton />,
 })
@@ -203,6 +206,8 @@ function DashboardPageContent() {
     switch (activeSection) {
       case 'feed':
         return <Feed />
+      case 'progress':
+        return <Progress />
       case 'history':
         return <History />
       case 'session':

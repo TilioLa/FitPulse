@@ -4,6 +4,7 @@ export const messages = {
   fr: {
     common: {
       feed: 'Feed',
+      progress: 'Progrès',
       session: 'Séance',
       history: 'Historique',
       programs: 'Programmes',
@@ -45,6 +46,7 @@ export const messages = {
   en: {
     common: {
       feed: 'Feed',
+      progress: 'Progress',
       session: 'Session',
       history: 'History',
       programs: 'Programs',

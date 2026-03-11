@@ -1,10 +1,10 @@
 'use client'
 
-import { Activity, BookOpen, Dumbbell, Home, Settings as SettingsIcon } from 'lucide-react'
+import { Activity, BookOpen, Dumbbell, Home, Settings as SettingsIcon, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
+type DashboardSection = 'feed' | 'progress' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
 type NavItem = {
   id: DashboardSection
@@ -14,6 +14,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { id: 'feed', label: 'Accueil', icon: Home },
+  { id: 'progress', label: 'Progrès', icon: TrendingUp },
   { id: 'session', label: 'Séance', icon: Activity },
   { id: 'programs', label: 'Programmes', icon: BookOpen },
   { id: 'exercises', label: 'Exercices', icon: Dumbbell },
@@ -33,7 +34,7 @@ export default function MobileBottomNav({
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 shadow-[0_-6px_24px_rgba(0,0,0,0.06)] lg:hidden">
-      <div className="grid grid-cols-5 gap-1 px-2 py-2">
+      <div className="grid grid-cols-6 gap-1 px-2 py-2">
         {navItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id

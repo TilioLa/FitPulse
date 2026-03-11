@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Dumbbell, Timer, Target, Filter, ArrowRight } from 'lucide-react'
+import { Dumbbell, Timer, Target, Filter, ArrowRight, Star } from 'lucide-react'
 import { programs as allPrograms } from '@/data/programs'
 import { labelize } from '@/lib/labels'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
@@ -10,6 +10,7 @@ import { readLocalSettings } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
 import { recommendProgram } from '@/lib/recommendation'
 import { useSearchParams } from 'next/navigation'
+import { readLocalProgramFavorites, writeLocalProgramFavorites } from '@/lib/favorites-store'
 
 export default function ProgramsList() {
   const searchParams = useSearchParams()
@@ -17,6 +18,8 @@ export default function ProgramsList() {
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
   const [query, setQuery] = useState('')
+  const [onlyFavorites, setOnlyFavorites] = useState(false)
+  const [favorites, setFavorites] = useState<string[]>(() => readLocalProgramFavorites())
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
@@ -26,6 +29,17 @@ export default function ProgramsList() {
     const term = searchParams.get('q') || ''
     setQuery(term)
   }, [searchParams])
+
+  useEffect(() => {
+    const apply = () => setFavorites(readLocalProgramFavorites())
+    apply()
+    window.addEventListener('fitpulse-program-favorites', apply)
+    window.addEventListener('storage', apply)
+    return () => {
+      window.removeEventListener('fitpulse-program-favorites', apply)
+      window.removeEventListener('storage', apply)
+    }
+  }, [])
 
   const filteredPrograms = allPrograms.filter(program => {
     const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
@@ -37,7 +51,8 @@ export default function ProgramsList() {
       program.name.toLowerCase().includes(term) ||
       program.description.toLowerCase().includes(term) ||
       program.goals.some((goal) => goal.toLowerCase().includes(term))
-    return levelMatch && equipmentMatch && bodyPartMatch && queryMatch
+    const favMatch = !onlyFavorites || favorites.includes(program.id)
+    return levelMatch && equipmentMatch && bodyPartMatch && queryMatch && favMatch
   })
 
   const { recommendedProgram, showQuickStart } = useMemo(() => {
@@ -111,6 +126,17 @@ export default function ProgramsList() {
               placeholder="Nom, objectif ou niveau"
             />
           </div>
+          <div className="md:col-span-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setOnlyFavorites((prev) => !prev)}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                onlyFavorites ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600'
+              }`}
+            >
+              Favoris uniquement
+            </button>
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
             <select
@@ -162,6 +188,7 @@ export default function ProgramsList() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredPrograms.map((program, index) => {
           const programHref = `/programmes/${program.slug}`
+          const isFav = favorites.includes(program.id)
           return (
           <div
             key={program.id}
@@ -177,6 +204,21 @@ export default function ProgramsList() {
                   {labelize(program.level)}
                 </span>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = isFav
+                    ? favorites.filter((id) => id !== program.id)
+                    : [...favorites, program.id]
+                  writeLocalProgramFavorites(next)
+                  setFavorites(next)
+                }}
+                className={`rounded-full p-2 ${isFav ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
+                aria-pressed={isFav}
+                aria-label="Favori"
+              >
+                <Star className={`h-4 w-4 ${isFav ? 'fill-amber-400' : ''}`} />
+              </button>
             </div>
 
             <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 mb-2">

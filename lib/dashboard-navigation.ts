@@ -1,5 +1,6 @@
 export type DashboardSection =
   | 'feed'
+  | 'progress'
   | 'history'
   | 'session'
   | 'programs'
@@ -11,6 +12,8 @@ export function viewToSection(view: string | null): DashboardSection | null {
   switch (view) {
     case 'feed':
       return 'feed'
+    case 'progress':
+      return 'progress'
     case 'history':
       return 'history'
     case 'session':

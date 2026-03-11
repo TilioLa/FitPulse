@@ -1,11 +1,12 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { PlusCircle, Dumbbell, Play, Copy, Search } from 'lucide-react'
+import { PlusCircle, Dumbbell, Play, Copy, Search, Star } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/ToastProvider'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
+import { readLocalRoutineFavorites, writeLocalRoutineFavorites } from '@/lib/favorites-store'
 import {
   persistCustomRoutinesForUser,
   persistCurrentWorkoutForUser,
@@ -96,12 +97,25 @@ export default function CustomRoutines() {
   const [query, setQuery] = useState('')
   const [equipmentFilter, setEquipmentFilter] = useState('Tous')
   const [sessionsFilter, setSessionsFilter] = useState('Tous')
+  const [onlyFavorites, setOnlyFavorites] = useState(false)
+  const [favorites, setFavorites] = useState<string[]>(() => readLocalRoutineFavorites())
 
   useEffect(() => {
     const apply = () => setRoutines(loadRoutines())
     apply()
     window.addEventListener('fitpulse-custom-routines', apply)
     return () => window.removeEventListener('fitpulse-custom-routines', apply)
+  }, [])
+
+  useEffect(() => {
+    const apply = () => setFavorites(readLocalRoutineFavorites())
+    apply()
+    window.addEventListener('fitpulse-routine-favorites', apply)
+    window.addEventListener('storage', apply)
+    return () => {
+      window.removeEventListener('fitpulse-routine-favorites', apply)
+      window.removeEventListener('storage', apply)
+    }
   }, [])
 
   useEffect(() => {
@@ -245,9 +259,10 @@ export default function CustomRoutines() {
       const matchesEquipment = equipmentFilter === 'Tous' || routine.equipment === equipmentFilter
       const matchesSessions =
         sessionsFilter === 'Tous' || routine.sessionsPerWeek === Number(sessionsFilter)
-      return matchesQuery && matchesEquipment && matchesSessions
+      const matchesFav = !onlyFavorites || favorites.includes(routine.id)
+      return matchesQuery && matchesEquipment && matchesSessions && matchesFav
     })
-  }, [equipmentFilter, query, routines, sessionsFilter])
+  }, [equipmentFilter, favorites, onlyFavorites, query, routines, sessionsFilter])
 
   return (
     <div className="page-wrap panel-stack">
@@ -289,6 +304,15 @@ export default function CustomRoutines() {
                 placeholder="Rechercher une routine ou un exercice"
               />
             </div>
+            <button
+              type="button"
+              onClick={() => setOnlyFavorites((prev) => !prev)}
+              className={`rounded-full border px-3 py-2 text-xs font-semibold ${
+                onlyFavorites ? 'border-amber-300 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-600'
+              }`}
+            >
+              Favoris
+            </button>
             <select
               value={equipmentFilter}
               onChange={(e) => setEquipmentFilter(e.target.value)}
@@ -388,6 +412,21 @@ export default function CustomRoutines() {
                   className="btn-secondary"
                 >
                   Modifier
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const isFav = favorites.includes(routine.id)
+                    const next = isFav
+                      ? favorites.filter((id) => id !== routine.id)
+                      : [...favorites, routine.id]
+                    writeLocalRoutineFavorites(next)
+                    setFavorites(next)
+                  }}
+                  className={`btn-secondary inline-flex items-center gap-2 ${favorites.includes(routine.id) ? 'text-amber-600' : ''}`}
+                >
+                  <Star className={`h-4 w-4 ${favorites.includes(routine.id) ? 'fill-amber-400' : ''}`} />
+                  Favori
                 </button>
                 <button
                   onClick={() => duplicateRoutine(routine)}

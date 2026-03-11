@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIcon, Sparkles, History } from 'lucide-react'
+import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Settings as SettingsIcon, Sparkles, History, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -10,7 +10,7 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 
-type DashboardSection = 'feed' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
+type DashboardSection = 'feed' | 'progress' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
 type MenuItem = {
   id: DashboardSection
@@ -26,6 +26,7 @@ interface SidebarProps {
 
 const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
+  { id: 'progress', labelKey: 'progress', icon: TrendingUp },
   { id: 'session', labelKey: 'session', icon: Activity },
   { id: 'history', labelKey: 'history', icon: History },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },
