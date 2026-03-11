@@ -302,7 +302,7 @@ export default function TicketsPage() {
                     Aller au contact
                   </Link>
                   <Link href="/aide" className="mt-2 inline-flex text-xs font-semibold text-primary-700">
-                    Voir le centre d'aide →
+                    Voir le centre d&apos;aide →
                   </Link>
                 </div>
               </section>

@@ -20,7 +20,7 @@ export default function HelpCenterPage() {
             <div className="flex flex-col gap-4 text-center">
               <div className="inline-flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wide text-primary-100">
                 <LifeBuoy className="h-4 w-4" />
-                Centre d'aide
+                Centre d&apos;aide
               </div>
               <h1 className="text-4xl md:text-5xl font-bold">
                 Besoin d&apos;un coup de main ?

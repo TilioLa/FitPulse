@@ -77,7 +77,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/aide" className="hover:text-primary-400 transition-colors">
-                  Centre d'aide
+                  Centre d&apos;aide
                 </Link>
               </li>
               <li>

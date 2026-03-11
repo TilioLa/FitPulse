@@ -99,7 +99,7 @@ export default function ContactPage() {
                   Ouvrir un ticket
                 </Link>
                 <Link href="/aide" className="mt-2 inline-flex text-xs font-semibold text-primary-700">
-                  Centre d'aide →
+                  Centre d&apos;aide →
                 </Link>
               </div>
             </div>
