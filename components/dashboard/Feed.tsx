@@ -8,6 +8,7 @@ import { programsById, programs } from '@/data/programs'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { muscleLabel } from '@/lib/muscles'
 import { recommendProgram } from '@/lib/recommendation'
+import { shouldTrainToday, didWorkoutToday } from '@/lib/reminder-logic'
 import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } from '@/lib/subscription'
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCurrentWorkout, readLocalSettings } from '@/lib/user-state-store'
@@ -36,6 +37,20 @@ type NextAction = {
   body: string
   cta: string
   href: string
+}
+
+type ReminderCard = {
+  title: string
+  body: string
+  cta: string
+  href: string
+}
+
+type Badge = {
+  id: string
+  label: string
+  detail: string
+  earned: boolean
 }
 
 type OnboardingStep = {
@@ -174,6 +189,9 @@ export default function Feed() {
   })
   const [businessNudge, setBusinessNudge] = useState<BusinessNudge | null>(null)
   const [nextAction, setNextAction] = useState<NextAction | null>(null)
+  const [reminderCard, setReminderCard] = useState<ReminderCard | null>(null)
+  const [badges, setBadges] = useState<Badge[]>([])
+  const [nextBadge, setNextBadge] = useState<Badge | null>(null)
   const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
   const [weeklyCatchUpDays, setWeeklyCatchUpDays] = useState<string[]>([])
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
@@ -355,11 +373,16 @@ export default function Feed() {
             ? `/programmes/${workoutProgram.slug}/seances/${workoutSessionId}`
             : '/dashboard?view=session'
         setResumeSessionHref(hasInProgressWorkout ? resumeHref : null)
+        const historyProgramIds = stored
+          .map((item) => item.programId)
+          .filter(Boolean) as string[]
         const recommendedPick = recommendProgram(programs, {
           level: settings.level,
           goals: settings.goals,
           equipment: settings.equipment,
           sessionsPerWeek: settings.sessionsPerWeek,
+          historyProgramIds,
+          recentProgramId: historyProgramIds[0] || null,
         })?.program
         const hasProfile =
           Boolean(settings.level) &&
@@ -432,6 +455,62 @@ export default function Feed() {
             href: recommendedHref,
           })
         }
+
+        const shouldTrain = shouldTrainToday(settings)
+        const didTrain = didWorkoutToday(stored)
+        if (shouldTrain && !didTrain) {
+          setReminderCard({
+            title: 'Séance prévue aujourd’hui',
+            body: 'Une séance est planifiée pour aujourd’hui. Lance une session pour garder ta streak.',
+            cta: 'Démarrer une séance',
+            href: '/dashboard?view=session',
+          })
+        } else {
+          setReminderCard(null)
+        }
+
+        const weeklyGoalDone = weeklySessions >= targetSessionsPerWeek
+        const weekKey = (() => {
+          const now = new Date()
+          const start = new Date(now.getFullYear(), 0, 1)
+          const days = Math.floor((now.getTime() - start.getTime()) / (24 * 60 * 60 * 1000))
+          const week = Math.floor((days + start.getDay()) / 7) + 1
+          return `${now.getFullYear()}-W${week}`
+        })()
+        const goalToastKey = `fitpulse_week_goal_done_${weekKey}`
+        if (weeklyGoalDone && localStorage.getItem(goalToastKey) !== 'true') {
+          push('Objectif hebdo atteint. Bravo !', 'success')
+          localStorage.setItem(goalToastKey, 'true')
+        }
+
+        const badgeList: Badge[] = [
+          {
+            id: 'first-session',
+            label: 'Première séance',
+            detail: 'Terminer 1 séance',
+            earned: totalWorkouts >= 1,
+          },
+          {
+            id: 'weekly-goal',
+            label: 'Objectif hebdo',
+            detail: `${targetSessionsPerWeek} séances / semaine`,
+            earned: weeklyGoalDone,
+          },
+          {
+            id: 'streak-7',
+            label: 'Streak 7 jours',
+            detail: '7 jours consécutifs',
+            earned: streak >= 7,
+          },
+          {
+            id: 'minutes-100',
+            label: '100 minutes',
+            detail: '100 minutes totales',
+            earned: totalMinutes >= 100,
+          },
+        ]
+        setBadges(badgeList)
+        setNextBadge(badgeList.find((badge) => !badge.earned) || null)
 
         const now = new Date()
         const recapWindowDays = 5
@@ -892,6 +971,16 @@ export default function Feed() {
           </Link>
         </div>
       </div>
+      {reminderCard && (
+        <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-emerald-700">Rappel</div>
+          <div className="mt-1 text-base font-semibold text-emerald-900">{reminderCard.title}</div>
+          <div className="mt-1 text-sm text-emerald-800">{reminderCard.body}</div>
+          <Link href={reminderCard.href} className="mt-3 inline-flex btn-secondary">
+            {reminderCard.cta}
+          </Link>
+        </div>
+      )}
       {!hasProAccess(entitlement) && (
         <div className="mb-8 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-900">
           {entitlement.isTrialActive
@@ -1055,6 +1144,37 @@ export default function Feed() {
           </div>
         </div>
       </div>
+
+      {badges.length > 0 && (
+        <div className="card-compact mb-8">
+          <div className="flex items-center justify-between">
+            <div className="text-[11px] uppercase tracking-wide text-gray-500">Badges</div>
+            {nextBadge && (
+              <div className="text-xs text-gray-500">
+                Prochain : <span className="font-semibold text-gray-700">{nextBadge.label}</span>
+              </div>
+            )}
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {badges.map((badge) => (
+              <span
+                key={badge.id}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  badge.earned ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'
+                }`}
+                title={badge.detail}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+          {nextBadge && (
+            <div className="mt-3 text-xs text-gray-500">
+              {nextBadge.detail}
+            </div>
+          )}
+        </div>
+      )}
 
       <div id="tendance" className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8 reveal reveal-2 scroll-mt-6">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">

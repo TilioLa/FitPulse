@@ -239,6 +239,7 @@ export default function MySessions() {
     muscleUsage: { id: string; percent: number }[]
     bestPrKg: number
   } | null>(null)
+  const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [editWorkout, setEditWorkout] = useState(false)
   const [pickerOpen, setPickerOpen] = useState(false)
   const [pickerIndex, setPickerIndex] = useState<number | null>(null)
@@ -990,6 +991,15 @@ export default function MySessions() {
     return `${base}/share?s=${token}`
   }
 
+  useEffect(() => {
+    if (!showSummary || !lastSummary) {
+      setShareUrl(null)
+      return
+    }
+    setShareUrl(buildShareUrl())
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSummary, lastSummary, workout, user])
+
   const handleShareSession = async () => {
     if (!workout || !lastSummary) {
       push('Impossible de générer le lien pour le moment.', 'error')
@@ -1345,6 +1355,25 @@ export default function MySessions() {
                   Retour au dashboard
                 </button>
               </div>
+              {shareUrl && (
+                <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                  <div className="font-semibold text-gray-700">Lien prêt à partager</div>
+                  <div className="mt-1 truncate">{shareUrl}</div>
+                  <button
+                    className="mt-2 text-xs font-semibold text-primary-700"
+                    onClick={async () => {
+                      try {
+                        await navigator.clipboard.writeText(shareUrl)
+                        push('Lien copié.', 'success')
+                      } catch {
+                        push(shareUrl, 'info')
+                      }
+                    }}
+                  >
+                    Copier le lien
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="card-soft">

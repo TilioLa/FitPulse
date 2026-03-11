@@ -51,13 +51,16 @@ export default function ProgramsList() {
         equipment?: string[]
         sessionsPerWeek?: number
       }
+      const history = readLocalHistory() as { programId?: string }[]
+      const historyProgramIds = history.map((item) => item.programId).filter(Boolean) as string[]
       const recommendation = recommendProgram(allPrograms, {
         level: settings.level,
         goals: settings.goals,
         equipment: settings.equipment,
         sessionsPerWeek: settings.sessionsPerWeek,
+        historyProgramIds,
+        recentProgramId: historyProgramIds[0] || null,
       })
-      const history = readLocalHistory() as unknown[]
       return {
         recommendedProgram: recommendation?.program || null,
         showQuickStart: !Array.isArray(history) || history.length === 0,

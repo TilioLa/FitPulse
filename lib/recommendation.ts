@@ -5,6 +5,8 @@ type RecommendationInput = {
   goals?: string[]
   equipment?: string[]
   sessionsPerWeek?: number
+  historyProgramIds?: string[]
+  recentProgramId?: string | null
 }
 
 type RecommendationResult = {
@@ -38,6 +40,8 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
   const goals = (input.goals || []).map(normalize).filter(Boolean)
   const equipment = (input.equipment || []).map(normalize).filter(Boolean)
   const sessions = Number(input.sessionsPerWeek || 0)
+  const historyProgramIds = (input.historyProgramIds || []).filter(Boolean)
+  const recentProgramId = input.recentProgramId || null
 
   const ranked = programs.map((program) => {
     let score = 0
@@ -66,6 +70,15 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
       const diff = Math.abs(program.sessionsPerWeek - sessions)
       score += Math.max(0, 3 - diff)
       if (diff <= 1) reasons.push('rythme hebdo proche')
+    }
+
+    if (historyProgramIds.includes(program.id)) {
+      score -= 2
+      reasons.push('déjà commencé')
+    }
+
+    if (recentProgramId && recentProgramId === program.id) {
+      score -= 1
     }
 
     if (program.recommended) score += 1
