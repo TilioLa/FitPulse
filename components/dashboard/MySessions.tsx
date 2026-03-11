@@ -718,9 +718,7 @@ export default function MySessions() {
     const duplicateWindowMs = 10 * 60 * 1000
     const isDuplicateRecently = history.some((item: any) => {
       if (typeof item.date !== 'string') return false
-      const sameWorkout =
-        (item.workoutId && item.workoutId === workout.id) ||
-        (item.programId && item.programId === workout.programId)
+      const sameWorkout = item.workoutId && item.workoutId === workout.id
       if (!sameWorkout) return false
       const itemTs = new Date(item.date).getTime()
       return Number.isFinite(itemTs) && Math.abs(now - itemTs) < duplicateWindowMs
