@@ -888,7 +888,7 @@ export default function Feed() {
       window.removeEventListener('fitpulse-plan', computeFeed)
       window.removeEventListener('storage', computeFeed)
     }
-  }, [entitlement.plan, entitlement.effectivePlan, entitlement.trialDaysLeft, entitlement.isTrialActive])
+  }, [entitlement.plan, entitlement.effectivePlan, entitlement.trialDaysLeft, entitlement.isTrialActive, push])
 
   useEffect(() => {
     if (onboardingSteps.length === 0) return

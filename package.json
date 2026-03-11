@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint -c node_modules/eslint-config-next/dist/core-web-vitals.js . --ext .ts,.tsx --ignore-pattern \"android/**\" --ignore-pattern \"ios/**\" --ignore-pattern \".next/**\" --ignore-pattern \"test-results/**\" --ignore-pattern \"playwright-report/**\" --rule 'react-hooks/set-state-in-effect: off'",
+    "typecheck": "tsc --noEmit",
     "test:e2e": "env -u FORCE_COLOR NO_COLOR=1 playwright test",
     "test:e2e:standard": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/public-pages.spec.ts e2e/workout-flow.spec.ts e2e/workout-recovery.spec.ts",
     "test:e2e:auth-real": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/auth-real.spec.ts",
