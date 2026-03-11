@@ -648,6 +648,7 @@ function ExercicesPageContent() {
                 </div>
               </div>
           </div>
+          </div>
         </main>
       </div>
       <Footer />
