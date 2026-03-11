@@ -5,16 +5,22 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { Search, Plus, Dumbbell } from 'lucide-react'
+import { Search, Plus, Dumbbell, Star, Download } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
 import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/lib/exercise-insights'
 import { readLocalHistory } from '@/lib/history-store'
-import { readLocalCustomExercises, saveLocalCustomExercises } from '@/lib/exercise-preferences-store'
+import {
+  readLocalCustomExercises,
+  readLocalExerciseFavorites,
+  saveLocalCustomExercises,
+  saveLocalExerciseFavorites,
+} from '@/lib/exercise-preferences-store'
 import { hrefForDashboardSection } from '@/lib/dashboard-navigation'
 
 type HistoryExercise = {
   id?: string
   name: string
+  notes?: string
   sets?: { weight: number; reps: number }[]
 }
 
@@ -42,6 +48,8 @@ function ExercicesPageContent() {
   const [goal, setGoal] = useState<'all' | ExerciseGoal>('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
+  const [favorites, setFavorites] = useState<string[]>(() => readLocalExerciseFavorites())
+  const [onlyFavorites, setOnlyFavorites] = useState(false)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -68,6 +76,17 @@ function ExercicesPageContent() {
     }
   }, [])
 
+  useEffect(() => {
+    const applyFavorites = () => setFavorites(readLocalExerciseFavorites())
+    applyFavorites()
+    window.addEventListener('fitpulse-exercise-favorites', applyFavorites)
+    window.addEventListener('fitpulse-settings', applyFavorites)
+    return () => {
+      window.removeEventListener('fitpulse-exercise-favorites', applyFavorites)
+      window.removeEventListener('fitpulse-settings', applyFavorites)
+    }
+  }, [])
+
   const allExercises = useMemo(() => [...exerciseCatalog, ...customExercises], [customExercises])
 
   const equipmentOptions = useMemo(() => {
@@ -91,9 +110,10 @@ function ExercicesPageContent() {
       const insights = getExerciseInsights(ex)
       const matchLevel = level === 'all' || insights.level === level
       const matchGoal = goal === 'all' || insights.goals.includes(goal)
-      return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal
+      const matchFav = !onlyFavorites || favorites.includes(ex.id)
+      return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal && matchFav
     })
-  }, [allExercises, query, equipment, muscle, level, goal])
+  }, [allExercises, query, equipment, muscle, level, goal, onlyFavorites, favorites])
 
   const goalOptions = useMemo(() => {
     const set = new Set<ExerciseGoal>()
@@ -184,6 +204,73 @@ function ExercicesPageContent() {
     void saveLocalCustomExercises(next, user?.id)
   }
 
+  const toggleFavorite = (id: string) => {
+    const next = favorites.includes(id)
+      ? favorites.filter((fav) => fav !== id)
+      : [...favorites, id]
+    setFavorites(next)
+    void saveLocalExerciseFavorites(next, user?.id)
+  }
+
+  const selectedHistoryEntries = useMemo(() => {
+    if (!selected) return []
+    const rows = history
+      .map((item) => {
+        const matches = (item.exercises || []).filter((ex) => ex.name === selected.name)
+        if (matches.length === 0) return null
+        const allSets = matches.flatMap((ex) => ex.sets || [])
+        const volume = allSets.reduce(
+          (sum, set) => sum + (Number(set.weight) || 0) * (Number(set.reps) || 0),
+          0
+        )
+        const bestOneRm = allSets.reduce((max, set) => {
+          const oneRm = Math.round((Number(set.weight) || 0) * (1 + (Number(set.reps) || 0) / 30))
+          return Math.max(max, oneRm)
+        }, 0)
+        const notes =
+          matches.map((ex) => (ex.notes || '').trim()).find((note) => note.length > 0) || ''
+        return {
+          date: item.date,
+          volume: Math.round(volume),
+          bestOneRm,
+          totalSets: allSets.length,
+          notes,
+        }
+      })
+      .filter(
+        (row): row is { date: string; volume: number; bestOneRm: number; totalSets: number; notes: string } =>
+          Boolean(row)
+      )
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return rows.slice(0, 6)
+  }, [history, selected])
+
+  const exportSelectedCsv = () => {
+    if (!selected || selectedHistoryEntries.length === 0) return
+    const rows = [
+      ['date', 'volume_kg', 'best_1rm_kg', 'sets', 'notes'],
+      ...selectedHistoryEntries.map((row) => [
+        row.date,
+        String(row.volume),
+        String(row.bestOneRm),
+        String(row.totalSets),
+        row.notes || '',
+      ]),
+    ]
+    const csv = rows
+      .map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `fitpulse-${selected.name.replace(/\s+/g, '-').toLowerCase()}-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-600">
@@ -260,9 +347,22 @@ function ExercicesPageContent() {
                         )}
                       </div>
                     </div>
-                    <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
-                      <Dumbbell className="h-4 w-4" />
-                      Stats perso
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => toggleFavorite(selected.id)}
+                        className={`inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full border ${
+                          favorites.includes(selected.id)
+                            ? 'border-amber-300 text-amber-600 bg-amber-50'
+                            : 'border-gray-200 text-gray-500 bg-white'
+                        }`}
+                      >
+                        <Star className={`h-4 w-4 ${favorites.includes(selected.id) ? 'fill-amber-400' : ''}`} />
+                        Favori
+                      </button>
+                      <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-primary-600 bg-primary-50 px-3 py-1 rounded-full">
+                        <Dumbbell className="h-4 w-4" />
+                        Stats perso
+                      </div>
                     </div>
                   </div>
 
@@ -308,6 +408,50 @@ function ExercicesPageContent() {
                             </div>
                           )
                         })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-6 rounded-lg border border-gray-200 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs text-gray-500">Historique récent</div>
+                      <button
+                        onClick={exportSelectedCsv}
+                        disabled={selectedHistoryEntries.length === 0}
+                        className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 disabled:text-gray-300"
+                      >
+                        <Download className="h-4 w-4" />
+                        Exporter CSV
+                      </button>
+                    </div>
+                    {selectedHistoryEntries.length === 0 ? (
+                      <div className="mt-3 text-sm text-gray-500">Aucune séance enregistrée.</div>
+                    ) : (
+                      <div className="mt-3 overflow-x-auto">
+                        <table className="min-w-full text-left text-xs">
+                          <thead className="text-gray-400">
+                            <tr>
+                              <th className="py-2 pr-4">Date</th>
+                              <th className="py-2 pr-4">Volume</th>
+                              <th className="py-2 pr-4">1RM</th>
+                              <th className="py-2 pr-4">Séries</th>
+                              <th className="py-2 pr-4">Notes</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-gray-700">
+                            {selectedHistoryEntries.map((row) => (
+                              <tr key={row.date} className="border-t border-gray-100">
+                                <td className="py-2 pr-4">
+                                  {new Date(row.date).toLocaleDateString('fr-FR')}
+                                </td>
+                                <td className="py-2 pr-4">{row.volume} kg</td>
+                                <td className="py-2 pr-4">{row.bestOneRm || '—'} kg</td>
+                                <td className="py-2 pr-4">{row.totalSets}</td>
+                                <td className="py-2 pr-4">{row.notes || '—'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
@@ -447,33 +591,56 @@ function ExercicesPageContent() {
                       className="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm"
                     />
                   </div>
-              </div>
+                  <button
+                    onClick={() => setOnlyFavorites((prev) => !prev)}
+                    className={`w-full inline-flex items-center justify-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${
+                      onlyFavorites ? 'border-amber-400 text-amber-600' : 'border-gray-300 text-gray-600'
+                    }`}
+                  >
+                    <Star className={`h-4 w-4 ${onlyFavorites ? 'fill-amber-400' : ''}`} />
+                    Favoris
+                  </button>
+                </div>
 
               <div className="mt-4 rounded-2xl border border-gray-200 bg-white">
                 <div className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Tous les exercices
                 </div>
                 <div className="max-h-[70vh] overflow-y-auto pb-2">
-                  {filtered.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setSelected(item)}
-                        className={`w-full text-left px-4 py-2 transition-colors ${
+                    {filtered.map((item) => (
+                      <div
+                        key={item.id}
+                        className={`w-full px-4 py-2 transition-colors ${
                           selected?.id === item.id ? 'bg-gray-100' : 'hover:bg-gray-50'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className="h-11 w-11 rounded-full border border-gray-200 bg-white flex items-center justify-center">
-                            <Dumbbell className="h-5 w-5 text-gray-400" />
-                          </div>
-                          <div>
-                            <div className="text-sm font-semibold text-gray-900">{item.name}</div>
-                            <div className="text-xs text-gray-500">
-                              {item.tags.join(', ')} · {item.equipment[0] || 'Autre'}
+                        <div className="flex items-center justify-between gap-3">
+                          <button
+                            onClick={() => setSelected(item)}
+                            className="flex items-center gap-3 text-left"
+                          >
+                            <div className="h-11 w-11 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                              <Dumbbell className="h-5 w-5 text-gray-400" />
                             </div>
-                          </div>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                              <div className="text-xs text-gray-500">
+                                {item.tags.join(', ')} · {item.equipment[0] || 'Autre'}
+                              </div>
+                            </div>
+                          </button>
+                          <button
+                            onClick={() => toggleFavorite(item.id)}
+                            className={`p-2 rounded-full border ${
+                              favorites.includes(item.id)
+                                ? 'border-amber-400 text-amber-500'
+                                : 'border-gray-200 text-gray-400'
+                            }`}
+                          >
+                            <Star className={`h-4 w-4 ${favorites.includes(item.id) ? 'fill-amber-400' : ''}`} />
+                          </button>
                         </div>
-                      </button>
+                      </div>
                     ))}
                     {filtered.length === 0 && (
                       <div className="px-4 py-3 text-sm text-gray-500">Aucun exercice trouvé.</div>

@@ -3,11 +3,14 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import dynamic from 'next/dynamic'
+import Link from 'next/link'
 import Sidebar from '@/components/dashboard/Sidebar'
 import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
+import { readLocalCurrentWorkout } from '@/lib/user-state-store'
+import { programsById } from '@/data/programs'
 import {
   DashboardSection,
   sectionToView,
@@ -54,6 +57,8 @@ function DashboardPageContent() {
     () => viewToSection(searchParams.get('view')) || 'feed'
   )
   const [tourStep, setTourStep] = useState<number | null>(null)
+  const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
+  const [resumeSessionLabel, setResumeSessionLabel] = useState<string>('Reprendre la séance')
   const { status, reload } = useAuth()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
@@ -126,6 +131,40 @@ function DashboardPageContent() {
     }
     setTourStep(1)
   }, [effectiveStatus, searchParams])
+
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    const apply = () => {
+      const currentWorkout = readLocalCurrentWorkout() as {
+        status?: string
+        programId?: string
+        id?: string
+        name?: string
+      } | null
+      if (currentWorkout?.status === 'in_progress') {
+        const program = currentWorkout.programId ? programsById[currentWorkout.programId] : null
+        const sessionId = typeof currentWorkout.id === 'string' ? currentWorkout.id : null
+        const href =
+          program && sessionId
+            ? `/programmes/${program.slug}/seances/${sessionId}`
+            : '/dashboard?view=session'
+        setResumeSessionHref(href)
+        setResumeSessionLabel(
+          currentWorkout.name ? `Reprendre : ${currentWorkout.name}` : 'Reprendre la séance'
+        )
+      } else {
+        setResumeSessionHref(null)
+        setResumeSessionLabel('Reprendre la séance')
+      }
+    }
+    apply()
+    window.addEventListener('storage', apply)
+    window.addEventListener('fitpulse-current-workout', apply)
+    return () => {
+      window.removeEventListener('storage', apply)
+      window.removeEventListener('fitpulse-current-workout', apply)
+    }
+  }, [effectiveStatus])
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
@@ -235,6 +274,22 @@ function DashboardPageContent() {
       <div className="flex flex-col lg:flex-row flex-grow">
         <Sidebar activeSection={activeSection} setActiveSection={setActiveSection} />
         <main className="flex-grow min-w-0 p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
+          {resumeSessionHref && (
+            <div className="mb-6 rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 to-white px-5 py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">
+                    Séance en cours
+                  </div>
+                  <div className="text-lg font-semibold text-gray-900">{resumeSessionLabel}</div>
+                  <div className="text-sm text-gray-600">Continue exactement là où tu t&apos;es arrêté.</div>
+                </div>
+                <Link href={resumeSessionHref} className="btn-primary px-4 py-2 text-sm">
+                  Reprendre la séance
+                </Link>
+              </div>
+            </div>
+          )}
           {renderSection()}
         </main>
       </div>

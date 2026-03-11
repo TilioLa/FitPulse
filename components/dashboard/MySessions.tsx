@@ -229,6 +229,7 @@ export default function MySessions() {
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [hasPendingCloudSync, setHasPendingCloudSync] = useState(false)
+  const [restReady, setRestReady] = useState(false)
   const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>('kg')
   const [setPulse, setSetPulse] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
@@ -464,6 +465,14 @@ export default function MySessions() {
     if (reconnectSyncInFlightRef.current) return
     reconnectSyncInFlightRef.current = true
     saveSnapshotNow(workout)
+    try {
+      const history = readLocalHistory()
+      if (history.length > 0) {
+        void persistHistoryForUser(user.id, history as WorkoutHistoryItem[])
+      }
+    } catch {
+      // ignore history sync failures
+    }
     setHasPendingCloudSync(false)
     setTimeout(() => {
       reconnectSyncInFlightRef.current = false
@@ -554,6 +563,14 @@ export default function MySessions() {
               handleNextExercise()
             }
             setTimerKind(null)
+            setRestReady(true)
+            if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+              try {
+                navigator.vibrate([180, 80, 180])
+              } catch {
+                // ignore vibration errors
+              }
+            }
             return 0
           }
           return prev - 1
@@ -591,6 +608,10 @@ export default function MySessions() {
   }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, sessionCheckIn, user?.id, isOnline])
 
   useEffect(() => {
+    setRestReady(false)
+  }, [currentExerciseIndex])
+
+  useEffect(() => {
     if (!workout?.id) return
     localStorage.setItem(lastExerciseKey(workout.id), String(currentExerciseIndex))
     markProgressDirty()
@@ -624,6 +645,7 @@ export default function MySessions() {
 
   function handleStartTimer(restTime: number, kind: 'set' | 'exercise') {
     if (sessionPaused) return
+    setRestReady(false)
     setTimerKind(kind)
     setTimeRemaining(restTime)
     setIsRunning(true)
@@ -640,6 +662,7 @@ export default function MySessions() {
     setTimeRemaining(0)
     setIsRunning(false)
     setTimerKind(null)
+    setRestReady(false)
   }
 
   function handleSkipTimer() {
@@ -748,6 +771,9 @@ export default function MySessions() {
       writeLocalHistory(cappedHistory)
       if (user?.id) {
         void persistHistoryForUser(user.id, cappedHistory as WorkoutHistoryItem[])
+        if (!isOnline) {
+          setHasPendingCloudSync(true)
+        }
       }
       if (!hasProAccess(getEntitlement()) && history.length > cappedHistory.length) {
         push('Plan gratuit: historique limité aux 10 dernières séances.', 'info')
@@ -1995,6 +2021,11 @@ export default function MySessions() {
                   {formatTime(timeRemaining)}
                 </div>
                 <div className="text-gray-600">Temps de repos</div>
+                {restReady && !isRunning && timeRemaining === 0 && (
+                  <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    Prêt à repartir
+                  </div>
+                )}
               </div>
               <div className="flex flex-col sm:flex-row justify-center gap-3">
                 {!isRunning && timeRemaining === 0 && (
@@ -2106,6 +2137,47 @@ export default function MySessions() {
 
         {/* Liste des exercices */}
         <div>
+          <div className="card mb-4">
+            <div className="text-sm font-semibold text-gray-900">Partager la séance</div>
+            <div className="mt-2 text-xs text-gray-500">
+              Lien public et carte image pour partager ta progression.
+            </div>
+            <div className="mt-3 flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={handleShareSession}
+                className="btn-secondary w-full"
+              >
+                Copier le lien
+              </button>
+              <button
+                type="button"
+                onClick={downloadSessionShareCard}
+                className="btn-secondary w-full"
+              >
+                Télécharger la carte
+              </button>
+            </div>
+            {shareUrl && (
+              <div className="mt-3 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                <div className="font-semibold text-gray-700">Lien prêt</div>
+                <div className="mt-1 truncate">{shareUrl}</div>
+                <button
+                  className="mt-2 text-xs font-semibold text-primary-700"
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(shareUrl)
+                      push('Lien copié.', 'success')
+                    } catch {
+                      push(shareUrl, 'info')
+                    }
+                  }}
+                >
+                  Copier le lien
+                </button>
+              </div>
+            )}
+          </div>
           <h3 className="text-xl font-semibold text-gray-900 mb-4">Exercices</h3>
           <div className="space-y-3">
             {workout.exercises.map((exercise, index) => {
