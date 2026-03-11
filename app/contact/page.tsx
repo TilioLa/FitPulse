@@ -98,6 +98,9 @@ export default function ContactPage() {
                 <Link href="/tickets" className="mt-4 inline-flex btn-secondary">
                   Ouvrir un ticket
                 </Link>
+                <Link href="/aide" className="mt-2 inline-flex text-xs font-semibold text-primary-700">
+                  Centre d'aide →
+                </Link>
               </div>
             </div>
           </div>

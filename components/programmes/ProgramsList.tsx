@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Dumbbell, Timer, Target, Filter, ArrowRight } from 'lucide-react'
 import { programs as allPrograms } from '@/data/programs'
@@ -9,21 +9,35 @@ import StartProgramButton from '@/components/programmes/StartProgramButton'
 import { readLocalSettings } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
 import { recommendProgram } from '@/lib/recommendation'
+import { useSearchParams } from 'next/navigation'
 
 export default function ProgramsList() {
+  const searchParams = useSearchParams()
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
+  const [query, setQuery] = useState('')
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
   const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilité']
 
+  useEffect(() => {
+    const term = searchParams.get('q') || ''
+    setQuery(term)
+  }, [searchParams])
+
   const filteredPrograms = allPrograms.filter(program => {
     const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
     const equipmentMatch = selectedEquipment === 'all' || program.equipment === selectedEquipment
     const bodyPartMatch = selectedBodyPart === 'all' || program.bodyParts.includes(selectedBodyPart)
-    return levelMatch && equipmentMatch && bodyPartMatch
+    const term = query.trim().toLowerCase()
+    const queryMatch =
+      !term ||
+      program.name.toLowerCase().includes(term) ||
+      program.description.toLowerCase().includes(term) ||
+      program.goals.some((goal) => goal.toLowerCase().includes(term))
+    return levelMatch && equipmentMatch && bodyPartMatch && queryMatch
   })
 
   const { recommendedProgram, showQuickStart } = useMemo(() => {
@@ -85,6 +99,15 @@ export default function ProgramsList() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-3">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="Nom, objectif ou niveau"
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Niveau</label>
             <select

@@ -1,6 +1,7 @@
 import Footer from '@/components/Footer'
 import ProgramsList from '@/components/programmes/ProgramsList'
 import WithSidebar from '@/components/layouts/WithSidebar'
+import { Suspense } from 'react'
 
 export default function ProgrammesPage() {
   return (
@@ -16,7 +17,9 @@ export default function ProgrammesPage() {
                 Choisissez le programme qui correspond à votre niveau, vos objectifs et le matériel dont vous disposez
               </p>
             </div>
-            <ProgramsList />
+            <Suspense fallback={<div className="text-gray-600">Chargement des programmes...</div>}>
+              <ProgramsList />
+            </Suspense>
           </div>
         </main>
       </WithSidebar>

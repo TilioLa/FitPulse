@@ -47,6 +47,7 @@ function DashboardPageContent() {
   const [activeSection, setActiveSection] = useState<DashboardSection>(
     () => viewToSection(searchParams.get('view')) || 'feed'
   )
+  const [tourStep, setTourStep] = useState<number | null>(null)
   const { status, reload } = useAuth()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
@@ -108,6 +109,17 @@ function DashboardPageContent() {
       setActiveSection((prev) => (prev !== section ? section : prev))
     })
   }
+
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    const forcedTour = searchParams.get('tour') === '1'
+    const pending = typeof window !== 'undefined' && localStorage.getItem('fitpulse_tour_pending') === 'true'
+    if (!forcedTour && !pending) return
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('fitpulse_tour_pending', 'false')
+    }
+    setTourStep(1)
+  }, [effectiveStatus, searchParams])
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
@@ -217,6 +229,88 @@ function DashboardPageContent() {
         </main>
       </div>
       <Footer />
+      {tourStep != null && (
+        <div className="fixed inset-0 z-50 bg-black/30 flex items-end lg:items-center justify-center p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-5 shadow-xl">
+            <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+              Visite guidée {tourStep}/3
+            </div>
+            {tourStep === 1 && (
+              <>
+                <div className="mt-2 text-xl font-semibold text-gray-900">Naviguer rapidement</div>
+                <p className="mt-2 text-sm text-gray-600">
+                  Utilise la barre latérale pour passer entre Dashboard, Séances, Historique et Routines.
+                </p>
+              </>
+            )}
+            {tourStep === 2 && (
+              <>
+                <div className="mt-2 text-xl font-semibold text-gray-900">Lancer une séance</div>
+                <p className="mt-2 text-sm text-gray-600">
+                  Démarre ou reprends une séance pour activer le timer de repos et le suivi.
+                </p>
+              </>
+            )}
+            {tourStep === 3 && (
+              <>
+                <div className="mt-2 text-xl font-semibold text-gray-900">Créer ta routine</div>
+                <p className="mt-2 text-sm text-gray-600">
+                  Compose une routine personnalisée et démarre-la en un clic.
+                </p>
+              </>
+            )}
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+              <button
+                className="text-sm font-semibold text-gray-500 hover:text-gray-700"
+                onClick={() => {
+                  setTourStep(null)
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('fitpulse_tour_seen_v1', 'true')
+                  }
+                }}
+              >
+                Passer
+              </button>
+              <div className="flex gap-2">
+                {tourStep === 2 && (
+                  <button
+                    className="btn-secondary text-sm px-4 py-2"
+                    onClick={() => scheduleSection('session')}
+                  >
+                    Aller aux séances
+                  </button>
+                )}
+                {tourStep === 3 && (
+                  <button
+                    className="btn-secondary text-sm px-4 py-2"
+                    onClick={() => scheduleSection('routines')}
+                  >
+                    Voir les routines
+                  </button>
+                )}
+                <button
+                  className="btn-primary text-sm px-4 py-2"
+                  onClick={() => {
+                    const next = tourStep + 1
+                    if (next > 3) {
+                      setTourStep(null)
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('fitpulse_tour_seen_v1', 'true')
+                      }
+                    } else {
+                      setTourStep(next)
+                      if (next === 2) scheduleSection('session')
+                      if (next === 3) scheduleSection('routines')
+                    }
+                  }}
+                >
+                  {tourStep === 3 ? 'Terminer' : 'Suivant'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

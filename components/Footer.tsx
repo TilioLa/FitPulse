@@ -76,6 +76,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/aide" className="hover:text-primary-400 transition-colors">
+                  Centre d'aide
+                </Link>
+              </li>
+              <li>
                 <Link href="/tickets" className="hover:text-primary-400 transition-colors">
                   Tickets support
                 </Link>

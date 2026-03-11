@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useMemo, useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
@@ -26,7 +26,16 @@ type HistoryItem = {
 }
 
 export default function ExercicesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Chargement...</div>}>
+      <ExercicesPageContent />
+    </Suspense>
+  )
+}
+
+function ExercicesPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { status, user } = useAuth()
   const [query, setQuery] = useState('')
   const [equipment, setEquipment] = useState('all')
@@ -41,6 +50,11 @@ export default function ExercicesPage() {
       router.push('/connexion')
     }
   }, [router, status])
+
+  useEffect(() => {
+    const term = searchParams.get('q') || ''
+    if (term) setQuery(term)
+  }, [searchParams])
 
   useEffect(() => {
     const applyStored = (value: ExerciseCatalogItem[]) => {

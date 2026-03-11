@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/connexion',
     '/inscription',
     '/contact',
+    '/aide',
     '/tickets',
     '/mentions-legales',
     '/confidentialite',

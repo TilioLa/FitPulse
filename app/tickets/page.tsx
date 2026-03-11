@@ -301,6 +301,9 @@ export default function TicketsPage() {
                   <Link href="/contact" className="mt-4 inline-flex btn-secondary">
                     Aller au contact
                   </Link>
+                  <Link href="/aide" className="mt-2 inline-flex text-xs font-semibold text-primary-700">
+                    Voir le centre d'aide →
+                  </Link>
                 </div>
               </section>
             </div>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { ArrowRight, Dumbbell, Target, TrendingUp } from 'lucide-react'
+import TourCta from '@/components/home/TourCta'
 
 export default function Hero() {
   return (
@@ -22,6 +23,7 @@ export default function Hero() {
             <Link href="/programmes" className="btn-secondary border-white text-lg px-8 py-4">
               Découvrir les programmes
             </Link>
+            <TourCta />
           </div>
           
           {/* Features icons */}
