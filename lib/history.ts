@@ -67,14 +67,14 @@ function computeStreak(dates: string[]) {
 
 export function computeHistoryStats(history: WorkoutHistoryItem[]) {
   const deduped = uniqueDays(history)
-  const totalMinutes = deduped.reduce((sum, item) => sum + item.duration, 0)
+  const totalMinutes = history.reduce((sum, item) => sum + item.duration, 0)
   const dates = deduped.map((item) => item.date.slice(0, 10))
   const streak = computeStreak(dates)
 
   return {
     deduped,
     totalMinutes,
-    totalWorkouts: deduped.length,
+    totalWorkouts: history.length,
     streak,
   }
 }
