@@ -122,6 +122,29 @@ function DashboardPageContent() {
   }
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem('fitpulse_last_dashboard_view', sectionToView(activeSection))
+  }, [activeSection])
+
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    const view =
+      searchParams.get('view') ||
+      (typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('view')
+        : null)
+    if (view) {
+      const directSection = viewToSection(view)
+      if (directSection) scheduleSection(directSection)
+      return
+    }
+    if (typeof window === 'undefined') return
+    const lastView = localStorage.getItem('fitpulse_last_dashboard_view')
+    const lastSection = lastView ? viewToSection(lastView) : null
+    if (lastSection) scheduleSection(lastSection)
+  }, [effectiveStatus, searchParams])
+
+  useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
     const forcedTour = searchParams.get('tour') === '1'
     const pending = typeof window !== 'undefined' && localStorage.getItem('fitpulse_tour_pending') === 'true'
