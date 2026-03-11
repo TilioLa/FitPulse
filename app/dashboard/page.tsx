@@ -203,7 +203,11 @@ function DashboardPageContent() {
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
-    const view = searchParams.get('view')
+    const view =
+      searchParams.get('view') ||
+      (typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('view')
+        : null)
     if (view) return
 
     try {
