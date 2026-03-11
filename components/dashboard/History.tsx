@@ -9,6 +9,9 @@ import Link from 'next/link'
 import { programsById } from '@/data/programs'
 import { applyHistoryLimit, getEntitlement } from '@/lib/subscription'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { isSupabaseConfigured } from '@/lib/supabase-browser'
+import { persistHistoryForUserWithResult } from '@/lib/history-store'
 
 interface WorkoutHistory {
   id: string
@@ -29,6 +32,9 @@ export default function History() {
   const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'ok' | 'error'>('idle')
+  const [syncError, setSyncError] = useState<string | null>(null)
+  const { user } = useAuth()
   const { t } = useI18n()
 
   const loadHistory = () => {
@@ -250,6 +256,27 @@ export default function History() {
     popup.print()
   }
 
+  const handleSyncHistory = async () => {
+    if (!user?.id) {
+      setSyncState('error')
+      setSyncError('user_not_authenticated')
+      return
+    }
+    setSyncState('syncing')
+    setSyncError(null)
+    const { ok, error } = await persistHistoryForUserWithResult(
+      user.id,
+      (history as unknown as WorkoutHistoryItem[]) || []
+    )
+    if (ok) {
+      setSyncState('ok')
+      setTimeout(() => setSyncState('idle'), 2500)
+    } else {
+      setSyncState('error')
+      setSyncError(error || 'sync_failed')
+    }
+  }
+
   const applyPreset = (days: number | 'all') => {
     if (days === 'all') {
       setFromDate('')
@@ -277,6 +304,30 @@ export default function History() {
           </div>
         </div>
       )}
+      <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+        {!isSupabaseConfigured() && (
+          <div className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 font-semibold text-amber-800">
+            Sync cloud désactivée (variables Supabase manquantes).
+          </div>
+        )}
+        {isSupabaseConfigured() && (
+          <button
+            onClick={handleSyncHistory}
+            className="btn-secondary inline-flex items-center gap-2"
+            disabled={syncState === 'syncing'}
+          >
+            {syncState === 'syncing' ? 'Synchronisation…' : 'Sync cloud'}
+          </button>
+        )}
+        {syncState === 'ok' && (
+          <div className="font-semibold text-emerald-700">Historique synchronisé.</div>
+        )}
+        {syncState === 'error' && (
+          <div className="font-semibold text-red-700">
+            Sync échouée{syncError ? `: ${syncError}` : ''}.
+          </div>
+        )}
+      </div>
       <div className="mb-6 flex flex-wrap gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <div className="text-xs font-semibold text-gray-500">Période</div>

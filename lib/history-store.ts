@@ -54,6 +54,32 @@ export async function persistHistoryForUser(userId: string, items: WorkoutHistor
   }
 }
 
+export async function persistHistoryForUserWithResult(
+  userId: string,
+  items: WorkoutHistoryItem[]
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: 'missing_supabase_env' }
+  }
+  try {
+    const supabase = getSupabaseBrowserClient()
+    const { error } = await supabase.from('user_history').upsert(
+      {
+        user_id: userId,
+        history: items,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'user_id' }
+    )
+    if (error) {
+      return { ok: false, error: error.message || 'supabase_error' }
+    }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : 'network_error' }
+  }
+}
+
 export async function syncHistoryForUser(userId: string) {
   if (!isSupabaseConfigured()) return
 
