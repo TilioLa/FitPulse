@@ -66,7 +66,7 @@ export default function RecommendedPrograms() {
           { id: '2', name: 'Squats', sets: 3, reps: 15, rest: 60 },
           { id: '3', name: 'Planche', sets: 3, reps: 30, rest: 45 },
           { id: '4', name: 'Fentes', sets: 3, reps: 12, rest: 60 },
-          { id: '5', name: 'Gainage', sets: 3, reps: 45, rest: 60 },
+          { id: '5', name: 'Planche', sets: 3, reps: 45, rest: 60 },
         ]
       }
       localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))

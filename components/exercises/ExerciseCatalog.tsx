@@ -1,10 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
-import { Search, Star, ImageIcon } from 'lucide-react'
+import { Search, Star, Dumbbell } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
-import { inferVideoUrl } from '@/lib/videos'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { readLocalExerciseFavorites, saveLocalExerciseFavorites } from '@/lib/exercise-preferences-store'
 
@@ -61,14 +59,6 @@ export default function ExerciseCatalog({
     void saveLocalExerciseFavorites(next, user?.id)
   }
 
-  const getThumbnail = (name: string) => {
-    const url = inferVideoUrl(name)
-    if (!url) return null
-    const match = url.match(/\/embed\/([a-zA-Z0-9_-]+)/)
-    if (!match) return null
-    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row gap-3">
@@ -122,17 +112,7 @@ export default function ExerciseCatalog({
                 <div>
                   <div className="flex items-center gap-2">
                     <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                      {getThumbnail(item.name) ? (
-                        <Image
-                          src={getThumbnail(item.name) as string}
-                          alt={item.name}
-                          width={36}
-                          height={36}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <ImageIcon className="h-4 w-4 text-gray-400" />
-                      )}
+                      <Dumbbell className="h-4 w-4 text-gray-400" />
                     </div>
                     <div className="text-sm font-semibold text-gray-900">{item.name}</div>
                   </div>

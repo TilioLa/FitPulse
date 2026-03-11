@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Play, Pause, RotateCcw, Clock, Flame, Trophy, Dumbbell, ChevronDown, ChevronUp, Info } from 'lucide-react'
+import { Play, Pause, RotateCcw, SkipForward, Clock, Flame, Trophy, Dumbbell, ChevronDown, ChevronUp, Info } from 'lucide-react'
 import TrainingModeView from '@/components/dashboard/TrainingModeView'
 import { useToast } from '@/components/ui/ToastProvider'
 import DashboardCalendar from '@/components/dashboard/Calendar'
@@ -64,7 +64,6 @@ interface Exercise {
   sets: number
   reps: number
   rest: number // en secondes
-  videoUrl?: string
 }
 
 type SetInput = { weight: number; reps: number; completed?: boolean }
@@ -350,11 +349,11 @@ export default function MySessions() {
         equipment: 'Poids du corps',
         status: 'default',
         exercises: [
-          { id: '1', name: 'Pompes', sets: 3, reps: 10, rest: 60, videoUrl: 'https://www.youtube.com/embed/IODxDxX7oi4' },
-          { id: '2', name: 'Squats', sets: 3, reps: 12, rest: 60, videoUrl: 'https://www.youtube.com/embed/aclHkVaku9U' },
-          { id: '3', name: 'Fentes', sets: 3, reps: 10, rest: 60, videoUrl: 'https://www.youtube.com/embed/QOVaHwm-Q6U' },
-          { id: '4', name: 'Planche', sets: 3, reps: 30, rest: 45, videoUrl: 'https://www.youtube.com/embed/pSHjTRCQxIw' },
-          { id: '5', name: 'Gainage', sets: 3, reps: 45, rest: 45, videoUrl: 'https://www.youtube.com/embed/ASdvN_XEl_c' },
+          { id: '1', name: 'Pompes', sets: 3, reps: 10, rest: 60 },
+          { id: '2', name: 'Squats', sets: 3, reps: 12, rest: 60 },
+          { id: '3', name: 'Fentes', sets: 3, reps: 10, rest: 60 },
+          { id: '4', name: 'Planche', sets: 3, reps: 30, rest: 45 },
+          { id: '5', name: 'Planche', sets: 3, reps: 45, rest: 45 },
         ],
       }
       setWorkout(defaultWorkout)
@@ -639,6 +638,10 @@ export default function MySessions() {
     setTimeRemaining(0)
     setIsRunning(false)
     setTimerKind(null)
+  }
+
+  function handleSkipTimer() {
+    handleResetTimer()
   }
 
   function handleNextExercise() {
@@ -2015,6 +2018,16 @@ export default function MySessions() {
                   >
                     <RotateCcw className="h-5 w-5" />
                     <span>Reset</span>
+                  </button>
+                )}
+                {timeRemaining > 0 && (
+                  <button
+                    onClick={handleSkipTimer}
+                    disabled={sessionPaused}
+                    className="btn-secondary min-h-11 w-full sm:w-auto flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <SkipForward className="h-5 w-5" />
+                    <span>Passer</span>
                   </button>
                 )}
               </div>

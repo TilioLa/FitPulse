@@ -2,13 +2,11 @@
 
 import { useMemo, useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { Search, Plus, Dumbbell, ImageIcon } from 'lucide-react'
+import { Search, Plus, Dumbbell } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
-import { inferVideoUrl } from '@/lib/videos'
 import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/lib/exercise-insights'
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCustomExercises, saveLocalCustomExercises } from '@/lib/exercise-preferences-store'
@@ -172,14 +170,6 @@ function ExercicesPageContent() {
       .map((row) => row.item)
   }, [allExercises, selected])
 
-  const getThumbnail = (name: string) => {
-    const url = inferVideoUrl(name)
-    if (!url) return null
-    const match = url.match(/\/embed\/([a-zA-Z0-9_-]+)/)
-    if (!match) return null
-    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`
-  }
-
   const handleAddCustom = () => {
     const name = prompt('Nom de l’exercice')
     if (!name) return
@@ -240,18 +230,8 @@ function ExercicesPageContent() {
                 <div className="max-w-2xl w-full">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center overflow-hidden">
-                          {getThumbnail(selected.name) ? (
-                          <Image
-                            src={getThumbnail(selected.name) as string}
-                            alt={selected.name}
-                            width={56}
-                            height={56}
-                            className="h-full w-full object-cover"
-                          />
-                        ) : (
+                        <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center">
                           <Dumbbell className="h-6 w-6 text-gray-500" />
-                        )}
                       </div>
                       <div>
                         <h2 className="text-2xl font-semibold text-gray-900">{selected.name}</h2>
@@ -400,8 +380,8 @@ function ExercicesPageContent() {
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">Library</h3>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <ImageIcon className="h-4 w-4" />
-                    Aperçus
+                    <Dumbbell className="h-4 w-4" />
+                    Exercices
                   </div>
                 </div>
 
@@ -484,18 +464,8 @@ function ExercicesPageContent() {
                         }`}
                       >
                         <div className="flex items-center gap-3">
-                          <div className="h-11 w-11 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden">
-                            {getThumbnail(item.name) ? (
-                              <Image
-                                src={getThumbnail(item.name) as string}
-                                alt={item.name}
-                                width={44}
-                                height={44}
-                                className="h-full w-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon className="h-5 w-5 text-gray-400" />
-                            )}
+                          <div className="h-11 w-11 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                            <Dumbbell className="h-5 w-5 text-gray-400" />
                           </div>
                           <div>
                             <div className="text-sm font-semibold text-gray-900">{item.name}</div>

@@ -1,26 +1,24 @@
 'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useMemo, useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
 import Footer from '@/components/Footer'
 import { programs, programsById, programsBySlug } from '@/data/programs'
 import { slugify } from '@/lib/slug'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
-import ExerciseMedia from '@/components/exercises/ExerciseMedia'
 import EquipmentBadge from '@/components/exercises/EquipmentBadge'
 import RestTimeDisplay from '@/components/exercises/RestTimeDisplay'
 import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
+import MuscleMap from '@/components/exercises/MuscleMap'
 import { labelize } from '@/lib/labels'
 import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X } from 'lucide-react'
-import { inferVideoUrl } from '@/lib/videos'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistCurrentWorkoutForUser, readLocalCurrentWorkout, writeLocalCurrentWorkout } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
 
-type SessionExercise = { name: string; sets: number; reps: number; rest: number; videoUrl?: string }
+type SessionExercise = { name: string; sets: number; reps: number; rest: number }
 
 export default function SessionDetailPage() {
   const params = useParams<{ id?: string; sessionId?: string }>()
@@ -196,14 +194,6 @@ export default function SessionDetailPage() {
     })
   }
 
-  const getThumbnail = (name: string) => {
-    const url = inferVideoUrl(name)
-    if (!url) return null
-    const match = url.match(/\/embed\/([a-zA-Z0-9_-]+)/)
-    if (!match) return null
-    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`
-  }
-
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <WithSidebar active="session">
@@ -324,19 +314,9 @@ export default function SessionDetailPage() {
                     {sessionExercises.map((exercise, index) => (
                       <div key={exercise.name} className="py-4">
                         <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-11 w-11 rounded-full border border-gray-200 bg-white overflow-hidden flex items-center justify-center">
-                              {getThumbnail(exercise.name) ? (
-                                <Image
-                                  src={getThumbnail(exercise.name) as string}
-                                  alt={exercise.name}
-                                  width={44}
-                                  height={44}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <Dumbbell className="h-5 w-5 text-gray-400" />
-                              )}
+                        <div className="flex items-center gap-3">
+                            <div className="h-11 w-11 rounded-full border border-gray-200 bg-white flex items-center justify-center">
+                              <Dumbbell className="h-5 w-5 text-gray-400" />
                             </div>
                             <div>
                               <div className="text-sm font-semibold text-gray-900">{exercise.name}</div>
@@ -421,10 +401,10 @@ export default function SessionDetailPage() {
                         </div>
                         <details className="mt-3">
                           <summary className="text-xs font-semibold text-primary-600 cursor-pointer">
-                            Voir la vidéo et les muscles
+                            Voir les muscles sollicités
                           </summary>
                           <div className="mt-3">
-                            <ExerciseMedia name={exercise.name} videoUrl={exercise.videoUrl} />
+                            <MuscleMap name={exercise.name} />
                           </div>
                         </details>
                       </div>
