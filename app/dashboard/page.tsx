@@ -232,6 +232,10 @@ function DashboardPageContent() {
         ? new URLSearchParams(window.location.search).get('view')
         : null)
     if (view) return
+    if (typeof window !== 'undefined') {
+      const lastView = localStorage.getItem('fitpulse_last_dashboard_view')
+      if (lastView) return
+    }
 
     try {
       const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
