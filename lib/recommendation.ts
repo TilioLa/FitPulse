@@ -33,8 +33,8 @@ function goalMatches(userGoal: string, programGoal: string) {
   return p.includes(u) || u.includes(p)
 }
 
-export function recommendProgram(programs: Program[], input: RecommendationInput): RecommendationResult | null {
-  if (!programs.length) return null
+export function rankPrograms(programs: Program[], input: RecommendationInput): RecommendationResult[] {
+  if (!programs.length) return []
 
   const level = normalize(input.level || '')
   const goals = (input.goals || []).map(normalize).filter(Boolean)
@@ -83,10 +83,14 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
 
     if (program.recommended) score += 1
 
-    return { program, score, reasons }
+    return { program, score, reasons: Array.from(new Set(reasons)) }
   })
 
   ranked.sort((a, b) => b.score - a.score)
-  const best = ranked[0]
-  return best ? { ...best, reasons: Array.from(new Set(best.reasons)) } : null
+  return ranked
+}
+
+export function recommendProgram(programs: Program[], input: RecommendationInput): RecommendationResult | null {
+  const ranked = rankPrograms(programs, input)
+  return ranked[0] || null
 }

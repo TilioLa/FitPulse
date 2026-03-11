@@ -10,7 +10,7 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 
-type DashboardSection = 'feed' | 'progress' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
+type DashboardSection = 'feed' | 'progress' | 'recommendations' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
 
 type MenuItem = {
   id: DashboardSection
@@ -27,6 +27,7 @@ interface SidebarProps {
 const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
   { id: 'progress', labelKey: 'progress', icon: TrendingUp },
+  { id: 'recommendations', labelKey: 'recommendations', icon: Sparkles },
   { id: 'session', labelKey: 'session', icon: Activity },
   { id: 'history', labelKey: 'history', icon: History },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },

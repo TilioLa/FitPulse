@@ -3,15 +3,18 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
-import { User, Calendar, Trophy, TrendingUp, Clock } from 'lucide-react'
+import { User, Calendar, Trophy, TrendingUp, Clock, Star } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import WithSidebar from '@/components/layouts/WithSidebar'
+import { computeXp, getLevelInfo } from '@/lib/levels'
 
 export default function ProfilPage() {
   const router = useRouter()
   const { user, status } = useAuth()
   const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+  const [level, setLevel] = useState({ name: 'Bronze', level: 1, progress: 0 })
+  const [badges, setBadges] = useState<string[]>([])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -28,8 +31,18 @@ export default function ProfilPage() {
           completedWorkouts: totalWorkouts,
           totalMinutes,
         })
+        const xp = computeXp(totalMinutes, totalWorkouts)
+        const levelInfo = getLevelInfo(xp)
+        setLevel({ name: levelInfo.current.name, level: levelInfo.current.level, progress: levelInfo.progress })
+        const nextBadges = [
+          totalWorkouts >= 1 ? 'Première séance' : null,
+          streak >= 7 ? 'Streak 7 jours' : null,
+          totalMinutes >= 100 ? '100 minutes' : null,
+        ].filter(Boolean) as string[]
+        setBadges(nextBadges)
       } catch {
         setStats({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+        setBadges([])
       }
     })
   }, [router, status])
@@ -121,7 +134,33 @@ export default function ProfilPage() {
                 <Clock className="h-12 w-12 text-green-600" />
               </div>
             </div>
+            <div className="card-soft bg-gradient-to-br from-amber-50 to-amber-100">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="text-sm text-gray-600 mb-1">Niveau</div>
+                  <div className="text-4xl font-bold text-amber-600">{level.level}</div>
+                  <div className="text-sm text-gray-600 mt-1">{level.name}</div>
+                </div>
+                <Star className="h-12 w-12 text-amber-600" />
+              </div>
+              <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
+              </div>
+            </div>
           </div>
+
+          {badges.length > 0 && (
+            <div className="card-soft mb-8">
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Badges</h3>
+              <div className="flex flex-wrap gap-2">
+                {badges.map((badge) => (
+                  <span key={badge} className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold">
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             <div className="card">

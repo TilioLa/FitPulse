@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Flame, Trophy, TrendingUp, Target, RotateCcw } from 'lucide-react'
+import { CalendarDays, Flame, Trophy, TrendingUp, Target, RotateCcw, Star } from 'lucide-react'
 import DashboardCalendar from '@/components/dashboard/Calendar'
 import { computeHistoryStats, toLocalDateKey, WorkoutHistoryItem } from '@/lib/history'
 import { applyHistoryLimit, getEntitlement } from '@/lib/subscription'
@@ -11,6 +11,7 @@ import { readLocalSettings, writeLocalSettings, persistSettingsForUser } from '@
 import { generateWeeklyPlan, type WeeklyPlanDay } from '@/lib/weekly-plan'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { useToast } from '@/components/ui/ToastProvider'
+import { computeXp, getLevelInfo } from '@/lib/levels'
 
 type TrendDay = {
   day: string
@@ -32,6 +33,20 @@ export default function Progress() {
   const [topMuscles, setTopMuscles] = useState<{ id: string; percent: number }[]>([])
   const [weeklyPlan, setWeeklyPlan] = useState<WeeklyPlanDay[]>([])
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
+  const [level, setLevel] = useState<{ name: string; level: number; progress: number; next?: string | null }>({
+    name: 'Bronze',
+    level: 1,
+    progress: 0,
+    next: null,
+  })
+  const [monthlyCompare, setMonthlyCompare] = useState({
+    currentSessions: 0,
+    previousSessions: 0,
+    currentMinutes: 0,
+    previousMinutes: 0,
+    currentVolume: 0,
+    previousVolume: 0,
+  })
 
   const loadProgress = () => {
     try {
@@ -48,6 +63,14 @@ export default function Progress() {
         bestPrKg: Math.round(bestPrKg),
         totalVolume: Math.round(totalVolume),
       })
+      const xp = computeXp(totalMinutes, totalWorkouts)
+      const levelInfo = getLevelInfo(xp)
+      setLevel({
+        name: levelInfo.current.name,
+        level: levelInfo.current.level,
+        progress: levelInfo.progress,
+        next: levelInfo.next?.name || null,
+      })
 
       const sevenDaySeries = Array.from({ length: 7 }, (_, index) => {
         const date = new Date()
@@ -61,6 +84,29 @@ export default function Progress() {
         }
       })
       setWeekTrend(sevenDaySeries)
+
+      const now = new Date()
+      const currentStart = new Date(now.getFullYear(), now.getMonth(), 1)
+      const currentEnd = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+      const previousStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const previousEnd = currentStart
+
+      const currentItems = stored.filter((item) => {
+        const d = new Date(item.date)
+        return d >= currentStart && d < currentEnd
+      })
+      const previousItems = stored.filter((item) => {
+        const d = new Date(item.date)
+        return d >= previousStart && d < previousEnd
+      })
+      setMonthlyCompare({
+        currentSessions: currentItems.length,
+        previousSessions: previousItems.length,
+        currentMinutes: currentItems.reduce((sum, item) => sum + (Number(item.duration) || 0), 0),
+        previousMinutes: previousItems.reduce((sum, item) => sum + (Number(item.duration) || 0), 0),
+        currentVolume: currentItems.reduce((sum, item) => sum + (Number(item.volume) || 0), 0),
+        previousVolume: previousItems.reduce((sum, item) => sum + (Number(item.volume) || 0), 0),
+      })
 
       const muscleTotals = stored.reduce((acc: Record<string, number>, item) => {
         const muscles = item.muscleUsage || []
@@ -182,6 +228,25 @@ export default function Progress() {
         </div>
       </div>
 
+      <div className="card-compact mb-8">
+        <div className="flex items-center justify-between">
+          <div className="text-[11px] uppercase tracking-wide text-gray-500">Niveau</div>
+          <div className="text-xs text-gray-500">Prochain: {level.next || '—'}</div>
+        </div>
+        <div className="mt-2 flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-semibold">
+            {level.level}
+          </div>
+          <div>
+            <div className="text-lg font-semibold text-gray-900">{level.name}</div>
+            <div className="text-xs text-gray-500">Progression {level.progress}%</div>
+          </div>
+        </div>
+        <div className="mt-3 h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+          <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         <div className="card-compact">
           <div className="flex items-center justify-between mb-3">
@@ -227,6 +292,31 @@ export default function Progress() {
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+        <div className="card-compact">
+          <div className="text-xs text-gray-500">Comparaison mensuelle</div>
+          <div className="mt-2 text-sm text-gray-700">Séances ce mois</div>
+          <div className="text-2xl font-bold text-gray-900">{monthlyCompare.currentSessions}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Mois précédent: {monthlyCompare.previousSessions}
+          </div>
+        </div>
+        <div className="card-compact">
+          <div className="text-xs text-gray-500">Minutes</div>
+          <div className="mt-2 text-2xl font-bold text-gray-900">{Math.round(monthlyCompare.currentMinutes)}</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Mois précédent: {Math.round(monthlyCompare.previousMinutes)}
+          </div>
+        </div>
+        <div className="card-compact">
+          <div className="text-xs text-gray-500">Volume total</div>
+          <div className="mt-2 text-2xl font-bold text-gray-900">{Math.round(monthlyCompare.currentVolume)} kg</div>
+          <div className="text-xs text-gray-500 mt-1">
+            Mois précédent: {Math.round(monthlyCompare.previousVolume)} kg
+          </div>
         </div>
       </div>
 

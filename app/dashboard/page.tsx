@@ -20,6 +20,9 @@ const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
 const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
   loading: () => <SectionSkeleton />,
 })
+const Recommendations = dynamic(() => import('@/components/dashboard/Recommendations'), {
+  loading: () => <SectionSkeleton />,
+})
 const History = dynamic(() => import('@/components/dashboard/History'), {
   loading: () => <SectionSkeleton />,
 })
@@ -208,6 +211,8 @@ function DashboardPageContent() {
         return <Feed />
       case 'progress':
         return <Progress />
+      case 'recommendations':
+        return <Recommendations />
       case 'history':
         return <History />
       case 'session':

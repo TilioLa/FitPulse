@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation'
 import { muscleLabel } from '@/lib/muscles'
 import { isProfileFollowed, toggleFollowProfile } from '@/lib/public-profile-follow'
 import { readPublicGoal, writePublicGoal, type PublicGoalMetric } from '@/lib/public-goal'
+import { computeXp, getLevelInfo } from '@/lib/levels'
 
 type PublicSession = {
   id: string
@@ -109,6 +110,8 @@ export default function PublicProfileView() {
     profile.totalVolume >= 10000 ? 'Machine à volume' : null,
     profile.bestPrKg >= 120 ? 'PR Elite' : profile.bestPrKg >= 80 ? 'PR Solide' : null,
   ].filter(Boolean) as string[]
+  const xp = computeXp(profile.totalDuration, profile.totalShares)
+  const levelInfo = getLevelInfo(xp)
 
   const weeklyTrend = (() => {
     const now = new Date()
@@ -310,6 +313,9 @@ export default function PublicProfileView() {
           <div>
             <h1 className="section-title mb-2">{profile.author}</h1>
             <p className="text-gray-600">Profil public FitPulse</p>
+            <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+              Niveau {levelInfo.current.level} · {levelInfo.current.name}
+            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <select
@@ -348,6 +354,15 @@ export default function PublicProfileView() {
             </button>
           </div>
         </div>
+        {badges.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {badges.map((badge) => (
+              <span key={badge} className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold">
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
         {previewDataUrl && (
           <div className="mt-4">
             <div className="text-xs text-gray-500 mb-2">Aperçu de la carte</div>
