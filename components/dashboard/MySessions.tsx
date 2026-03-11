@@ -850,9 +850,12 @@ export default function MySessions() {
         }
       }
       setNextWorkout(nextSessionWorkout)
-      writeLocalCurrentWorkout(nextSessionWorkout)
+      writeLocalCurrentWorkout(nextSessionWorkout as unknown as Record<string, unknown> | null)
       if (user?.id) {
-        void persistCurrentWorkoutForUser(user.id, nextSessionWorkout)
+        void persistCurrentWorkoutForUser(
+          user.id,
+          nextSessionWorkout as unknown as Record<string, unknown> | null
+        )
       }
     }
     setLastSummary({
