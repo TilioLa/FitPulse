@@ -240,6 +240,7 @@ export default function MySessions() {
     muscleUsage: { id: string; percent: number }[]
     bestPrKg: number
   } | null>(null)
+  const [nextWorkout, setNextWorkout] = useState<Workout | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
   const [guideOpen, setGuideOpen] = useState(true)
   const [editWorkout, setEditWorkout] = useState(false)
@@ -608,6 +609,23 @@ export default function MySessions() {
   }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, sessionCheckIn, user?.id, isOnline])
 
   useEffect(() => {
+    if (!nextWorkout) return
+    if (showSummary) return
+    setWorkout(nextWorkout)
+    setExerciseInputs(buildInputsForExercises(nextWorkout.exercises))
+    setExerciseNotes({})
+    setSessionCheckIn(defaultSessionCheckIn())
+    setCurrentExerciseIndex(0)
+    setTimeRemaining(0)
+    setIsRunning(false)
+    setSessionPaused(false)
+    setTimerKind(null)
+    setLastCompletedSet(null)
+    if (nextWorkout.equipment) setEquipment(nextWorkout.equipment)
+    setNextWorkout(null)
+  }, [nextWorkout, showSummary])
+
+  useEffect(() => {
     setRestReady(false)
   }, [currentExerciseIndex])
 
@@ -805,9 +823,36 @@ export default function MySessions() {
     setSessionPaused(false)
     setLastCompletedSet(null)
     if (workout) {
-      writeLocalCurrentWorkout(null)
+      let nextSessionWorkout: Workout | null = null
+      if (workout.programId) {
+        const program = allPrograms.find((item) => item.id === workout.programId)
+        if (program) {
+          const sessionIndex = program.sessions.findIndex((item) => item.id === workout.id)
+          const nextSession =
+            sessionIndex >= 0 && sessionIndex < program.sessions.length - 1
+              ? program.sessions[sessionIndex + 1]
+              : null
+          if (nextSession) {
+            nextSessionWorkout = {
+              id: nextSession.id,
+              name: `${program.name} - ${nextSession.name}`,
+              duration: nextSession.duration,
+              programId: program.id,
+              programName: program.name,
+              equipment: program.equipment,
+              status: 'default',
+              exercises: nextSession.exercises.map((exercise, index) => ({
+                id: `${nextSession.id}-${index + 1}`,
+                ...exercise,
+              })),
+            }
+          }
+        }
+      }
+      setNextWorkout(nextSessionWorkout)
+      writeLocalCurrentWorkout(nextSessionWorkout)
       if (user?.id) {
-        void persistCurrentWorkoutForUser(user.id, null)
+        void persistCurrentWorkoutForUser(user.id, nextSessionWorkout)
       }
     }
     setLastSummary({
