@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
-import { syncHistoryForUser } from '@/lib/history-store'
+import { persistHistoryForUser, readLocalHistory, syncHistoryForUser } from '@/lib/history-store'
 import { persistProgressStateForUser, syncUserStateForUser } from '@/lib/user-state-store'
 import { logClientEvent } from '@/lib/client-telemetry'
 import { maybeSendLifecycleEmails } from '@/lib/lifecycle-client'
@@ -63,6 +63,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       : null
   )
   const lastProgressPersistRef = useRef(0)
+  const lastHistoryPersistRef = useRef(0)
 
   const applySession = useCallback(async () => {
     if (e2eBypass) {
@@ -173,6 +174,32 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     return () => {
       window.clearInterval(interval)
       window.removeEventListener('fitpulse-progress', onProgress)
+      window.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [status, user])
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !user) return
+    const persistHistoryNow = () => {
+      if (!user?.id) return
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return
+      const now = Date.now()
+      if (now - lastHistoryPersistRef.current < 20_000) return
+      lastHistoryPersistRef.current = now
+      const localHistory = readLocalHistory()
+      if (localHistory.length === 0) return
+      void persistHistoryForUser(user.id, localHistory)
+    }
+    const interval = window.setInterval(persistHistoryNow, 45_000)
+    const onHistory = () => persistHistoryNow()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') persistHistoryNow()
+    }
+    window.addEventListener('fitpulse-history', onHistory)
+    window.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('fitpulse-history', onHistory)
       window.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [status, user])
