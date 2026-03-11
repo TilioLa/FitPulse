@@ -586,6 +586,7 @@ export default function MySessions() {
 
   useEffect(() => {
     if (!workout) return
+    if (showSummary) return
 
     const timeout = setTimeout(() => {
       setSaveState('saving')
@@ -644,6 +645,7 @@ export default function MySessions() {
 
   useEffect(() => {
     const saveNow = () => {
+      if (showSummary) return
       saveSnapshotNow(workout)
     }
 
@@ -659,7 +661,7 @@ export default function MySessions() {
       document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, sessionCheckIn, user?.id])
+  }, [workout, exerciseInputs, exerciseNotes, currentExerciseIndex, timeRemaining, timerKind, sessionPaused, sessionCheckIn, user?.id, showSummary])
 
   function handleStartTimer(restTime: number, kind: 'set' | 'exercise') {
     if (sessionPaused) return
