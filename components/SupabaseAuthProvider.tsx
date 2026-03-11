@@ -1,10 +1,10 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 import { syncHistoryForUser } from '@/lib/history-store'
-import { syncUserStateForUser } from '@/lib/user-state-store'
+import { persistProgressStateForUser, syncUserStateForUser } from '@/lib/user-state-store'
 import { logClientEvent } from '@/lib/client-telemetry'
 import { maybeSendLifecycleEmails } from '@/lib/lifecycle-client'
 import { maybeSendDailyWorkoutReminder } from '@/lib/reminder-client'
@@ -62,6 +62,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         }
       : null
   )
+  const lastProgressPersistRef = useRef(0)
 
   const applySession = useCallback(async () => {
     if (e2eBypass) {
@@ -150,6 +151,30 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       userId: user.id,
       userName: user.name,
     })
+  }, [status, user])
+
+  useEffect(() => {
+    if (status !== 'authenticated' || !user) return
+    const persistNow = () => {
+      if (!user?.id) return
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return
+      const now = Date.now()
+      if (now - lastProgressPersistRef.current < 20_000) return
+      lastProgressPersistRef.current = now
+      void persistProgressStateForUser(user.id)
+    }
+    const interval = window.setInterval(persistNow, 30_000)
+    const onProgress = () => persistNow()
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') persistNow()
+    }
+    window.addEventListener('fitpulse-progress', onProgress)
+    window.addEventListener('visibilitychange', onVisibilityChange)
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('fitpulse-progress', onProgress)
+      window.removeEventListener('visibilitychange', onVisibilityChange)
+    }
   }, [status, user])
 
   useEffect(() => {

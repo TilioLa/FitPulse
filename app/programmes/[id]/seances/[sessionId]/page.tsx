@@ -15,7 +15,12 @@ import { labelize } from '@/lib/labels'
 import { Clock, Timer, Dumbbell, Pencil, Plus, RefreshCw, Save, X } from 'lucide-react'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { persistCurrentWorkoutForUser, readLocalCurrentWorkout, writeLocalCurrentWorkout } from '@/lib/user-state-store'
+import {
+  markProgressDirty,
+  persistCurrentWorkoutForUser,
+  readLocalCurrentWorkout,
+  writeLocalCurrentWorkout,
+} from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
 
 type SessionExercise = { name: string; sets: number; reps: number; rest: number }
@@ -165,6 +170,7 @@ export default function SessionDetailPage() {
       },
     }
     localStorage.setItem('fitpulse_program_overrides', JSON.stringify(next))
+    markProgressDirty()
   }
 
   const resetOverrides = () => {
@@ -176,6 +182,7 @@ export default function SessionDetailPage() {
         delete next[program.id][session.id]
       }
       localStorage.setItem('fitpulse_program_overrides', JSON.stringify(next))
+      markProgressDirty()
     }
     setCustomExercises(session.exercises)
     setIsEditing(false)

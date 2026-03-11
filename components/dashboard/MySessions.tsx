@@ -15,6 +15,7 @@ import ExerciseCatalog from '@/components/exercises/ExerciseCatalog'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { persistHistoryForUser, readLocalHistory, writeLocalHistory } from '@/lib/history-store'
 import {
+  markProgressDirty,
   persistCurrentWorkoutForUser,
   readLocalCurrentWorkout,
   readLocalSettings,
@@ -592,6 +593,7 @@ export default function MySessions() {
   useEffect(() => {
     if (!workout?.id) return
     localStorage.setItem(lastExerciseKey(workout.id), String(currentExerciseIndex))
+    markProgressDirty()
   }, [workout?.id, currentExerciseIndex])
 
   useEffect(() => {

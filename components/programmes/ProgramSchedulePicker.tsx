@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { CalendarCheck, Timer } from 'lucide-react'
+import { markProgressDirty } from '@/lib/user-state-store'
 
 function clampSessions(value: number) {
   if (value < 1) return 1
@@ -30,6 +31,7 @@ export default function ProgramSchedulePicker({
   useEffect(() => {
     if (typeof window === 'undefined') return
     window.localStorage.setItem(storageKey, String(sessionsPerWeek))
+    markProgressDirty()
   }, [sessionsPerWeek, storageKey])
 
   const computedWeeks = useMemo(() => {

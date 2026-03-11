@@ -3,6 +3,19 @@ import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-b
 export const SETTINGS_KEY = 'fitpulse_settings'
 export const CURRENT_WORKOUT_KEY = 'fitpulse_current_workout'
 export const CUSTOM_ROUTINES_KEY = 'fitpulse_custom_routines'
+export const PROGRESS_STATE_KEY = '__progress_state_v1'
+
+const PROGRESS_EXACT_KEYS = ['fitpulse_program_overrides']
+const PROGRESS_PREFIX_KEYS = [
+  'fitpulse_last_exercise_index_',
+  'fitpulse_superset_',
+  'fitpulse_sessions_per_week_',
+]
+
+export function markProgressDirty() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event('fitpulse-progress'))
+}
 
 type UserStateRow = {
   user_id: string
@@ -45,7 +58,13 @@ export function readLocalSettings() {
 }
 
 export function writeLocalSettings(settings: Record<string, unknown>) {
-  writeJson(SETTINGS_KEY, settings)
+  const existing = readJson<Record<string, unknown>>(SETTINGS_KEY, {})
+  const existingProgress = existing[PROGRESS_STATE_KEY]
+  const nextSettings =
+    existingProgress && !Object.prototype.hasOwnProperty.call(settings, PROGRESS_STATE_KEY)
+      ? { ...settings, [PROGRESS_STATE_KEY]: existingProgress }
+      : settings
+  writeJson(SETTINGS_KEY, nextSettings)
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('fitpulse-settings'))
   }
@@ -73,6 +92,40 @@ export function writeLocalCustomRoutines(routines: Record<string, unknown>[]) {
   writeJson(CUSTOM_ROUTINES_KEY, routines)
   if (typeof window !== 'undefined') {
     window.dispatchEvent(new Event('fitpulse-custom-routines'))
+  }
+}
+
+export function readLocalProgressState(): Record<string, string> {
+  if (typeof window === 'undefined') return {}
+  const state: Record<string, string> = {}
+  try {
+    for (let i = 0; i < localStorage.length; i += 1) {
+      const key = localStorage.key(i)
+      if (!key) continue
+      const matchesExact = PROGRESS_EXACT_KEYS.includes(key)
+      const matchesPrefix = PROGRESS_PREFIX_KEYS.some((prefix) => key.startsWith(prefix))
+      if (!matchesExact && !matchesPrefix) continue
+      const value = localStorage.getItem(key)
+      if (value == null) continue
+      state[key] = value
+    }
+  } catch {
+    return {}
+  }
+  return state
+}
+
+export function writeLocalProgressState(state: Record<string, string>) {
+  if (typeof window === 'undefined') return
+  try {
+    for (const [key, value] of Object.entries(state)) {
+      if (!key) continue
+      const existing = localStorage.getItem(key)
+      if (existing === value) continue
+      localStorage.setItem(key, value)
+    }
+  } catch {
+    // ignore localStorage write errors
   }
 }
 
@@ -111,11 +164,23 @@ export async function persistCustomRoutinesForUser(
   await upsertUserState(userId, { custom_routines: routines })
 }
 
+export async function persistProgressStateForUser(userId: string) {
+  const localSettings = readLocalSettings()
+  const localProgress = readLocalProgressState()
+  const nextSettings = {
+    ...localSettings,
+    [PROGRESS_STATE_KEY]: localProgress,
+  }
+  writeLocalSettings(nextSettings)
+  await upsertUserState(userId, { settings: nextSettings })
+}
+
 export async function syncUserStateForUser(userId: string) {
   if (!isSupabaseConfigured()) return
   const localSettings = readLocalSettings()
   const localWorkout = readLocalCurrentWorkout()
   const localRoutines = readLocalCustomRoutines()
+  const localProgress = readLocalProgressState()
 
   try {
     const supabase = getSupabaseBrowserClient()
@@ -128,14 +193,21 @@ export async function syncUserStateForUser(userId: string) {
     if (error) return
 
     const remoteSettings = (data?.settings || {}) as Record<string, unknown>
+    const remoteProgress =
+      (remoteSettings[PROGRESS_STATE_KEY] as Record<string, string> | undefined) || {}
     const remoteWorkout = (data?.current_workout || null) as Record<string, unknown> | null
     const remoteRoutines = (data?.custom_routines || []) as Record<string, unknown>[]
 
-    const mergedSettings = mergeObjects(remoteSettings, localSettings)
+    const mergedProgress = { ...remoteProgress, ...localProgress }
+    const mergedSettings = {
+      ...mergeObjects(remoteSettings, localSettings),
+      [PROGRESS_STATE_KEY]: mergedProgress,
+    }
     const mergedWorkout = localWorkout || remoteWorkout
     const mergedRoutines = mergeRoutines(remoteRoutines, localRoutines)
 
     writeLocalSettings(mergedSettings)
+    writeLocalProgressState(mergedProgress)
     writeLocalCurrentWorkout(mergedWorkout)
     writeLocalCustomRoutines(mergedRoutines)
 

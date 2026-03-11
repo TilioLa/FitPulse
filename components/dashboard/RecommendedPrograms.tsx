@@ -8,6 +8,8 @@
 'use client'
 
 import { ArrowRight, Dumbbell, Timer, Target } from 'lucide-react'
+import { useAuth } from '@/components/SupabaseAuthProvider'
+import { persistCurrentWorkoutForUser, writeLocalCurrentWorkout } from '@/lib/user-state-store'
 
 const programs = [
   {
@@ -53,6 +55,8 @@ const programs = [
 ]
 
 export default function RecommendedPrograms() {
+  const { user } = useAuth()
+
   const handleStartProgram = (programId: string) => {
     // Créer une séance par défaut pour le programme
     const program = programs.find(p => p.id === programId)
@@ -69,7 +73,10 @@ export default function RecommendedPrograms() {
           { id: '5', name: 'Planche', sets: 3, reps: 45, rest: 60 },
         ]
       }
-      localStorage.setItem('fitpulse_current_workout', JSON.stringify(workout))
+      writeLocalCurrentWorkout(workout)
+      if (user?.id) {
+        void persistCurrentWorkoutForUser(user.id, workout)
+      }
       alert(`Programme "${program.name}" démarré ! Vous pouvez maintenant commencer votre séance.`)
     }
   }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { markProgressDirty } from '@/lib/user-state-store'
 
 type SupersetMap = Record<string, string>
 
@@ -14,6 +15,7 @@ function readSupersetMap(storageKey: string): SupersetMap {
 
 function writeSupersetMap(storageKey: string, map: SupersetMap) {
   localStorage.setItem(storageKey, JSON.stringify(map))
+  markProgressDirty()
 }
 
 export default function SupersetToggle({
