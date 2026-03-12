@@ -49,6 +49,17 @@ test('ordered user journey: inscription -> programme -> seance -> historique', a
   await page.getByRole('button', { name: /Historique|History/ }).click()
   await expect(page.getByRole('heading', { name: /Historique des séances|Session history/ })).toBeVisible()
 
+  await page.getByLabel('Date de début').fill('2023-01-01')
+  await page.getByLabel('Date de fin').fill('2023-02-01')
+  await expect(page.getByLabel('Date de début')).toHaveValue('2023-01-01')
+  await expect(page.getByLabel('Date de fin')).toHaveValue('2023-02-01')
+
+  await page.goto('/profil')
+  await expect(page.getByText('Historique récent')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Accéder au Dashboard/i })).toBeVisible()
+  await page.getByRole('button', { name: /Accéder au Dashboard/i }).click()
+  await expect(page).toHaveURL(/\/dashboard/)
+
   if (errors.length) {
     throw new Error(`Console/page errors:\n${errors.join('\n')}`)
   }

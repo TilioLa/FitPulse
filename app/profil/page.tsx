@@ -15,6 +15,11 @@ export default function ProfilPage() {
   const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
   const [level, setLevel] = useState({ name: 'Bronze', level: 1, progress: 0 })
   const [badges, setBadges] = useState<string[]>([])
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -46,6 +51,14 @@ export default function ProfilPage() {
       }
     })
   }, [router, status])
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Chargement du profil...
+      </div>
+    )
+  }
 
   if (status === 'loading') {
     return (
