@@ -1,13 +1,15 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { Calendar, Clock, TrendingUp, Trophy, Download, FileText } from 'lucide-react'
+import { ArrowRight, Calendar, Clock, TrendingUp, Trophy, Download, FileText } from 'lucide-react'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import DashboardCalendar from '@/components/dashboard/Calendar'
 import { useI18n } from '@/components/I18nProvider'
 import Link from 'next/link'
-import { programsById } from '@/data/programs'
+import { programs, programsById } from '@/data/programs'
+import { recommendProgram } from '@/lib/recommendation'
 import { applyHistoryLimit, getEntitlement } from '@/lib/subscription'
+import { readLocalSettings } from '@/lib/user-state-store'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { isSupabaseConfigured } from '@/lib/supabase-browser'
@@ -147,6 +149,29 @@ export default function History() {
     })
     return items.map((item, idx) => ({ id: item.id, percent: withRemainder[idx] }))
   }
+
+  const recommendation = useMemo(() => {
+    const historyProgramIds = history.map((item) => item.programId).filter(Boolean) as string[]
+    const settings = readLocalSettings() as {
+      level?: string
+      goals?: string[]
+      equipment?: string[]
+      sessionsPerWeek?: number
+      goal?: string
+    }
+    const recommendationResult = recommendProgram(programs, {
+      level: settings?.level,
+      goals: settings?.goals,
+      equipment: settings?.equipment,
+      sessionsPerWeek: settings?.sessionsPerWeek,
+      historyProgramIds,
+      recentProgramId: historyProgramIds[0] || null,
+    })
+    return {
+      program: recommendationResult?.program || programs[0],
+      favoriteGoal: settings?.goal || settings?.goals?.[0] || 'ton objectif',
+    }
+  }, [history])
 
   const filteredHistory = useMemo(() => {
     if (!fromDate && !toDate) return history
@@ -328,22 +353,22 @@ export default function History() {
           </div>
         )}
       </div>
-      <div className="mb-6 flex flex-wrap gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="text-xs font-semibold text-gray-500">Période</div>
-          <button onClick={() => applyPreset(7)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-            7 jours
-          </button>
-          <button onClick={() => applyPreset(30)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-            30 jours
-          </button>
-          <button onClick={() => applyPreset(90)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-            90 jours
-          </button>
-          <button onClick={() => applyPreset('all')} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
-            Tout
-          </button>
-        </div>
+        <div className="mb-6 flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-xs font-semibold text-gray-500">Période</div>
+            <button onClick={() => applyPreset(7)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+              7 jours
+            </button>
+            <button onClick={() => applyPreset(30)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+              30 jours
+            </button>
+            <button onClick={() => applyPreset(90)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+              90 jours
+            </button>
+            <button onClick={() => applyPreset('all')} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+              Tout
+            </button>
+          </div>
         <div className="flex flex-wrap items-center gap-2">
           <input
             type="date"
@@ -361,15 +386,59 @@ export default function History() {
             aria-label="Date de fin"
           />
         </div>
-        <button onClick={exportCsv} className="btn-secondary inline-flex items-center gap-2">
-          <Download className="h-4 w-4" />
-          Export CSV
-        </button>
-        <button onClick={exportPdf} className="btn-secondary inline-flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          Export PDF
-        </button>
-      </div>
+        </div>
+        <div className="grid gap-6 mb-8 lg:grid-cols-[2fr_1fr]">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-gray-500">Visite + insights</p>
+                <h3 className="text-xl font-semibold text-gray-900">Tendances de ta semaine</h3>
+              </div>
+              <TrendingUp className="h-5 w-5 text-primary-600" />
+            </div>
+            <p className="text-sm text-gray-600 mb-4">Streak {filteredStats.streak} jours • {filteredStats.totalMinutes} minutes • {recommendation.favoriteGoal}</p>
+            <div className="grid grid-cols-2 gap-4 mt-4">
+              <div>
+                <p className="text-xs text-gray-500">Séances</p>
+                <p className="text-base font-semibold text-gray-900">{filteredStats.totalWorkouts}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500">Poids total</p>
+                <p className="text-base font-semibold text-gray-900">{filteredStats.totalWeight ?? 0} kg</p>
+              </div>
+            </div>
+          </div>
+          <div className="rounded-2xl border border-gray-100 bg-white p-6">
+            <p className="text-xs uppercase tracking-wider text-gray-500">Export & prochaine étape</p>
+            <p className="text-lg font-semibold text-gray-900">{recommendation.program.name}</p>
+            <p className="text-sm text-gray-600 mb-4">Prochain objectif : {recommendation.favoriteGoal}</p>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <button
+                onClick={exportCsv}
+                disabled={history.length === 0}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Export CSV
+              </button>
+              <button
+                onClick={exportPdf}
+                disabled={history.length === 0}
+                className="btn-secondary inline-flex items-center gap-2"
+              >
+                <FileText className="h-4 w-4" />
+                Export PDF
+              </button>
+            </div>
+            <Link
+              href={`/programmes/${recommendation.program.slug}`}
+              className="btn-primary inline-flex items-center justify-center gap-2"
+            >
+              Quoi faire ensuite ?
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="card-compact bg-gradient-to-br from-primary-50 to-primary-100 reveal reveal-1 hover:shadow-md transition-all">

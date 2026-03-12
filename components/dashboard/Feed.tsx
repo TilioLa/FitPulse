@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target } from 'lucide-react'
+import { ArrowRight, Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target, Sparkles } from 'lucide-react'
 import { computeHistoryStats, toLocalDateKey, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
@@ -938,6 +938,25 @@ export default function Feed() {
     day: '2-digit',
     month: 'long',
   })
+
+  const storedCommunityHistory = readLocalHistory()
+  const communityPulse = storedCommunityHistory.length === 0
+    ? []
+    : storedCommunityHistory.slice(0, 4).map((item, index) => {
+        const names = ['Sofia', 'Noah', 'Léa', 'Milo', 'Camille']
+        const detail = `${item.duration} min • ${item.programName || 'programme FitPulse'}`
+        const metric = item.volume
+          ? `${item.volume} kg total`
+          : item.calories
+          ? `${item.calories} kcal`
+          : 'Nouveau badge'
+        return {
+          id: `${item.id}-${index}`,
+          name: names[index % names.length],
+          detail,
+          metric,
+        }
+      })
   const primarySessionHref = resumeSessionHref || '/dashboard?view=session'
   const primarySessionLabel = resumeSessionHref ? 'Reprendre la séance' : 'Démarrer une séance'
 
@@ -1004,6 +1023,35 @@ export default function Feed() {
           <div className="mt-1 text-sm text-gray-600">{quickStart.body}</div>
           <Link href={quickStart.href} className="mt-3 inline-flex btn-primary">
             {quickStart.cta}
+          </Link>
+        </div>
+      )}
+      {communityPulse.length > 0 && (
+        <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500">Community pulse</p>
+              <h3 className="text-xl font-semibold text-gray-900">Les derniers partages</h3>
+            </div>
+            <Sparkles className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div className="space-y-3">
+            {communityPulse.map((pulse) => (
+              <div key={pulse.id} className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
+                <div>
+                  <p className="text-sm font-semibold text-gray-900">{pulse.name}</p>
+                  <p className="text-xs text-gray-500">{pulse.detail}</p>
+                </div>
+                <span className="text-xs font-semibold text-primary-600">{pulse.metric}</span>
+              </div>
+            ))}
+          </div>
+          <Link
+            href="/share"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary-600"
+          >
+            Voir le mur de partage
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
@@ -1579,6 +1627,20 @@ export default function Feed() {
           })}
         </div>
       )}
+      <div className="md:hidden">
+        <div className="fixed inset-x-4 bottom-4 z-50 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
+          <Link
+            href={quickStart?.href || primarySessionHref}
+            className="btn-primary w-full justify-center"
+          >
+            <Play className="h-4 w-4" />
+            {quickStart?.cta || primarySessionLabel}
+          </Link>
+          <Link href="/dashboard" className="btn-secondary w-full text-center">
+            Accéder au dashboard
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

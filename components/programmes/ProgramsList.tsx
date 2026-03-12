@@ -41,7 +41,7 @@ export default function ProgramsList() {
       window.removeEventListener('fitpulse-program-favorites', apply)
       window.removeEventListener('storage', apply)
     }
-  }, [])
+  }, [mounted])
 
   const filteredPrograms = allPrograms.filter(program => {
     const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
@@ -85,7 +85,7 @@ export default function ProgramsList() {
     } catch {
       return { recommendedProgram: null as (typeof allPrograms)[number] | null, showQuickStart: false }
     }
-  }, [])
+  }, [mounted])
 
   return (
     <div>
@@ -119,15 +119,18 @@ export default function ProgramsList() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-3">
-            <label className="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              placeholder="Nom, objectif ou niveau"
-            />
-          </div>
+            <div className="md:col-span-3">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Recherche</label>
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="Nom, objectif ou niveau"
+              />
+              <p className="text-xs text-gray-500 mt-2">
+                Astuce : les filtres te permettent de garder ton objectif en vue et l&apos;étoile marque un programme à relancer facilement.
+              </p>
+            </div>
           <div className="md:col-span-3 flex flex-wrap gap-2">
             <button
               type="button"
@@ -218,6 +221,7 @@ export default function ProgramsList() {
                 className={`rounded-full p-2 ${isFav ? 'text-amber-500' : 'text-gray-400 hover:text-amber-500'}`}
                 aria-pressed={isFav}
                 aria-label="Favori"
+                title="Installe ce programme parmi tes favoris"
               >
                 <Star className={`h-4 w-4 ${isFav ? 'fill-amber-400' : ''}`} />
               </button>
@@ -280,6 +284,18 @@ export default function ProgramsList() {
           <p className="text-gray-600 text-lg">Aucun programme ne correspond à vos filtres</p>
         </div>
       )}
+      <div className="md:hidden">
+        <div className="fixed inset-x-4 bottom-4 z-40 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
+          <StartProgramButton
+            program={recommendedProgram}
+            label="Démarrer la séance recommandée"
+            className="btn-primary w-full justify-center"
+          />
+          <Link href="/dashboard" className="btn-secondary w-full text-center">
+            Accéder au dashboard
+          </Link>
+        </div>
+      </div>
     </div>
   )
 }

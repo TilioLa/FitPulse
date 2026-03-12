@@ -517,6 +517,7 @@ export default function MySessions() {
         setProgramCompletedSessions(completedForProgram)
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

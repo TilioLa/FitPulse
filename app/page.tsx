@@ -3,6 +3,8 @@ import Hero from '@/components/home/Hero'
 import Benefits from '@/components/home/Benefits'
 import ProgramsPreview from '@/components/home/ProgramsPreview'
 import Onboarding from '@/components/home/Onboarding'
+import JourneyStarter from '@/components/home/JourneyStarter'
+import SuccessWall from '@/components/home/SuccessWall'
 import Testimonials from '@/components/home/Testimonials'
 import FAQ from '@/components/home/FAQ'
 import Footer from '@/components/Footer'
@@ -16,6 +18,8 @@ export default function Home() {
         <Benefits />
         <ProgramsPreview />
         <Onboarding />
+        <JourneyStarter />
+        <SuccessWall />
         <Testimonials />
         <FAQ />
       </main>
