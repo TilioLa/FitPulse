@@ -11,6 +11,7 @@ import { readLocalHistory } from '@/lib/history-store'
 import { recommendProgram } from '@/lib/recommendation'
 import { useSearchParams } from 'next/navigation'
 import { readLocalProgramFavorites, writeLocalProgramFavorites } from '@/lib/favorites-store'
+import type { SharedSessionPayload } from '@/lib/session-share'
 
 type CommunityProgramHighlight = {
   slug: string
@@ -100,7 +101,7 @@ export default function ProgramsList() {
       try {
         const response = await fetch('/api/share/recent')
         if (!response.ok) throw new Error('fetch_failed')
-        const data = (await response.json().catch(() => ({}))) as { shares?: { payload: { programSlug?: string; programName?: string } }[] }
+        const data = (await response.json().catch(() => ({}))) as { shares?: { payload?: SharedSessionPayload }[] }
         if (!active) return
         const shares = Array.isArray(data?.shares) ? data.shares : []
         const map = new Map<string, { name: string; count: number }>()

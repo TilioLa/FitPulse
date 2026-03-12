@@ -10,13 +10,20 @@ import { readLocalSettings } from '@/lib/user-state-store'
 
 const steps = ['Choisir ton objectif', 'Planifier tes séances', 'Lancer la séance']
 
+type LocalSettings = {
+  level?: string
+  goals?: string[]
+  equipment?: string[]
+  sessionsPerWeek?: number
+}
+
 export default function JourneyStarter() {
   const recommendedProgram = useMemo(() => {
     if (typeof window === 'undefined') {
       return programs[0]
     }
     try {
-      const settings = readLocalSettings()
+      const settings = readLocalSettings() as LocalSettings
       const recommendation = recommendProgram(programs, {
         level: settings?.level,
         goals: settings?.goals,

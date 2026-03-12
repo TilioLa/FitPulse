@@ -25,6 +25,7 @@ interface WorkoutHistory {
   volume?: number
   muscleUsage?: { id: string; percent: number }[]
   exercises?: { sets?: { weight: number; reps: number }[] }[]
+  programId?: string
 }
 
 export default function History() {
@@ -200,6 +201,7 @@ export default function History() {
     }, 0)
     return {
       total: totalWorkouts,
+      totalWorkouts,
       streak,
       totalMinutes,
       totalWeight: Math.round(totalWeight),

@@ -6,6 +6,11 @@ import { Clock, Play, Star, TrendingUp } from 'lucide-react'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import { readLocalSettings } from '@/lib/user-state-store'
 
+type SettingsWithGoal = {
+  goal?: string
+  goals?: string[]
+}
+
 const quotes = [
   '“J’ai gardé ma streak et je me sens plus fort chaque semaine.”',
   '“3 séances par semaine, zéro prise de tête.”',
@@ -32,7 +37,7 @@ export default function SuccessWall() {
 
   const goal = useMemo(() => {
     if (typeof window === 'undefined') return 'ton objectif'
-    const settings = readLocalSettings()
+    const settings = readLocalSettings() as SettingsWithGoal
     return settings?.goal || settings?.goals?.[0] || 'ton objectif'
   }, [])
 
