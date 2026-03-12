@@ -39,11 +39,13 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
   const router = useRouter()
   const { user, signOut } = useAuth()
   const { t } = useI18n()
-  const displayName = user?.name || 'Utilisateur'
+  const [mounted, setMounted] = useState(false)
+  const displayName = mounted && user?.name ? user.name : 'Utilisateur'
   const initials = displayName.trim().charAt(0).toUpperCase() || 'U'
   const [sessionInProgress, setSessionInProgress] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
     const syncInProgress = () => {
       const current = readLocalCurrentWorkout() as { status?: string } | null
       setSessionInProgress(current?.status === 'in_progress')

@@ -14,18 +14,20 @@ import { readLocalProgramFavorites, writeLocalProgramFavorites } from '@/lib/fav
 
 export default function ProgramsList() {
   const searchParams = useSearchParams()
+  const [mounted, setMounted] = useState(false)
   const [selectedLevel, setSelectedLevel] = useState<string>('all')
   const [selectedEquipment, setSelectedEquipment] = useState<string>('all')
   const [selectedBodyPart, setSelectedBodyPart] = useState<string>('all')
   const [query, setQuery] = useState('')
   const [onlyFavorites, setOnlyFavorites] = useState(false)
-  const [favorites, setFavorites] = useState<string[]>(() => readLocalProgramFavorites())
+  const [favorites, setFavorites] = useState<string[]>([])
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
   const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilité']
 
   useEffect(() => {
+    setMounted(true)
     const term = searchParams.get('q') || ''
     setQuery(term)
   }, [searchParams])
@@ -56,7 +58,7 @@ export default function ProgramsList() {
   })
 
   const { recommendedProgram, showQuickStart } = useMemo(() => {
-    if (typeof window === 'undefined') {
+    if (!mounted || typeof window === 'undefined') {
       return { recommendedProgram: null as (typeof allPrograms)[number] | null, showQuickStart: false }
     }
     try {
