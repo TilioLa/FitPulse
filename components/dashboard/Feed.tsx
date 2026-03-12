@@ -285,6 +285,8 @@ export default function Feed() {
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
   const [communityPulse, setCommunityPulse] = useState<CommunityPulseEntry[]>([])
+  const [communityPulseLoading, setCommunityPulseLoading] = useState(true)
+  const [communityPulseSource, setCommunityPulseSource] = useState<'shares' | 'history'>('history')
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -303,9 +305,11 @@ export default function Feed() {
       const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
       if (!active) return
       setCommunityPulse(buildPulseEntries(fallbackHistory))
+      setCommunityPulseSource('history')
     }
 
     const loadRecentShares = async () => {
+      setCommunityPulseLoading(true)
       try {
         const response = await fetch('/api/share/recent')
         if (!response.ok) throw new Error('fetch_failed')
@@ -316,12 +320,17 @@ export default function Feed() {
         const entries = buildSharePulseEntries(shares, baseUrl)
         if (entries.length > 0) {
           setCommunityPulse(entries)
+          setCommunityPulseSource('shares')
           return
         }
         setHistoryFallback()
       } catch {
         if (!active) return
         setHistoryFallback()
+      } finally {
+        if (active) {
+          setCommunityPulseLoading(false)
+        }
       }
     }
 
@@ -1122,7 +1131,7 @@ export default function Feed() {
           </Link>
         </div>
       )}
-      {communityPulse.length > 0 && (
+      {(communityPulseLoading || communityPulse.length > 0) && (
         <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -1131,6 +1140,29 @@ export default function Feed() {
             </div>
             <Sparkles className="h-5 w-5 text-emerald-500" />
           </div>
+          <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-3">
+            {communityPulseLoading
+              ? 'Chargement des partages…'
+              : communityPulseSource === 'shares'
+              ? 'Partages récents'
+              : 'Basé sur ton historique local'}
+          </div>
+          {communityPulseLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={`skeleton-${index}`}
+                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 animate-pulse"
+                >
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 w-32 rounded-full bg-gray-200" />
+                    <div className="h-2 w-24 rounded-full bg-gray-200" />
+                  </div>
+                  <div className="h-3 w-12 rounded-full bg-gray-200" />
+                </div>
+              ))}
+            </div>
+          ) : (
           <div className="space-y-3">
             {communityPulse.map((pulse) => {
               const entryContent = (
@@ -1156,6 +1188,7 @@ export default function Feed() {
               )
             })}
           </div>
+          )}
           <Link
             href="/share"
             className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary-600"
