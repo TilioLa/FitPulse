@@ -353,11 +353,13 @@ export default function ProgramsList() {
       )}
       <div className="md:hidden">
         <div className="fixed inset-x-4 bottom-4 z-40 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
-          <StartProgramButton
-            program={recommendedProgram}
-            label="Démarrer la séance recommandée"
-            className="btn-primary w-full justify-center"
-          />
+          {recommendedProgram && (
+            <StartProgramButton
+              program={recommendedProgram}
+              label="Démarrer la séance recommandée"
+              className="btn-primary w-full justify-center"
+            />
+          )}
           <Link href="/dashboard" className="btn-secondary w-full text-center">
             Accéder au dashboard
           </Link>

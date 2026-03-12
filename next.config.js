@@ -8,6 +8,23 @@ const nextConfig = {
         ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
         : "script-src 'self' 'unsafe-inline' https://js.stripe.com"
 
+    const connectSources = [
+      "'self'",
+      "https://*.supabase.co",
+      "wss://*.supabase.co",
+      "https://api.stripe.com",
+    ]
+    if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      try {
+        const { origin } = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL)
+        if (!connectSources.includes(origin)) {
+          connectSources.push(origin)
+        }
+      } catch {}
+    }
+
+    const connectSrc = `connect-src ${connectSources.join(' ')}`
+
     const csp = [
       "default-src 'self'",
       "base-uri 'self'",
@@ -18,7 +35,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://img.youtube.com https://i.ytimg.com https://*.supabase.co",
       "font-src 'self' data:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com",
+      connectSrc,
       "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://js.stripe.com",
       "media-src 'self' blob:",
       "worker-src 'self' blob:",

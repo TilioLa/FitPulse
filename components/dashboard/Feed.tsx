@@ -84,6 +84,8 @@ type CommunityPulseEntry = {
   detail: string
   metric: string
   createdAt: string
+  workoutName?: string
+  href?: string
 }
 
 type ShareRecentRecord = {
@@ -125,6 +127,7 @@ const buildPulseEntries = (history: WorkoutHistoryItem[]): CommunityPulseEntry[]
   return history.slice(0, 4).map((item, index) => ({
     id: item.id,
     author: names[index % names.length],
+    workoutName: item.workoutName || 'Séance partagée',
     detail: `${item.workoutName || 'Séance partagée'} · ${new Date(item.date).toLocaleDateString('fr-FR', {
       weekday: 'short',
       day: '2-digit',
@@ -137,6 +140,48 @@ const buildPulseEntries = (history: WorkoutHistoryItem[]): CommunityPulseEntry[]
       : 'Nouveau badge',
     createdAt: item.date,
   }))
+}
+
+const formatShareMetric = (payload: SharedSessionPayload) => {
+  if (payload.volume && payload.volume > 0) {
+    return `${payload.volume} kg total`
+  }
+  if (payload.duration && payload.duration > 0) {
+    return `${payload.duration} min`
+  }
+  if (payload.calories && payload.calories > 0) {
+    return `${payload.calories} kcal`
+  }
+  if (payload.bestPrKg && payload.bestPrKg > 0) {
+    return `${payload.bestPrKg} kg PR`
+  }
+  return 'Séance partagée'
+}
+
+const formatShareDetail = (payload: SharedSessionPayload, createdAt: string) => {
+  const programLabel = payload.programName ? `${payload.programName} · ` : ''
+  const dateLabel = new Date(createdAt).toLocaleDateString('fr-FR', {
+    weekday: 'short',
+    day: '2-digit',
+    month: 'long',
+  })
+  return `${programLabel}${dateLabel}`
+}
+
+const buildSharePulseEntries = (shares: ShareRecentRecord[], baseUrl: string): CommunityPulseEntry[] => {
+  return shares
+    .slice()
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .map((share) => ({
+      id: share.id,
+      author: share.payload.author || 'Utilisateur FitPulse',
+      detail: formatShareDetail(share.payload, share.created_at),
+      metric: formatShareMetric(share.payload),
+      createdAt: share.created_at,
+      workoutName: share.payload.workoutName || 'Séance partagée',
+      href: `${baseUrl}/share?id=${encodeURIComponent(share.id)}`,
+    }))
+    .slice(0, 4)
 }
 
 const suggestCatchUpDays = (remainingSessions: number, sessionsDoneToday: number) => {
@@ -254,6 +299,12 @@ export default function Feed() {
 
   useEffect(() => {
     let active = true
+    const setHistoryFallback = () => {
+      const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
+      if (!active) return
+      setCommunityPulse(buildPulseEntries(fallbackHistory))
+    }
+
     const loadRecentShares = async () => {
       try {
         const response = await fetch('/api/share/recent')
@@ -261,33 +312,19 @@ export default function Feed() {
         const data = (await response.json().catch(() => ({}))) as { shares?: ShareRecentRecord[] }
         const shares = Array.isArray(data?.shares) ? data.shares : []
         if (!active) return
-        if (shares.length === 0) {
-          const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
-          setCommunityPulse(buildPulseEntries(fallbackHistory))
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
+        const entries = buildSharePulseEntries(shares, baseUrl)
+        if (entries.length > 0) {
+          setCommunityPulse(entries)
           return
         }
-        const entries = shares.map((share) => ({
-          id: share.id,
-          author: share.payload.author || 'Utilisateur FitPulse',
-          detail: `${share.payload.workoutName || 'Séance partagée'} · ${new Date(share.created_at).toLocaleDateString('fr-FR', {
-            weekday: 'short',
-            day: '2-digit',
-            month: 'long',
-          })}`,
-          metric: share.payload.volume
-            ? `${share.payload.volume} kg total`
-            : share.payload.duration
-            ? `${share.payload.duration} min`
-            : 'Nouveau badge',
-          createdAt: share.created_at,
-        }))
-        setCommunityPulse(entries)
-      } catch (error) {
+        setHistoryFallback()
+      } catch {
         if (!active) return
-        const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
-        setCommunityPulse(buildPulseEntries(fallbackHistory))
+        setHistoryFallback()
       }
     }
+
     void loadRecentShares()
     return () => {
       active = false
@@ -1095,15 +1132,29 @@ export default function Feed() {
             <Sparkles className="h-5 w-5 text-emerald-500" />
           </div>
           <div className="space-y-3">
-            {communityPulse.map((pulse) => (
-              <div key={pulse.id} className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{pulse.author}</p>
-                  <p className="text-xs text-gray-500">{pulse.detail}</p>
+            {communityPulse.map((pulse) => {
+              const entryContent = (
+                <>
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">{pulse.workoutName || pulse.author}</p>
+                    <p className="text-xs text-gray-500 mt-1">{pulse.detail}</p>
+                    <p className="text-[10px] uppercase tracking-wide text-gray-500 mt-1">par {pulse.author}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-primary-600">{pulse.metric}</span>
+                </>
+              )
+              const entryClasses =
+                'flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-primary-200'
+              return pulse.href ? (
+                <Link key={pulse.id} href={pulse.href} className={entryClasses}>
+                  {entryContent}
+                </Link>
+              ) : (
+                <div key={pulse.id} className={entryClasses}>
+                  {entryContent}
                 </div>
-                <span className="text-xs font-semibold text-primary-600">{pulse.metric}</span>
-              </div>
-            ))}
+              )
+            })}
           </div>
           <Link
             href="/share"
