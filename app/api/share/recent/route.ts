@@ -12,7 +12,7 @@ type ShareRecord = {
 
 export async function GET() {
   if (!isSupabaseAdminConfigured()) {
-    return NextResponse.json({ ok: false, error: 'missing_supabase_admin_env' }, { status: 500 })
+    return NextResponse.json({ ok: false, shares: [] }, { status: 200 })
   }
   const supabase = getSupabaseAdminClient()
   const { data, error } = await supabase
