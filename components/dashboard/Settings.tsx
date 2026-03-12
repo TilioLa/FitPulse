@@ -174,7 +174,7 @@ export default function Settings() {
   const goalsOptions = ['Perte de poids', 'Prise de masse', 'Endurance', 'Force', 'Souplesse']
   const focusOptions = ['Pectoraux', 'Dos', 'Bras', 'Jambes', 'Épaules', 'Abdos', 'Fessiers']
   const avoidOptions = ['Dos', 'Genoux', 'Épaules', 'Hanches']
-  const equipmentOptions = ['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines de salle']
+  const equipmentOptions = ['Poids du corps', 'Haltères', 'Barres', 'Machines de salle']
   const notificationsSupported = canUseBrowserNotifications()
 
   return (

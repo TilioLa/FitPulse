@@ -30,7 +30,7 @@ export default function ProgramsList() {
   const [favorites, setFavorites] = useState<string[]>([])
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
-  const equipments = ['all', 'Poids du corps', 'Élastiques', 'Machines', 'Haltères', 'Aucun matériel']
+  const equipments = ['all', 'Poids du corps', 'Machines', 'Haltères', 'Barres', 'Aucun matériel']
   const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilité']
 
   useEffect(() => {

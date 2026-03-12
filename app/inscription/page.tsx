@@ -390,7 +390,7 @@ export default function InscriptionPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Équipement disponible</label>
                   <div className="flex flex-wrap gap-2">
-                    {['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines de salle'].map((item) => (
+                    {['Poids du corps', 'Haltères', 'Barres', 'Machines de salle'].map((item) => (
                       <button
                         type="button"
                         key={item}

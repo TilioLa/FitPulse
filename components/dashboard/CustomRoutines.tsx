@@ -285,7 +285,7 @@ export default function CustomRoutines() {
               onChange={(e) => setEquipmentFilter(e.target.value)}
               className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm"
             >
-              {['Tous', 'Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines'].map((item) => (
+              {['Tous', 'Poids du corps', 'Haltères', 'Barres', 'Machines'].map((item) => (
                 <option key={item}>{item}</option>
               ))}
             </select>
@@ -460,7 +460,7 @@ export default function CustomRoutines() {
                   onChange={(e) => setEquipment(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
                 >
-                  {['Poids du corps', 'Élastiques', 'Haltères', 'Barres', 'Machines'].map((item) => (
+                  {['Poids du corps', 'Haltères', 'Barres', 'Machines'].map((item) => (
                     <option key={item}>{item}</option>
                   ))}
                 </select>
