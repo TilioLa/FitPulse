@@ -1199,6 +1199,9 @@ export default function MySessions() {
       calories: lastSummary.calories,
       muscleUsage: lastSummary.muscleUsage,
       bestPrKg: lastSummary.bestPrKg,
+      programId: workout.programId,
+      programName: workout.programName,
+      programSlug: workout.programName ? slugify(workout.programName) : undefined,
     }
 
     let url: string | null = null

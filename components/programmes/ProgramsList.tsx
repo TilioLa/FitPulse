@@ -12,6 +12,12 @@ import { recommendProgram } from '@/lib/recommendation'
 import { useSearchParams } from 'next/navigation'
 import { readLocalProgramFavorites, writeLocalProgramFavorites } from '@/lib/favorites-store'
 
+type CommunityProgramHighlight = {
+  slug: string
+  name: string
+  count: number
+}
+
 export default function ProgramsList() {
   const searchParams = useSearchParams()
   const [mounted, setMounted] = useState(false)
@@ -86,6 +92,39 @@ export default function ProgramsList() {
       return { recommendedProgram: null as (typeof allPrograms)[number] | null, showQuickStart: false }
     }
   }, [mounted])
+  const [communityHighlights, setCommunityHighlights] = useState<CommunityProgramHighlight[]>([])
+
+  useEffect(() => {
+    let active = true
+    const loadShareHighlights = async () => {
+      try {
+        const response = await fetch('/api/share/recent')
+        if (!response.ok) throw new Error('fetch_failed')
+        const data = (await response.json().catch(() => ({}))) as { shares?: { payload: { programSlug?: string; programName?: string } }[] }
+        if (!active) return
+        const shares = Array.isArray(data?.shares) ? data.shares : []
+        const map = new Map<string, { name: string; count: number }>()
+        shares.forEach((share) => {
+          const slug = share?.payload?.programSlug || 'share'
+          const name = share?.payload?.programName || share?.payload?.workoutName || 'Séance partagée'
+          const entry = map.get(slug) || { name, count: 0 }
+          entry.count += 1
+          map.set(slug, entry)
+        })
+        const highlights = Array.from(map.entries())
+          .filter(([slug]) => slug !== 'share')
+          .map(([slug, info]) => ({ slug, name: info.name, count: info.count }))
+        setCommunityHighlights(highlights.slice(0, 3))
+      } catch {
+        if (!active) return
+        setCommunityHighlights([])
+      }
+    }
+    void loadShareHighlights()
+    return () => {
+      active = false
+    }
+  }, [])
 
   return (
     <div>
@@ -107,6 +146,34 @@ export default function ProgramsList() {
             <Link href={`/programmes/${recommendedProgram.slug}`} className="btn-secondary w-full sm:w-auto text-center">
               Voir le détail
             </Link>
+          </div>
+        </div>
+      )}
+      {communityHighlights.length > 0 && (
+        <div className="card-soft mb-8 border border-primary-100 bg-white">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-xs uppercase tracking-wider text-gray-500">Communauté</p>
+              <h3 className="text-lg font-semibold text-gray-900">Programmes partagés</h3>
+            </div>
+            <Link href="/share" className="text-sm font-semibold text-primary-600">
+              Voir le mur
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {communityHighlights.map((highlight) => (
+              <div key={highlight.slug} className="rounded-xl border border-gray-100 bg-primary-50/40 p-4 flex flex-col">
+                <div className="text-sm font-semibold text-gray-900">{highlight.name}</div>
+                <div className="text-xs text-gray-500">Partages récents</div>
+                <div className="mt-3 text-2xl font-bold text-primary-600">{highlight.count}</div>
+                <Link
+                  href={`/programmes/${highlight.slug}`}
+                  className="mt-3 text-xs font-semibold text-primary-700"
+                >
+                  Voir le programme
+                </Link>
+              </div>
+            ))}
           </div>
         </div>
       )}
