@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowRight, Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target, Sparkles } from 'lucide-react'
+import { ArrowRight, Calendar, Clock, Play, Sparkles, Trophy, Activity, Flame, Timer, Target } from 'lucide-react'
 import { computeHistoryStats, toLocalDateKey, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
@@ -13,6 +13,7 @@ import { applyHistoryLimit, getEntitlement, hasProAccess, readBusinessSignals } 
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCurrentWorkout, readLocalSettings } from '@/lib/user-state-store'
 import { useToast } from '@/components/ui/ToastProvider'
+import type { SharedSessionPayload } from '@/lib/session-share'
 
 type FeedItem = {
   id: string
@@ -77,6 +78,20 @@ type ExerciseProgress = {
   regularity30d: number
 }
 
+type CommunityPulseEntry = {
+  id: string
+  author: string
+  detail: string
+  metric: string
+  createdAt: string
+}
+
+type ShareRecentRecord = {
+  id: string
+  created_at: string
+  payload: SharedSessionPayload
+}
+
 const toDayKey = (value: string) => value.slice(0, 10)
 
 const computeBestStreak = (dates: string[]) => {
@@ -103,6 +118,25 @@ const computeBestStreak = (dates: string[]) => {
 const estimateOneRm = (weight: number, reps: number) => {
   if (weight <= 0 || reps <= 0) return 0
   return Math.round(weight * (1 + reps / 30))
+}
+
+const buildPulseEntries = (history: WorkoutHistoryItem[]): CommunityPulseEntry[] => {
+  const names = ['Sofia', 'Noah', 'Léa', 'Milo', 'Camille']
+  return history.slice(0, 4).map((item, index) => ({
+    id: item.id,
+    author: names[index % names.length],
+    detail: `${item.workoutName || 'Séance partagée'} · ${new Date(item.date).toLocaleDateString('fr-FR', {
+      weekday: 'short',
+      day: '2-digit',
+      month: 'long',
+    })}`,
+    metric: item.volume
+      ? `${item.volume} kg total`
+      : item.calories
+      ? `${item.calories} kcal`
+      : 'Nouveau badge',
+    createdAt: item.date,
+  }))
 }
 
 const suggestCatchUpDays = (remainingSessions: number, sessionsDoneToday: number) => {
@@ -205,6 +239,7 @@ export default function Feed() {
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
+  const [communityPulse, setCommunityPulse] = useState<CommunityPulseEntry[]>([])
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -214,6 +249,48 @@ export default function Feed() {
     return () => {
       window.removeEventListener('fitpulse-plan', applyPlan)
       window.removeEventListener('storage', applyPlan)
+    }
+  }, [])
+
+  useEffect(() => {
+    let active = true
+    const loadRecentShares = async () => {
+      try {
+        const response = await fetch('/api/share/recent')
+        if (!response.ok) throw new Error('fetch_failed')
+        const data = (await response.json().catch(() => ({}))) as { shares?: ShareRecentRecord[] }
+        const shares = Array.isArray(data?.shares) ? data.shares : []
+        if (!active) return
+        if (shares.length === 0) {
+          const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
+          setCommunityPulse(buildPulseEntries(fallbackHistory))
+          return
+        }
+        const entries = shares.map((share) => ({
+          id: share.id,
+          author: share.payload.author || 'Utilisateur FitPulse',
+          detail: `${share.payload.workoutName || 'Séance partagée'} · ${new Date(share.created_at).toLocaleDateString('fr-FR', {
+            weekday: 'short',
+            day: '2-digit',
+            month: 'long',
+          })}`,
+          metric: share.payload.volume
+            ? `${share.payload.volume} kg total`
+            : share.payload.duration
+            ? `${share.payload.duration} min`
+            : 'Nouveau badge',
+          createdAt: share.created_at,
+        }))
+        setCommunityPulse(entries)
+      } catch (error) {
+        if (!active) return
+        const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
+        setCommunityPulse(buildPulseEntries(fallbackHistory))
+      }
+    }
+    void loadRecentShares()
+    return () => {
+      active = false
     }
   }, [])
 
@@ -939,24 +1016,6 @@ export default function Feed() {
     month: 'long',
   })
 
-  const storedCommunityHistory = readLocalHistory()
-  const communityPulse = storedCommunityHistory.length === 0
-    ? []
-    : storedCommunityHistory.slice(0, 4).map((item, index) => {
-        const names = ['Sofia', 'Noah', 'Léa', 'Milo', 'Camille']
-        const detail = `${item.duration} min • ${item.programName || 'programme FitPulse'}`
-        const metric = item.volume
-          ? `${item.volume} kg total`
-          : item.calories
-          ? `${item.calories} kcal`
-          : 'Nouveau badge'
-        return {
-          id: `${item.id}-${index}`,
-          name: names[index % names.length],
-          detail,
-          metric,
-        }
-      })
   const primarySessionHref = resumeSessionHref || '/dashboard?view=session'
   const primarySessionLabel = resumeSessionHref ? 'Reprendre la séance' : 'Démarrer une séance'
 
@@ -1039,7 +1098,7 @@ export default function Feed() {
             {communityPulse.map((pulse) => (
               <div key={pulse.id} className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">{pulse.name}</p>
+                  <p className="text-sm font-semibold text-gray-900">{pulse.author}</p>
                   <p className="text-xs text-gray-500">{pulse.detail}</p>
                 </div>
                 <span className="text-xs font-semibold text-primary-600">{pulse.metric}</span>
