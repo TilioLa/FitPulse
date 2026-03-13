@@ -7,7 +7,7 @@ import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { Search, Plus, Dumbbell, Star, Download } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
-import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/lib/exercise-insights'
+import { getExerciseInsights, type ExerciseGoal } from '@/lib/exercise-insights'
 import { readLocalHistory } from '@/lib/history-store'
 import {
   readLocalCustomExercises,
@@ -44,7 +44,6 @@ function ExercicesPageContent() {
   const [query, setQuery] = useState('')
   const [equipment, setEquipment] = useState('all')
   const [muscle, setMuscle] = useState('all')
-  const [level, setLevel] = useState<'all' | ExerciseLevel>('all')
   const [goal, setGoal] = useState<'all' | ExerciseGoal>('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
@@ -108,12 +107,11 @@ function ExercicesPageContent() {
       const matchEquip = equipment === 'all' || ex.equipment.includes(equipment)
       const matchMuscle = muscle === 'all' || ex.tags.includes(muscle)
       const insights = getExerciseInsights(ex)
-      const matchLevel = level === 'all' || insights.level === level
       const matchGoal = goal === 'all' || insights.goals.includes(goal)
       const matchFav = !onlyFavorites || favorites.includes(ex.id)
-      return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal && matchFav
+      return matchQuery && matchEquip && matchMuscle && matchGoal && matchFav
     })
-  }, [allExercises, query, equipment, muscle, level, goal, onlyFavorites, favorites])
+  }, [allExercises, query, equipment, muscle, goal, onlyFavorites, favorites])
 
   const goalOptions = useMemo(() => {
     const set = new Set<ExerciseGoal>()
@@ -551,16 +549,6 @@ function ExercicesPageContent() {
                       </option>
                     ))}
                     </select>
-                  <select
-                    value={level}
-                    onChange={(e) => setLevel(e.target.value as 'all' | ExerciseLevel)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    <option value="all">Tous niveaux</option>
-                    <option value="beginner">Débutant</option>
-                    <option value="intermediate">Intermédiaire</option>
-                    <option value="advanced">Avancé</option>
-                  </select>
                   <select
                     value={goal}
                     onChange={(e) => setGoal(e.target.value as 'all' | ExerciseGoal)}
