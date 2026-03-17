@@ -66,6 +66,14 @@ export default function TicketsPage() {
   const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [sendError, setSendError] = useState<string | null>(null)
   const [attachment, setAttachment] = useState<TicketAttachment | null>(null)
+  const sendErrorLabel: Record<string, string> = {
+    configuration_email_incomplete: 'configuration email incomplète',
+    missing_smtp_env: 'variables SMTP manquantes',
+    smtp_auth_failed: 'auth SMTP invalide (app password)',
+    smtp_connection_failed: 'connexion SMTP impossible',
+    smtp_timeout: 'timeout SMTP',
+    send_failed: 'envoi impossible',
+  }
 
   useEffect(() => {
     setTickets(loadTickets())
@@ -384,7 +392,8 @@ export default function TicketsPage() {
                     )}
                     {sendState === 'error' && (
                       <p className="text-sm text-red-600" role="alert">
-                        Envoi support échoué{sendError ? ` (${sendError})` : ''}. Tu peux réessayer.
+                        Envoi support échoué
+                        {sendError ? ` (${sendErrorLabel[sendError] || sendError})` : ''}. Tu peux réessayer.
                       </p>
                     )}
                   </form>
