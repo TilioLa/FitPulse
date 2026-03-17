@@ -75,7 +75,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <div className="card">
-                  <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-4 sm:-m-6 mb-6`}></div>
+                  <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 mb-6`}></div>
                   <h1 className="section-title mb-3">{program.name}</h1>
                   <p className="text-gray-600 mb-6">{program.description}</p>
 

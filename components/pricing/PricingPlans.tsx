@@ -22,7 +22,7 @@ export default function PricingPlans() {
           </span>
         </div>
 
-        <div className="h-2 bg-gradient-to-r from-primary-500 to-primary-700 rounded-t-xl -m-6 mb-6"></div>
+        <div className="h-2 bg-gradient-to-r from-primary-500 to-primary-700 rounded-t-xl -mx-6 -mt-6 mb-6"></div>
 
         <div className="text-center mb-6">
           <div className="inline-block mb-4 text-primary-600">

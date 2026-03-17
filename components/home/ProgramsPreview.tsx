@@ -23,7 +23,7 @@ export default function ProgramsPreview() {
               className="card group hover:scale-105 transition-transform duration-300 reveal"
               style={{ animationDelay: `${index * 80}ms` }}
             >
-              <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-4 sm:-m-6 mb-4`}></div>
+              <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 mb-4`}></div>
               <div className="flex items-center justify-between mb-4">
                 <Dumbbell className="h-8 w-8 text-primary-600" />
                 <span className="px-3 py-1 bg-primary-100 text-primary-700 text-sm font-semibold rounded-full">

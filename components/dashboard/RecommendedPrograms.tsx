@@ -102,7 +102,7 @@ export default function RecommendedPrograms() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {programs.map((program) => (
           <div key={program.id} className="card group hover:scale-105 transition-transform duration-300">
-            <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-6 mb-4`}></div>
+            <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -mx-6 -mt-6 mb-4`}></div>
             
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">

@@ -268,7 +268,7 @@ export default function ProgramsList() {
             className="card-soft group hover:shadow-md transition-transform duration-300 reveal border border-transparent hover:border-primary-200"
             style={{ animationDelay: `${index * 60}ms` }}
           >
-          <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-4 sm:-m-6 mb-4`}></div>
+          <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -mx-4 -mt-4 sm:-mx-6 sm:-mt-6 mb-4`}></div>
             
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
