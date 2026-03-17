@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowRight, Calendar, Clock, Play, Sparkles, Trophy, Activity, Flame, Timer, Target } from 'lucide-react'
+import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target } from 'lucide-react'
 import { computeHistoryStats, toLocalDateKey, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
@@ -78,22 +78,6 @@ type ExerciseProgress = {
   regularity30d: number
 }
 
-type CommunityPulseEntry = {
-  id: string
-  author: string
-  detail: string
-  metric: string
-  createdAt: string
-  workoutName?: string
-  href?: string
-}
-
-type ShareRecentRecord = {
-  id: string
-  created_at: string
-  payload: SharedSessionPayload
-}
-
 const toDayKey = (value: string) => value.slice(0, 10)
 
 const computeBestStreak = (dates: string[]) => {
@@ -120,68 +104,6 @@ const computeBestStreak = (dates: string[]) => {
 const estimateOneRm = (weight: number, reps: number) => {
   if (weight <= 0 || reps <= 0) return 0
   return Math.round(weight * (1 + reps / 30))
-}
-
-const buildPulseEntries = (history: WorkoutHistoryItem[]): CommunityPulseEntry[] => {
-  const names = ['Sofia', 'Noah', 'Léa', 'Milo', 'Camille']
-  return history.slice(0, 4).map((item, index) => ({
-    id: item.id,
-    author: names[index % names.length],
-    workoutName: item.workoutName || 'Séance partagée',
-    detail: `${item.workoutName || 'Séance partagée'} · ${new Date(item.date).toLocaleDateString('fr-FR', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'long',
-    })}`,
-    metric: item.volume
-      ? `${item.volume} kg total`
-      : item.calories
-      ? `${item.calories} kcal`
-      : 'Nouveau badge',
-    createdAt: item.date,
-  }))
-}
-
-const formatShareMetric = (payload: SharedSessionPayload) => {
-  if (payload.volume && payload.volume > 0) {
-    return `${payload.volume} kg total`
-  }
-  if (payload.duration && payload.duration > 0) {
-    return `${payload.duration} min`
-  }
-  if (payload.calories && payload.calories > 0) {
-    return `${payload.calories} kcal`
-  }
-  if (payload.bestPrKg && payload.bestPrKg > 0) {
-    return `${payload.bestPrKg} kg PR`
-  }
-  return 'Séance partagée'
-}
-
-const formatShareDetail = (payload: SharedSessionPayload, createdAt: string) => {
-  const programLabel = payload.programName ? `${payload.programName} · ` : ''
-  const dateLabel = new Date(createdAt).toLocaleDateString('fr-FR', {
-    weekday: 'short',
-    day: '2-digit',
-    month: 'long',
-  })
-  return `${programLabel}${dateLabel}`
-}
-
-const buildSharePulseEntries = (shares: ShareRecentRecord[], baseUrl: string): CommunityPulseEntry[] => {
-  return shares
-    .slice()
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .map((share) => ({
-      id: share.id,
-      author: share.payload.author || 'Utilisateur FitPulse',
-      detail: formatShareDetail(share.payload, share.created_at),
-      metric: formatShareMetric(share.payload),
-      createdAt: share.created_at,
-      workoutName: share.payload.workoutName || 'Séance partagée',
-      href: `${baseUrl}/share?id=${encodeURIComponent(share.id)}`,
-    }))
-    .slice(0, 4)
 }
 
 const suggestCatchUpDays = (remainingSessions: number, sessionsDoneToday: number) => {
@@ -284,9 +206,6 @@ export default function Feed() {
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
-  const [communityPulse, setCommunityPulse] = useState<CommunityPulseEntry[]>([])
-  const [communityPulseLoading, setCommunityPulseLoading] = useState(true)
-  const [communityPulseSource, setCommunityPulseSource] = useState<'shares' | 'history'>('history')
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -296,47 +215,6 @@ export default function Feed() {
     return () => {
       window.removeEventListener('fitpulse-plan', applyPlan)
       window.removeEventListener('storage', applyPlan)
-    }
-  }, [])
-
-  useEffect(() => {
-    let active = true
-    const setHistoryFallback = () => {
-      const fallbackHistory = readLocalHistory() as WorkoutHistoryItem[]
-      if (!active) return
-      setCommunityPulse(buildPulseEntries(fallbackHistory))
-      setCommunityPulseSource('history')
-    }
-
-    const loadRecentShares = async () => {
-      setCommunityPulseLoading(true)
-      try {
-        const response = await fetch('/api/share/recent')
-        if (!response.ok) throw new Error('fetch_failed')
-        const data = (await response.json().catch(() => ({}))) as { shares?: ShareRecentRecord[] }
-        const shares = Array.isArray(data?.shares) ? data.shares : []
-        if (!active) return
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
-        const entries = buildSharePulseEntries(shares, baseUrl)
-        if (entries.length > 0) {
-          setCommunityPulse(entries)
-          setCommunityPulseSource('shares')
-          return
-        }
-        setHistoryFallback()
-      } catch {
-        if (!active) return
-        setHistoryFallback()
-      } finally {
-        if (active) {
-          setCommunityPulseLoading(false)
-        }
-      }
-    }
-
-    void loadRecentShares()
-    return () => {
-      active = false
     }
   }, [])
 
@@ -1128,73 +1006,6 @@ export default function Feed() {
           <div className="mt-1 text-sm text-gray-600">{quickStart.body}</div>
           <Link href={quickStart.href} className="mt-3 inline-flex btn-primary">
             {quickStart.cta}
-          </Link>
-        </div>
-      )}
-      {(communityPulseLoading || communityPulse.length > 0) && (
-        <div className="mb-8 rounded-2xl border border-gray-100 bg-white p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-xs uppercase tracking-wider text-gray-500">Community pulse</p>
-              <h3 className="text-xl font-semibold text-gray-900">Les derniers partages</h3>
-            </div>
-            <Sparkles className="h-5 w-5 text-emerald-500" />
-          </div>
-          <div className="text-[10px] uppercase tracking-wide text-gray-400 mb-3">
-            {communityPulseLoading
-              ? 'Chargement des partages…'
-              : communityPulseSource === 'shares'
-              ? 'Partages récents'
-              : 'Basé sur ton historique local'}
-          </div>
-          {communityPulseLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={`skeleton-${index}`}
-                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 animate-pulse"
-                >
-                  <div className="flex-1 space-y-2">
-                    <div className="h-3 w-32 rounded-full bg-gray-200" />
-                    <div className="h-2 w-24 rounded-full bg-gray-200" />
-                  </div>
-                  <div className="h-3 w-12 rounded-full bg-gray-200" />
-                </div>
-              ))}
-            </div>
-          ) : (
-          <div className="space-y-3">
-            {communityPulse.map((pulse) => {
-              const entryContent = (
-                <>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-gray-900">{pulse.workoutName || pulse.author}</p>
-                    <p className="text-xs text-gray-500 mt-1">{pulse.detail}</p>
-                    <p className="text-[10px] uppercase tracking-wide text-gray-500 mt-1">par {pulse.author}</p>
-                  </div>
-                  <span className="text-xs font-semibold text-primary-600">{pulse.metric}</span>
-                </>
-              )
-              const entryClasses =
-                'flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 px-4 py-3 transition hover:border-primary-200'
-              return pulse.href ? (
-                <Link key={pulse.id} href={pulse.href} className={entryClasses}>
-                  {entryContent}
-                </Link>
-              ) : (
-                <div key={pulse.id} className={entryClasses}>
-                  {entryContent}
-                </div>
-              )
-            })}
-          </div>
-          )}
-          <Link
-            href="/share"
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary-600"
-          >
-            Voir le mur de partage
-            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}

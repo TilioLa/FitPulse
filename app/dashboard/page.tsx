@@ -38,9 +38,6 @@ const ProgramsList = dynamic(() => import('@/components/programmes/ProgramsList'
 const CustomRoutines = dynamic(() => import('@/components/dashboard/CustomRoutines'), {
   loading: () => <SectionSkeleton />,
 })
-const Settings = dynamic(() => import('@/components/dashboard/Settings'), {
-  loading: () => <SectionSkeleton />,
-})
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false)
@@ -301,8 +298,6 @@ function DashboardPageContent() {
         return <ProgramsList />
       case 'routines':
         return <CustomRoutines />
-      case 'settings':
-        return <Settings />
       case 'exercises':
         return <div />
       default:

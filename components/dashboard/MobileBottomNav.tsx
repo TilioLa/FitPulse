@@ -1,10 +1,10 @@
 'use client'
 
-import { Activity, BookOpen, Dumbbell, Home, Settings as SettingsIcon, TrendingUp, Sparkles } from 'lucide-react'
+import { Activity, BookOpen, Dumbbell, Home, TrendingUp, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
-type DashboardSection = 'feed' | 'progress' | 'recommendations' | 'session' | 'history' | 'programs' | 'routines' | 'settings' | 'exercises'
+type DashboardSection = 'feed' | 'progress' | 'recommendations' | 'session' | 'history' | 'programs' | 'routines' | 'exercises'
 
 type NavItem = {
   id: DashboardSection
@@ -19,7 +19,6 @@ const navItems: NavItem[] = [
   { id: 'session', label: 'Séance', icon: Activity },
   { id: 'programs', label: 'Programmes', icon: BookOpen },
   { id: 'exercises', label: 'Exercices', icon: Dumbbell },
-  { id: 'settings', label: 'Réglages', icon: SettingsIcon },
 ]
 
 export default function MobileBottomNav({

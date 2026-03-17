@@ -30,6 +30,8 @@
     "@types/node": "^20.10.5",
     "@types/react": "^18.2.45",
     "@types/react-dom": "^18.2.18",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "autoprefixer": "^10.4.16",
     "eslint": "^9.39.2",
     "eslint-config-next": "^16.1.6",

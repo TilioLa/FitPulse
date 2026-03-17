@@ -6,7 +6,6 @@ export type DashboardSection =
   | 'session'
   | 'programs'
   | 'routines'
-  | 'settings'
   | 'exercises'
 
 export function viewToSection(view: string | null): DashboardSection | null {
@@ -25,8 +24,6 @@ export function viewToSection(view: string | null): DashboardSection | null {
       return 'programs'
     case 'routines':
       return 'routines'
-    case 'settings':
-      return 'settings'
     case 'exercises':
       return 'exercises'
     default:

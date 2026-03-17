@@ -2,6 +2,7 @@
 
 import { useMemo, useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Image from 'next/image'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
@@ -315,6 +316,15 @@ function ExercicesPageContent() {
                 <div className="max-w-4xl w-full">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
+                    <div className="hidden sm:flex items-center justify-center">
+                      <Image
+                        src="/images/dumbbell.svg"
+                        alt="Illustration d'haltère"
+                        width={80}
+                        height={80}
+                        className="h-20 w-20"
+                      />
+                    </div>
                       <div className="h-14 w-14 rounded-xl border border-gray-200 bg-white flex items-center justify-center">
                         <Dumbbell className="h-6 w-6 text-gray-500" />
                       </div>
