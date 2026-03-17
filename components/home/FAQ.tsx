@@ -12,13 +12,13 @@ export default function FAQ() {
   }
 
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-14 sm:py-20 bg-gray-50">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4">
+        <div className="text-center mb-10 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Questions fréquentes
           </h2>
-          <p className="text-xl text-gray-600">
+          <p className="text-base sm:text-xl text-gray-600">
             Tout ce que vous devez savoir sur FitPulse
           </p>
         </div>
@@ -33,7 +33,7 @@ export default function FAQ() {
                 aria-expanded={openIndex === index}
                 aria-controls={`faq-panel-${index}`}
               >
-                <span className="text-lg font-semibold text-gray-900 pr-8">
+                <span className="text-base sm:text-lg font-semibold text-gray-900 pr-8">
                   {faq.question}
                 </span>
                 {openIndex === index ? (

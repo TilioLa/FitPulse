@@ -54,7 +54,7 @@ export default function SuccessWall() {
         <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-primary-600">Succès</p>
-            <h2 className="text-3xl font-bold text-gray-900">Une piste claire vers de vrais résultats</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Une piste claire vers de vrais résultats</h2>
             <p className="text-gray-600 max-w-2xl">
               Reste sur la bonne voie : garde ta streak, mesure ton temps d&apos;entraînement et vois ce que cela donne sur ton {goal}.
             </p>
@@ -65,13 +65,13 @@ export default function SuccessWall() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-8">
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-6">
             <div className="flex items-center justify-between mb-3">
               <div className="text-xs uppercase tracking-wider text-gray-500">Streak actuel</div>
               <Star className="h-5 w-5 text-yellow-500" />
             </div>
-            <div className="text-4xl font-bold text-gray-900">{stats.streak}</div>
+            <div className="text-3xl sm:text-4xl font-bold text-gray-900">{stats.streak}</div>
             <p className="text-sm text-gray-500">jours consécutifs</p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-6">
@@ -79,7 +79,7 @@ export default function SuccessWall() {
               <div className="text-xs uppercase tracking-wider text-gray-500">Temps total</div>
               <Clock className="h-5 w-5 text-primary-600" />
             </div>
-            <div className="text-4xl font-bold text-gray-900">{stats.minutes}</div>
+            <div className="text-3xl sm:text-4xl font-bold text-gray-900">{stats.minutes}</div>
             <p className="text-sm text-gray-500">minutes</p>
           </div>
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-6">
@@ -87,7 +87,7 @@ export default function SuccessWall() {
               <div className="text-xs uppercase tracking-wider text-gray-500">Séances complétées</div>
               <Play className="h-5 w-5 text-emerald-500" />
             </div>
-            <div className="text-4xl font-bold text-gray-900">{stats.workouts}</div>
+            <div className="text-3xl sm:text-4xl font-bold text-gray-900">{stats.workouts}</div>
             <p className="text-sm text-gray-500">réalisées</p>
           </div>
         </div>

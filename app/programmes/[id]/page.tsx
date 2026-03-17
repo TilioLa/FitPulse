@@ -35,7 +35,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
         <WithSidebar active="programs">
-          <main className="flex-grow py-12">
+          <main className="flex-grow py-6 lg:py-12">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
               <div className="card">
                 <h1 className="text-2xl font-semibold text-gray-900 mb-2">Programme introuvable</h1>
@@ -63,7 +63,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <WithSidebar active="programs">
-        <main className="flex-grow py-12">
+        <main className="flex-grow py-6 lg:py-12">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-10">
               <Link href="/programmes" className="text-sm text-primary-600 hover:text-primary-700">
@@ -75,7 +75,7 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2">
                 <div className="card">
-                  <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-6 mb-6`}></div>
+                  <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-4 sm:-m-6 mb-6`}></div>
                   <h1 className="section-title mb-3">{program.name}</h1>
                   <p className="text-gray-600 mb-6">{program.description}</p>
 

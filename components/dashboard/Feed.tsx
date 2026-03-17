@@ -1075,7 +1075,7 @@ export default function Feed() {
       )}
 
       {focus && (
-        <div className="mb-8 rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-white p-8 shadow-sm reveal">
+        <div className="mb-8 rounded-2xl border border-primary-100 bg-gradient-to-br from-primary-50 via-white to-white p-5 sm:p-8 shadow-sm reveal">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Focus du jour</div>
@@ -1153,7 +1153,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 reveal reveal-1">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 reveal reveal-1">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
@@ -1220,23 +1220,25 @@ export default function Feed() {
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Tendance 7 jours</div>
             <Activity className="h-5 w-5 text-primary-500" />
           </div>
-          <div className="grid grid-cols-7 gap-2 items-end h-24">
-            {weekTrend.map((day) => {
-              const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
-              return (
-                <div key={day.day} className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-500">{day.sessions}</span>
-                  <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
-                    <div
-                      className="w-full bg-primary-600 rounded-t"
-                      style={{ height: `${barHeight}%` }}
-                      title={`${day.sessions} séance(s), ${day.minutes} min`}
-                    />
+          <div className="scroll-x-touch">
+            <div className="grid min-w-[320px] grid-cols-7 gap-2 items-end h-24">
+              {weekTrend.map((day) => {
+                const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
+                return (
+                  <div key={day.day} className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] text-gray-500">{day.sessions}</span>
+                    <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
+                      <div
+                        className="w-full bg-primary-600 rounded-t"
+                        style={{ height: `${barHeight}%` }}
+                        title={`${day.sessions} séance(s), ${day.minutes} min`}
+                      />
+                    </div>
+                    <span className="text-[10px] text-gray-500 uppercase">{day.day.replace('.', '')}</span>
                   </div>
-                  <span className="text-[10px] text-gray-500 uppercase">{day.day.replace('.', '')}</span>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
           <p className="mt-3 text-xs text-gray-500">Barres basées sur le nombre de séances par jour.</p>
         </div>
@@ -1363,7 +1365,7 @@ export default function Feed() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 reveal reveal-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 reveal reveal-1">
         <div className="card-compact transition-all hover:-translate-y-0.5 hover:shadow-md">
           <div className="flex items-center justify-between">
             <div>
@@ -1473,7 +1475,7 @@ export default function Feed() {
       <div className={`card-compact mb-8 ${!hasProAccess(entitlement) ? 'opacity-75' : ''}`}>
         <div className="text-xs text-gray-500">Comparaison mensuelle</div>
         {hasProAccess(entitlement) ? (
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-sm">
             <div className="rounded-lg bg-gray-50 px-3 py-2">
               Ce mois: <span className="font-semibold text-gray-900">{monthlyCompare.currentVolume} kg</span>
             </div>
@@ -1543,10 +1545,10 @@ export default function Feed() {
             return (
               <Link key={item.id} href={href} className="block group">
                 <div className="card hover:shadow-xl transition-shadow border border-transparent group-hover:border-primary-200">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900">{item.workoutName}</h3>
-                      <div className="flex items-center space-x-4 text-gray-600 text-sm mt-1">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 gap-1 sm:gap-0 text-gray-600 text-sm mt-1">
                         <div className="flex items-center space-x-1">
                           <Calendar className="h-4 w-4" />
                           <span>{formatDate(item.date)}</span>
@@ -1569,7 +1571,7 @@ export default function Feed() {
                         </div>
                       )}
                     </div>
-                    <div className="ml-4">
+                    <div className="sm:ml-4">
                       <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
                         Terminée
                       </div>
@@ -1582,7 +1584,7 @@ export default function Feed() {
         </div>
       )}
       <div className="md:hidden">
-        <div className="fixed inset-x-4 bottom-4 z-50 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
+        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-50 flex flex-col gap-3 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
           <Link
             href={quickStart?.href || primarySessionHref}
             className="btn-primary w-full justify-center"

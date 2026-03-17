@@ -4,30 +4,30 @@ import TourCta from '@/components/home/TourCta'
 
 export default function Hero() {
   return (
-    <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-20">
+    <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-14 sm:py-20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight reveal">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 leading-tight reveal">
             Un coach clair, des séances efficaces
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto reveal reveal-1">
+          <p className="text-base sm:text-lg md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto reveal reveal-1">
             Des programmes structurés, adaptés à votre niveau.
             Poids du corps, élastiques ou machines.
             Avancez avec un plan simple et mesurable.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 reveal reveal-2">
-            <Link href="/inscription" className="btn-primary bg-white text-primary-600 hover:bg-primary-50 text-lg px-8 py-4 flex items-center space-x-2">
+            <Link href="/inscription" className="btn-primary w-full sm:w-auto bg-white text-primary-600 hover:bg-primary-50 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center justify-center space-x-2">
               <span>Commencez gratuitement</span>
               <ArrowRight className="h-5 w-5" />
             </Link>
-            <Link href="/programmes" className="btn-secondary border-white text-lg px-8 py-4">
+            <Link href="/programmes" className="btn-secondary w-full sm:w-auto border-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 text-center">
               Découvrir les programmes
             </Link>
             <TourCta />
           </div>
           
           {/* Features icons */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-16 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mt-12 sm:mt-16 max-w-4xl mx-auto">
             <div className="flex flex-col items-center reveal reveal-1">
               <div className="bg-white/20 rounded-full p-4 mb-4">
                 <Dumbbell className="h-8 w-8" />

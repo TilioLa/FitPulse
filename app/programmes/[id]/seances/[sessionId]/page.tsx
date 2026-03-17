@@ -204,7 +204,7 @@ export default function SessionDetailPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <WithSidebar active="session">
-        <main className="flex-grow py-12">
+        <main className="flex-grow py-6 lg:py-12">
           <div className="page-wrap">
           {!program || !session ? (
             <div className="card-soft text-center py-12">
@@ -233,9 +233,9 @@ export default function SessionDetailPage() {
                 </Link>
               </div>
 
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 lg:gap-8">
                 <div className="card-soft">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div>
                       <h1 className="text-xl lg:text-2xl font-semibold text-gray-900">{session.name}</h1>
                       <div className="text-xs text-gray-500 mt-1">{session.focus}</div>
@@ -243,7 +243,7 @@ export default function SessionDetailPage() {
                         <EquipmentBadge equipment={program.equipment} />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => setIsEditing((prev) => !prev)}
                         className="btn-secondary px-3 py-2 text-xs flex items-center gap-2"
@@ -255,7 +255,7 @@ export default function SessionDetailPage() {
                         program={program}
                         sessionId={session.id}
                         label={isStarted ? 'Séance en cours' : 'Démarrer la séance'}
-                        className="btn-primary px-4 py-2 text-sm"
+                        className="btn-primary w-full sm:w-auto px-4 py-2 text-sm"
                         onStart={handleStart}
                         hrefOverride="/dashboard?view=session"
                         overrideExercises={sessionExercises}
@@ -287,17 +287,17 @@ export default function SessionDetailPage() {
                             Ajoute, remplace ou supprime des exercices. Les changements sont sauvés pour toi.
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
                           <button
                             onClick={() => saveOverrides(sessionExercises)}
-                            className="btn-primary px-3 py-2 text-xs flex items-center gap-2"
+                            className="btn-primary w-full sm:w-auto px-3 py-2 text-xs flex items-center justify-center gap-2"
                           >
                             <Save className="h-4 w-4" />
                             Enregistrer
                           </button>
                           <button
                             onClick={resetOverrides}
-                            className="btn-secondary px-3 py-2 text-xs flex items-center gap-2"
+                            className="btn-secondary w-full sm:w-auto px-3 py-2 text-xs flex items-center justify-center gap-2"
                           >
                             <RefreshCw className="h-4 w-4" />
                             Réinitialiser
@@ -307,7 +307,7 @@ export default function SessionDetailPage() {
                               setPickerIndex(sessionExercises.length)
                               setPickerOpen(true)
                             }}
-                            className="btn-secondary px-3 py-2 text-xs flex items-center gap-2"
+                            className="btn-secondary w-full sm:w-auto px-3 py-2 text-xs flex items-center justify-center gap-2"
                           >
                             <Plus className="h-4 w-4" />
                             Ajouter un exercice

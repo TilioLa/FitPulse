@@ -21,14 +21,14 @@ const steps = [
 
 export default function Onboarding() {
   return (
-    <section className="py-20 bg-gray-50">
+    <section className="py-14 sm:py-20 bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12">
           <div>
-            <h2 className="text-4xl font-bold text-gray-900 mb-3 reveal">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 reveal">
               Un parcours simple, des résultats visibles
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl reveal reveal-1">
+            <p className="text-base sm:text-lg text-gray-600 max-w-2xl reveal reveal-1">
               Pas de jargon, pas de confusion. Tu sais quoi faire dès aujourd&apos;hui.
             </p>
           </div>

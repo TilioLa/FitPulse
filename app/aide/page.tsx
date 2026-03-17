@@ -15,17 +15,17 @@ export default function HelpCenterPage() {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <main>
-        <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-16">
+        <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-12 sm:py-16">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col gap-4 text-center">
               <div className="inline-flex items-center justify-center gap-2 text-sm font-semibold uppercase tracking-wide text-primary-100">
                 <LifeBuoy className="h-4 w-4" />
                 Centre d&apos;aide
               </div>
-              <h1 className="text-4xl md:text-5xl font-bold">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold">
                 Besoin d&apos;un coup de main ?
               </h1>
-              <p className="text-lg text-primary-100">
+              <p className="text-base sm:text-lg text-primary-100">
                 FAQ, tickets et contact direct pour vous répondre rapidement.
               </p>
               <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
@@ -84,7 +84,7 @@ export default function HelpCenterPage() {
         <section id="faq" className="py-12 bg-white">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-10">
-              <h2 className="text-3xl font-bold text-gray-900 mb-3">Questions fréquentes</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">Questions fréquentes</h2>
               <p className="text-gray-600">Toutes les réponses rapides, au même endroit.</p>
             </div>
             <div className="space-y-4">
@@ -97,7 +97,7 @@ export default function HelpCenterPage() {
                     aria-expanded={openIndex === index}
                     aria-controls={`help-faq-${index}`}
                   >
-                    <span className="text-lg font-semibold text-gray-900 pr-8">
+                    <span className="text-base sm:text-lg font-semibold text-gray-900 pr-8">
                       {faq.question}
                     </span>
                     {openIndex === index ? (

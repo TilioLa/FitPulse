@@ -25,7 +25,7 @@ export default function Navbar() {
           <span className="text-xl font-bold text-gray-900">FitPulse</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden lg:flex items-center gap-2">
           {links.map((item) => (
             <Link
               key={item.href}
@@ -42,7 +42,10 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/connexion" className="btn-secondary px-4 py-2 text-sm">
+          <Link href="/dashboard" className="hidden sm:inline-flex rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100">
+            Dashboard
+          </Link>
+          <Link href="/connexion" className="btn-secondary hidden sm:inline-flex px-4 py-2 text-sm">
             Connexion
           </Link>
           <Link href="/inscription" className="btn-primary px-4 py-2 text-sm">

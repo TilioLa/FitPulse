@@ -35,18 +35,18 @@ const benefits = [
 
 export default function Benefits() {
   return (
-    <section className="py-20 bg-white">
+    <section className="py-14 sm:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold text-gray-900 mb-4 reveal">
+        <div className="text-center mb-10 sm:mb-16">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 reveal">
             Pourquoi choisir FitPulse ?
           </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto reveal reveal-1">
+          <p className="text-base sm:text-xl text-gray-600 max-w-2xl mx-auto reveal reveal-1">
             Tout ce dont vous avez besoin pour transformer votre corps et atteindre vos objectifs sportifs.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {benefits.map((benefit, index) => (
             <div
               key={index}

@@ -355,7 +355,7 @@ export default function History() {
           </div>
         )}
       </div>
-        <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-2">
           <div className="flex flex-wrap items-center gap-2">
             <div className="text-xs font-semibold text-gray-500">Période</div>
             <button onClick={() => applyPreset(7)} className="rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-600 hover:bg-gray-50">
@@ -371,12 +371,12 @@ export default function History() {
               Tout
             </button>
           </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           <input
             type="date"
             value={fromDate}
             onChange={(e) => setFromDate(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs w-full sm:w-auto"
             aria-label="Date de début"
           />
           <span className="text-xs text-gray-400">→</span>
@@ -384,7 +384,7 @@ export default function History() {
             type="date"
             value={toDate}
             onChange={(e) => setToDate(e.target.value)}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs"
+            className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs w-full sm:w-auto"
             aria-label="Date de fin"
           />
         </div>
@@ -399,7 +399,7 @@ export default function History() {
               <TrendingUp className="h-5 w-5 text-primary-600" />
             </div>
             <p className="text-sm text-gray-600 mb-4">Streak {filteredStats.streak} jours • {filteredStats.totalMinutes} minutes • {recommendation.favoriteGoal}</p>
-            <div className="grid grid-cols-2 gap-4 mt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
               <div>
                 <p className="text-xs text-gray-500">Séances</p>
                 <p className="text-base font-semibold text-gray-900">{filteredStats.totalWorkouts}</p>
@@ -442,7 +442,7 @@ export default function History() {
           </div>
         </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-8">
         <div className="card-compact bg-gradient-to-br from-primary-50 to-primary-100 reveal reveal-1 hover:shadow-md transition-all">
           <div className="flex items-center justify-between">
             <div>
@@ -493,7 +493,7 @@ export default function History() {
         </div>
         <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-4">{t('recentSessionsTitle')}</h2>
         {filteredHistory.length === 0 ? (
-          <div className="card text-center py-12">
+            <div className="card text-center py-12">
             <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
             <p className="text-gray-600 text-lg mb-2">{t('noSessions')}</p>
             <p className="text-gray-500">{t('startFirstSession')}</p>
@@ -509,17 +509,17 @@ export default function History() {
               return (
                 <Link key={workout.id} href={href} className="block">
                 <div className="card-soft hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                        <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-1">
                           {workout.workoutName}
                         </h3>
-                        <div className="flex items-center space-x-4 text-gray-600">
-                          <div className="flex items-center space-x-1">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 text-gray-600 gap-1 sm:gap-0">
+                          <div className="flex items-center space-x-1 text-sm">
                             <Calendar className="h-4 w-4" />
                             <span>{formatDate(workout.date)}</span>
                           </div>
-                          <div className="flex items-center space-x-1">
+                          <div className="flex items-center space-x-1 text-sm">
                             <Clock className="h-4 w-4" />
                             <span>{workout.duration} minutes</span>
                           </div>
@@ -541,7 +541,7 @@ export default function History() {
                           </div>
                         )}
                       </div>
-                      <div className="ml-4">
+                      <div className="sm:ml-4">
                         <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-semibold">
                           {t('completed')}
                         </div>

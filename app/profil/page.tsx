@@ -32,6 +32,11 @@ export default function ProfilPage() {
   const [mounted, setMounted] = useState(false)
   const [activeView, setActiveView] = useState<'progress' | 'history'>('progress')
 
+  const navigateToView = (view: 'progress' | 'history') => {
+    setActiveView(view)
+    router.push(`/profil?view=${view}`, { scroll: false })
+  }
+
   useEffect(() => {
     setMounted(true)
   }, [])
@@ -107,14 +112,36 @@ export default function ProfilPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <div className="flex flex-1">
+      <div className="flex flex-1 flex-col lg:flex-row">
         <ProfileSidebar activeView={activeView} onSelectView={setActiveView} />
-        <main className="flex-1 overflow-y-auto py-12">
+        <main className="flex-1 overflow-y-auto py-6 pb-24 lg:py-12 lg:pb-12">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="mb-5 grid grid-cols-2 gap-2 lg:hidden">
+              <button
+                onClick={() => navigateToView('progress')}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+                  activeView === 'progress'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-700'
+                }`}
+              >
+                Progrès
+              </button>
+              <button
+                onClick={() => navigateToView('history')}
+                className={`rounded-lg px-3 py-2 text-sm font-semibold ${
+                  activeView === 'history'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-white border border-gray-200 text-gray-700'
+                }`}
+              >
+                Historique
+              </button>
+            </div>
             <div className="card-soft mb-8">
-              <div className="flex items-center space-x-6">
-                <div className="bg-primary-100 rounded-full p-6">
-                  <User className="h-16 w-16 text-primary-600" />
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
+                <div className="bg-primary-100 rounded-full p-4 sm:p-6 w-fit">
+                  <User className="h-12 w-12 sm:h-16 sm:w-16 text-primary-600" />
                 </div>
                 <div className="flex-1">
                   <h1 className="section-title mb-2">{user?.name || 'Utilisateur FitPulse'}</h1>
@@ -173,7 +200,7 @@ export default function ProfilPage() {
             <div className="mt-8 flex justify-end">
               <button
                 onClick={() => router.push('/dashboard')}
-                className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
               >
                 Retour au dashboard
               </button>

@@ -134,7 +134,7 @@ export default function TicketsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <WithSidebar active="feed">
-        <main className="flex-grow py-12">
+        <main className="flex-grow py-6 lg:py-12">
           <div className="page-wrap">
             <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
               <div>
@@ -151,7 +151,7 @@ export default function TicketsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.1fr_0.9fr] gap-6">
               <section className="card-soft">
                 <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
                   <div className="flex items-center gap-2">

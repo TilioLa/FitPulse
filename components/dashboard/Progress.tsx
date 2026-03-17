@@ -213,7 +213,7 @@ export default function Progress({ compact = false }: ProgressProps) {
         <p className="section-subtitle">Tout ce qui compte pour suivre ta progression.</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-8">
         <div className="card-compact">
           <div className="text-[11px] uppercase tracking-wide text-gray-500">Streak</div>
           <div className="text-2xl font-bold text-gray-900">{stats.streak} j</div>
@@ -257,19 +257,21 @@ export default function Progress({ compact = false }: ProgressProps) {
             <div className="text-[11px] uppercase tracking-wide text-gray-500">Tendance 7 jours</div>
             <TrendingUp className="h-5 w-5 text-primary-500" />
           </div>
-          <div className="grid grid-cols-7 gap-2 items-end h-24">
-            {weekTrend.map((day) => {
-              const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
-              return (
-                <div key={day.day} className="flex flex-col items-center gap-1">
-                  <span className="text-[10px] text-gray-500">{day.sessions}</span>
-                  <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
-                    <div className="w-full bg-primary-600 rounded-t" style={{ height: `${barHeight}%` }} />
+          <div className="scroll-x-touch">
+            <div className="grid min-w-[320px] grid-cols-7 gap-2 items-end h-24">
+              {weekTrend.map((day) => {
+                const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
+                return (
+                  <div key={day.day} className="flex flex-col items-center gap-1">
+                    <span className="text-[10px] text-gray-500">{day.sessions}</span>
+                    <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
+                      <div className="w-full bg-primary-600 rounded-t" style={{ height: `${barHeight}%` }} />
+                    </div>
+                    <span className="text-[10px] text-gray-500 uppercase">{day.day.replace('.', '')}</span>
                   </div>
-                  <span className="text-[10px] text-gray-500 uppercase">{day.day.replace('.', '')}</span>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
           <p className="mt-3 text-xs text-gray-500">Barres basées sur le nombre de séances par jour.</p>
         </div>
@@ -299,7 +301,7 @@ export default function Progress({ compact = false }: ProgressProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         <div className="card-compact">
           <div className="text-xs text-gray-500">Comparaison mensuelle</div>
           <div className="mt-2 text-sm text-gray-700">Séances ce mois</div>

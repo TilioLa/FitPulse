@@ -46,7 +46,7 @@ export default function JourneyStarter() {
         <div className="flex flex-col lg:flex-row items-start justify-between gap-8 mb-10">
           <div className="space-y-3">
             <p className="text-sm font-semibold uppercase tracking-wider text-primary-600">Starter kit</p>
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 max-w-2xl">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 max-w-2xl">
               Ton parcours FitPulse en 3 étapes
             </h2>
             <p className="text-gray-600 max-w-2xl">
@@ -69,7 +69,7 @@ export default function JourneyStarter() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6 mb-10">
           {steps.map((label, index) => (
             <div
               key={label}
@@ -97,21 +97,21 @@ export default function JourneyStarter() {
             <CheckSquare className="h-6 w-6 text-primary-600" />
             <div>
               <div className="text-xs text-gray-500 uppercase tracking-wider">Planification</div>
-              <div className="text-lg font-semibold text-gray-900">{sessionCount} séances / semaine</div>
+              <div className="text-base sm:text-lg font-semibold text-gray-900">{sessionCount} séances / semaine</div>
             </div>
           </div>
           <div className="p-4 rounded-xl bg-white shadow-sm border border-white flex items-center gap-3">
             <CheckSquare className="h-6 w-6 text-primary-600" />
             <div>
               <div className="text-xs text-gray-500 uppercase tracking-wider">Durée</div>
-              <div className="text-lg font-semibold text-gray-900">{recommendedProgram.duration}</div>
+              <div className="text-base sm:text-lg font-semibold text-gray-900">{recommendedProgram.duration}</div>
             </div>
           </div>
           <div className="p-4 rounded-xl bg-white shadow-sm border border-white flex items-center gap-3">
             <CheckSquare className="h-6 w-6 text-primary-600" />
             <div>
               <div className="text-xs text-gray-500 uppercase tracking-wider">Matériel</div>
-              <div className="text-lg font-semibold text-gray-900">{recommendedProgram.equipment}</div>
+              <div className="text-base sm:text-lg font-semibold text-gray-900">{recommendedProgram.equipment}</div>
             </div>
           </div>
         </div>

@@ -268,7 +268,7 @@ export default function ProgramsList() {
             className="card-soft group hover:shadow-md transition-transform duration-300 reveal border border-transparent hover:border-primary-200"
             style={{ animationDelay: `${index * 60}ms` }}
           >
-            <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-6 mb-4`}></div>
+          <div className={`h-2 bg-gradient-to-r ${program.color} rounded-t-xl -m-4 sm:-m-6 mb-4`}></div>
             
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center space-x-2">
@@ -353,7 +353,7 @@ export default function ProgramsList() {
         </div>
       )}
       <div className="md:hidden">
-        <div className="fixed inset-x-4 bottom-4 z-40 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
+        <div className="fixed inset-x-4 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-40 flex flex-col gap-2 rounded-2xl border border-gray-200 bg-white/95 px-4 py-3 shadow-lg shadow-black/10 backdrop-blur">
           {recommendedProgram && (
             <StartProgramButton
               program={recommendedProgram}
