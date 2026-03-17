@@ -76,7 +76,7 @@ export default function StartProgramButton({
   const targetUrl =
     hrefOverride === undefined
       ? targetSession
-        ? `/programmes/${program.slug}/seances/${targetSession.id}`
+        ? '/dashboard?view=session'
         : '#'
       : hrefOverride
 
