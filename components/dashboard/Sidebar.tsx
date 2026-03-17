@@ -27,7 +27,6 @@ interface SidebarProps {
 const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
   { id: 'recommendations', labelKey: 'recommendations', icon: Sparkles },
-  { id: 'session', labelKey: 'session', icon: Activity },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },
   { id: 'routines', labelKey: 'routines', icon: FolderPlus },
   { id: 'exercises', labelKey: 'exercises', icon: Dumbbell, href: '/exercices' },
@@ -62,6 +61,10 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
     router.push('/')
   }
 
+  const visibleMenuItems: MenuItem[] = sessionInProgress
+    ? [...menuItems.slice(0, 2), { id: 'session', labelKey: 'session', icon: Activity }, ...menuItems.slice(2)]
+    : menuItems
+
   return (
     <aside className="w-full lg:w-64 bg-white shadow-lg lg:min-h-screen p-3 lg:p-4 border-b lg:border-b-0">
       <div className="flex items-center space-x-2 mb-3 lg:mb-6 pb-3 lg:pb-4 border-b">
@@ -70,7 +73,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
       </div>
 
       <nav className="hidden lg:grid lg:grid-cols-1 gap-2 lg:space-y-1">
-        {menuItems.map((item) => {
+        {visibleMenuItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
           if (item.href) {

@@ -15,7 +15,6 @@ type NavItem = {
 const navItems: NavItem[] = [
   { id: 'feed', label: 'Dashboard', icon: Home },
   { id: 'recommendations', label: 'Reco', icon: Sparkles },
-  { id: 'session', label: 'Séance', icon: Activity },
   { id: 'programs', label: 'Programmes', icon: BookOpen },
   { id: 'exercises', label: 'Exercices', icon: Dumbbell },
 ]
@@ -30,11 +29,14 @@ export default function MobileBottomNav({
   sessionInProgress?: boolean
 }) {
   const router = useRouter()
+  const visibleNavItems: NavItem[] = sessionInProgress
+    ? [...navItems.slice(0, 2), { id: 'session', label: 'Séance', icon: Activity }, ...navItems.slice(2)]
+    : navItems
 
   return (
     <nav className="fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 shadow-[0_-6px_24px_rgba(0,0,0,0.06)] lg:hidden">
-      <div className="grid grid-cols-5 gap-1 px-2 py-2">
-        {navItems.map((item) => {
+      <div className="grid gap-1 px-2 py-2" style={{ gridTemplateColumns: `repeat(${visibleNavItems.length}, minmax(0, 1fr))` }}>
+        {visibleNavItems.map((item) => {
           const Icon = item.icon
           const isActive = activeSection === item.id
           return (
