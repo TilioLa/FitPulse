@@ -7,8 +7,9 @@ test('dashboard sidebar links to profile page', async ({ page }) => {
   })
 
   await page.goto('/dashboard?view=feed&e2e=1')
-  await expect(page.getByRole('link', { name: /^profil$/i })).toBeVisible({ timeout: 15_000 })
-  await page.getByRole('link', { name: /^profil$/i }).click()
+  const profileLink = page.getByRole('link', { name: /voir mon profil|profil/i })
+  await expect(profileLink).toBeVisible({ timeout: 15_000 })
+  await profileLink.click()
 
   await expect(page).toHaveURL(/\/profil$/, { timeout: 15_000 })
   await expect(page.getByRole('heading', { name: /e2e user|utilisateur fitpulse/i })).toBeVisible({

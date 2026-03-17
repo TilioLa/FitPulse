@@ -93,6 +93,24 @@ interface Workout {
   }
 }
 
+const isValidWorkoutPayload = (value: unknown): value is Workout => {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Partial<Workout>
+  if (typeof candidate.id !== 'string' || candidate.id.trim().length === 0) return false
+  if (typeof candidate.name !== 'string' || candidate.name.trim().length === 0) return false
+  if (!Array.isArray(candidate.exercises) || candidate.exercises.length === 0) return false
+  return candidate.exercises.every((exercise) => (
+    typeof exercise?.id === 'string' &&
+    typeof exercise?.name === 'string' &&
+    Number.isFinite(Number(exercise?.sets)) &&
+    Number(exercise?.sets) > 0 &&
+    Number.isFinite(Number(exercise?.reps)) &&
+    Number(exercise?.reps) > 0 &&
+    Number.isFinite(Number(exercise?.rest)) &&
+    Number(exercise?.rest) >= 0
+  ))
+}
+
 type SessionHint = {
   tone: 'amber' | 'blue' | 'emerald'
   title: string
@@ -296,8 +314,16 @@ export default function MySessions() {
 
   useEffect(() => {
     // Charger la séance du jour
-    const storedWorkout = readLocalCurrentWorkout()
+    let storedWorkout = readLocalCurrentWorkout()
     const history = readLocalHistory() as WorkoutHistoryItem[]
+    if (storedWorkout && !isValidWorkoutPayload(storedWorkout)) {
+      writeLocalCurrentWorkout(null)
+      if (user?.id) {
+        void persistCurrentWorkoutForUser(user.id, null)
+      }
+      push('Séance en cours invalide détectée. Retour au flux principal.', 'info')
+      storedWorkout = null
+    }
     if (storedWorkout) {
       const parsed = storedWorkout as unknown as Workout
       let activeWorkout: Workout | null = parsed
@@ -681,7 +707,7 @@ export default function MySessions() {
       const now = Date.now()
       if (!isOnline) {
         setHasPendingCloudSync(true)
-      } else if (user?.id && now - lastCloudPersistRef.current > 10_000) {
+      } else if (user?.id && now - lastCloudPersistRef.current > 5_000) {
         lastCloudPersistRef.current = now
         void persistCurrentWorkoutForUser(user.id, snapshot as unknown as Record<string, unknown>)
         setHasPendingCloudSync(false)

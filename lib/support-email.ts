@@ -10,6 +10,11 @@ type SupportEmailInput = {
   updatedAt: string
   userEmail?: string | null
   appUrl: string
+  attachment?: {
+    name: string
+    mimeType: string
+    dataUrl: string
+  } | null
 }
 
 const escapeHtml = (value: string) =>
@@ -72,6 +77,24 @@ ${input.description}
     </div>
   `
 
+  let attachments: Array<{ filename: string; content: Buffer; contentType: string }> = []
+  if (input.attachment?.dataUrl && input.attachment.name) {
+    const match = input.attachment.dataUrl.match(/^data:([^;]+);base64,(.+)$/)
+    if (match) {
+      const [, mimeType, base64] = match
+      const content = Buffer.from(base64, 'base64')
+      if (content.length <= 2_000_000) {
+        attachments = [
+          {
+            filename: input.attachment.name,
+            content,
+            contentType: mimeType || input.attachment.mimeType || 'application/octet-stream',
+          },
+        ]
+      }
+    }
+  }
+
   await transporter.sendMail({
     from: emailFrom,
     to: toEmail,
@@ -81,6 +104,7 @@ ${input.description}
     headers: {
       'X-Entity-Ref-ID': `fitpulse-support-${input.id}`,
     },
+    attachments,
   })
 
   return { sent: true as const }

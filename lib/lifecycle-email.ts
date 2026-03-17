@@ -39,13 +39,13 @@ function getTemplate({ name, event, appUrl }: Omit<LifecycleEmailInput, 'to'>) {
   if (event === 'day7') {
     return {
       subject: 'FitPulse - Fais le point sur ta première semaine',
-      text: `Salut ${safeName}, fais le point sur ta semaine et ajuste ton plan: ${appUrl}/dashboard?view=history`,
+      text: `Salut ${safeName}, fais le point sur ta semaine et ajuste ton plan: ${appUrl}/profil?view=history`,
       html: `
         <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
           <h2>Premier bilan hebdo</h2>
           <p>Salut ${safeName},</p>
           <p>Regarde ton historique et ajuste ton rythme pour la semaine suivante.</p>
-          <p><a href="${appUrl}/dashboard?view=history">Voir mon bilan</a></p>
+          <p><a href="${appUrl}/profil?view=history">Voir mon bilan</a></p>
         </div>
       `,
     }

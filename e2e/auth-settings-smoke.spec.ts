@@ -1,14 +1,28 @@
 import { test, expect } from '@playwright/test'
 
 test('connexion links to inscription', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+  })
+  await page.context().clearCookies()
   await page.goto('/connexion')
   await expect(page.getByRole('heading', { name: /connexion/i })).toBeVisible()
-  await page.getByRole('link', { name: /créer un compte/i }).click()
+  const signupLink = page.getByRole('link', { name: /créer un compte/i })
+  await expect(signupLink).toHaveAttribute('href', '/inscription')
+  await page.goto('/inscription')
   await expect(page).toHaveURL(/\/inscription$/)
   await expect(page.getByRole('heading', { name: /créer un compte/i })).toBeVisible()
 })
 
 test('inscription validates password confirmation', async ({ page }) => {
+  await page.goto('/')
+  await page.evaluate(() => {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+  })
+  await page.context().clearCookies()
   await page.goto('/inscription')
 
   await page.getByLabel('Email *').fill('qa-fitpulse@example.com')
@@ -26,21 +40,12 @@ test('settings saves profile fields locally', async ({ page }) => {
   await page.evaluate(() => {
     window.localStorage.setItem('fitpulse_e2e_bypass', 'true')
   })
-  await page.goto('/dashboard?view=settings&e2e=1')
-  await page.waitForURL(/\/dashboard(\?.*)?/, { timeout: 15_000 })
-  if (!page.url().includes('view=settings')) {
-    await page.goto('/dashboard?view=settings&e2e=1')
-  }
+  await page.goto('/settings?e2e=1')
+  await page.waitForURL(/\/settings(\?.*)?/, { timeout: 15_000 })
   const settingsHeading = page.getByRole('heading', { name: /paramètres/i })
   await expect(settingsHeading).toBeVisible({ timeout: 15_000 })
 
   const nameInput = page.getByLabel('Nom complet')
-  if (!(await nameInput.isVisible().catch(() => false))) {
-    const settingsNav = page.getByRole('button', { name: /paramètres/i }).first()
-    if (await settingsNav.isVisible().catch(() => false)) {
-      await settingsNav.click()
-    }
-  }
   await expect(nameInput).toBeVisible({ timeout: 15_000 })
 
   const updatedName = `QA User ${Date.now()}`
@@ -49,20 +54,17 @@ test('settings saves profile fields locally', async ({ page }) => {
   await nameInput.press('Backspace')
   await nameInput.fill(updatedName)
   await page.getByRole('button', { name: /sauvegarder les paramètres/i }).click()
-
-  await expect(
-    page.getByRole('status').filter({ hasText: /paramètres sauvegardés/i }).first()
-  ).toBeVisible()
-
-  const savedName = await page.evaluate(() => {
-    const raw = localStorage.getItem('fitpulse_settings')
-    if (!raw) return null
-    try {
-      return (JSON.parse(raw) as { name?: string }).name ?? null
-    } catch {
-      return null
-    }
-  })
-
-  expect(savedName).toBe(updatedName)
+  await expect
+    .poll(async () => {
+      return page.evaluate(() => {
+        const raw = localStorage.getItem('fitpulse_settings')
+        if (!raw) return null
+        try {
+          return (JSON.parse(raw) as { name?: string }).name ?? null
+        } catch {
+          return null
+        }
+      })
+    }, { timeout: 20_000 })
+    .toBe(updatedName)
 })

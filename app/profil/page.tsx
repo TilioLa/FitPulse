@@ -9,6 +9,8 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import ProfileSidebar from '@/components/profile/ProfileSidebar'
 import { computeXp, getLevelInfo } from '@/lib/levels'
+import { programsById } from '@/data/programs'
+import { readLocalCurrentWorkout, readLocalSettings, writeLocalSettings } from '@/lib/user-state-store'
 
 const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
   loading: () => <div className="py-10 text-center text-sm text-gray-500">Chargement des progrès...</div>,
@@ -31,6 +33,13 @@ export default function ProfilPage() {
   const [badges, setBadges] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
   const [activeView, setActiveView] = useState<'progress' | 'history'>('progress')
+  const [weeklyGoal, setWeeklyGoal] = useState({ target: 3, done: 0 })
+  const [sessionCard, setSessionCard] = useState<{
+    title: string
+    subtitle: string
+    cta: string
+    href: string
+  } | null>(null)
 
   const navigateToView = (view: 'progress' | 'history') => {
     setActiveView(view)
@@ -63,7 +72,7 @@ export default function ProfilPage() {
     queueMicrotask(() => {
       try {
         const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-        const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
+        const { totalMinutes, totalWorkouts, streak, deduped } = computeHistoryStats(history as WorkoutHistoryItem[])
         setStats({
           streak,
           completedWorkouts: totalWorkouts,
@@ -78,10 +87,66 @@ export default function ProfilPage() {
           totalMinutes >= 100 ? '100 minutes' : null,
         ].filter(Boolean) as string[]
         setBadges(nextBadges)
+
+        const settings = readLocalSettings() as { sessionsPerWeek?: number }
+        const target = Math.max(1, Math.min(7, Number(settings.sessionsPerWeek) || 3))
+        const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+        const done = deduped.filter((item) => new Date(item.date).getTime() >= weekAgo).length
+        setWeeklyGoal({ target, done })
+
+        const sorted = deduped
+          .slice()
+          .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        const latest = sorted[0]
+        const currentWorkout = readLocalCurrentWorkout() as {
+          status?: string
+          name?: string
+          programId?: string
+          id?: string
+        } | null
+        if (currentWorkout?.status === 'in_progress') {
+          const program = currentWorkout.programId ? programsById[currentWorkout.programId] : null
+          const href =
+            program && currentWorkout.id
+              ? `/programmes/${program.slug}/seances/${currentWorkout.id}`
+              : '/dashboard?view=session'
+          setSessionCard({
+            title: 'Séance en cours',
+            subtitle: currentWorkout.name || 'Reprends là où tu t’es arrêté.',
+            cta: 'Reprendre',
+            href,
+          })
+        } else if (latest) {
+          const program = latest.programId ? programsById[latest.programId] : null
+          const href =
+            program && latest.workoutId
+              ? `/programmes/${program.slug}/seances/${latest.workoutId}`
+              : '/profil?view=history'
+          setSessionCard({
+            title: 'Dernière séance',
+            subtitle: `${latest.workoutName} · ${latest.duration} min`,
+            cta: 'Voir le détail',
+            href,
+          })
+        } else {
+          setSessionCard({
+            title: 'Dernière séance',
+            subtitle: 'Aucune séance enregistrée pour le moment.',
+            cta: 'Voir l’historique',
+            href: '/profil?view=history',
+          })
+        }
       } catch {
         setStats({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
         setLevel({ name: 'Bronze', level: 1, progress: 0 })
         setBadges([])
+        setWeeklyGoal({ target: 3, done: 0 })
+        setSessionCard({
+          title: 'Dernière séance',
+          subtitle: 'Historique indisponible.',
+          cta: 'Voir l’historique',
+          href: '/profil?view=history',
+        })
       }
     })
   }, [router, status])
@@ -173,6 +238,49 @@ export default function ProfilPage() {
                 </div>
               </div>
             )}
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
+              <div className="card-soft">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Objectif hebdo</p>
+                <div className="mt-2 text-2xl font-semibold text-gray-900">
+                  {Math.min(weeklyGoal.done, weeklyGoal.target)} / {weeklyGoal.target} séances
+                </div>
+                <div className="mt-3">
+                  <label className="text-sm font-medium text-gray-700">Objectif cible</label>
+                  <select
+                    value={weeklyGoal.target}
+                    onChange={(event) => {
+                      const next = Math.max(1, Math.min(7, Number(event.target.value) || 3))
+                      setWeeklyGoal((prev) => ({ ...prev, target: next }))
+                      const previous = readLocalSettings()
+                      writeLocalSettings({
+                        ...previous,
+                        sessionsPerWeek: next,
+                      })
+                    }}
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  >
+                    {Array.from({ length: 7 }, (_, index) => index + 1).map((value) => (
+                      <option key={value} value={value}>
+                        {value} séance(s)
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              {sessionCard && (
+                <div className="card-soft">
+                  <p className="text-xs uppercase tracking-wide text-gray-500">{sessionCard.title}</p>
+                  <div className="mt-2 text-lg font-semibold text-gray-900">{sessionCard.subtitle}</div>
+                  <button
+                    onClick={() => router.push(sessionCard.href)}
+                    className="mt-4 btn-secondary w-full sm:w-auto"
+                  >
+                    {sessionCard.cta}
+                  </button>
+                </div>
+              )}
+            </div>
 
             <section className="space-y-10 mt-12">
               {activeView === 'progress' ? (

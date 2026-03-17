@@ -264,7 +264,7 @@ export default function Feed() {
           title: 'Tu es régulier, optimise ta progression',
           body: 'Analyse tes volumes hebdo et ajuste une semaine allégée si nécessaire.',
           cta: 'Voir l’historique',
-          href: '/dashboard?view=history',
+          href: '/profil?view=history',
         })
         return
       }
@@ -424,7 +424,7 @@ export default function Feed() {
             id: 'profile',
             label: 'Compléter ton profil fitness',
             done: hasProfile,
-            href: '/dashboard?view=settings',
+            href: '/settings',
             cta: 'Configurer',
           },
           {
@@ -454,7 +454,7 @@ export default function Feed() {
             title: 'Complète ton profil',
             body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
             cta: 'Ouvrir les paramètres',
-            href: '/dashboard?view=settings',
+            href: '/settings',
           })
         } else if (hasInProgressWorkout) {
           setNextAction({
@@ -848,14 +848,14 @@ export default function Feed() {
           title: 'Complète ton profil',
           body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
           cta: 'Ouvrir les paramètres',
-          href: '/dashboard?view=settings',
+          href: '/settings',
         })
         setOnboardingSteps([
           {
             id: 'profile',
             label: 'Compléter ton profil fitness',
             done: false,
-            href: '/dashboard?view=settings',
+            href: '/settings',
             cta: 'Configurer',
           },
           {
@@ -989,7 +989,7 @@ export default function Feed() {
             <Play className="h-4 w-4" />
             {primarySessionLabel}
           </Link>
-          <Link href="/dashboard?view=history" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
+          <Link href="/profil?view=history" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
             <Calendar className="h-4 w-4" />
             Voir l’historique
           </Link>
@@ -1439,7 +1439,7 @@ export default function Feed() {
           ) : (
             <div className="mt-4 text-sm text-gray-600">
               Stat indisponible temporairement.
-              <Link href="/dashboard?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+              <Link href="/profil?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
                 Historique
               </Link>
             </div>
@@ -1465,7 +1465,7 @@ export default function Feed() {
           ) : (
             <div className="mt-4 text-sm text-gray-600">
               Analyse de charge indisponible temporairement.
-              <Link href="/dashboard?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+              <Link href="/profil?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
                 Historique
               </Link>
             </div>
@@ -1497,7 +1497,7 @@ export default function Feed() {
         ) : (
           <div className="mt-3 text-sm text-gray-600">
             Comparaison indisponible temporairement.
-            <Link href="/dashboard?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
+            <Link href="/profil?view=history" className="ml-2 font-semibold text-primary-700 underline underline-offset-2">
               Historique
             </Link>
           </div>

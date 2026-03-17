@@ -21,6 +21,12 @@ type Ticket = {
   updatedAt: string
 }
 
+type TicketAttachment = {
+  name: string
+  mimeType: string
+  dataUrl: string
+}
+
 const STORAGE_KEY = 'fitpulse_tickets_v1'
 
 const buildTicketId = () => {
@@ -57,6 +63,9 @@ export default function TicketsPage() {
   const [priority, setPriority] = useState<TicketPriority>('normal')
   const [description, setDescription] = useState('')
   const [submittedId, setSubmittedId] = useState<string | null>(null)
+  const [sendState, setSendState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [sendError, setSendError] = useState<string | null>(null)
+  const [attachment, setAttachment] = useState<TicketAttachment | null>(null)
 
   useEffect(() => {
     setTickets(loadTickets())
@@ -91,6 +100,8 @@ export default function TicketsPage() {
     setPriority('normal')
     setCategory('Compte & accès')
     setSubmittedId(newTicket.id)
+    setSendState('sending')
+    setSendError(null)
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'https://fitpulse.app')
@@ -103,10 +114,24 @@ export default function TicketsPage() {
         ...newTicket,
         userEmail: user?.email || null,
         appUrl,
+        attachment,
       }),
-    }).catch((error) => {
-      console.error('Support ticket email failed', error)
     })
+      .then(async (response) => {
+        if (!response.ok) {
+          const payload = await response.json().catch(() => ({}))
+          throw new Error(String((payload as { error?: string }).error || 'send_failed'))
+        }
+        setSendState('sent')
+      })
+      .catch((error) => {
+        console.error('Support ticket email failed', error)
+        setSendState('error')
+        setSendError(error instanceof Error ? error.message : 'send_failed')
+      })
+      .finally(() => {
+        setAttachment(null)
+      })
   }
 
   const updateStatus = (id: string, status: TicketStatus) => {
@@ -299,13 +324,62 @@ export default function TicketsPage() {
                         placeholder="Decris le probleme, les etapes et l&apos;appareil utilise."
                       />
                     </div>
-                    <button type="submit" className="btn-primary inline-flex items-center gap-2">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Pièce jointe (optionnel)
+                      </label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(event) => {
+                          const file = event.target.files?.[0]
+                          if (!file) {
+                            setAttachment(null)
+                            return
+                          }
+                          if (file.size > 2_000_000) {
+                            setAttachment(null)
+                            setSendState('error')
+                            setSendError('attachment_too_large')
+                            return
+                          }
+                          const reader = new FileReader()
+                          reader.onload = () => {
+                            const dataUrl = typeof reader.result === 'string' ? reader.result : null
+                            if (!dataUrl) return
+                            setAttachment({
+                              name: file.name,
+                              mimeType: file.type || 'application/octet-stream',
+                              dataUrl,
+                            })
+                            setSendError(null)
+                            if (sendState === 'error') setSendState('idle')
+                          }
+                          reader.readAsDataURL(file)
+                        }}
+                        className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm"
+                      />
+                      <p className="mt-2 text-xs text-gray-500">
+                        Capture d&apos;écran recommandée. Max 2 Mo.
+                      </p>
+                    </div>
+                    <button type="submit" className="btn-primary inline-flex items-center gap-2" disabled={sendState === 'sending'}>
                       <AlertTriangle className="h-4 w-4" />
-                      Creer le ticket
+                      {sendState === 'sending' ? 'Envoi en cours...' : 'Creer le ticket'}
                     </button>
                     {submittedId && (
                       <p className="text-sm text-emerald-600" role="status" aria-live="polite">
                         Ticket cree: {submittedId}. Nous revenons vers toi rapidement.
+                      </p>
+                    )}
+                    {sendState === 'sent' && (
+                      <p className="text-sm text-emerald-600" role="status" aria-live="polite">
+                        Ticket envoyé au support.
+                      </p>
+                    )}
+                    {sendState === 'error' && (
+                      <p className="text-sm text-red-600" role="alert">
+                        Envoi support échoué{sendError ? ` (${sendError})` : ''}. Tu peux réessayer.
                       </p>
                     )}
                   </form>

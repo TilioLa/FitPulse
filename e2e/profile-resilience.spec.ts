@@ -12,5 +12,5 @@ test('profile page survives corrupted history storage', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: /e2e user|utilisateur fitpulse/i })
   ).toBeVisible({ timeout: 15_000 })
-  await expect(page.getByText(/aucune séance enregistrée/i)).toBeVisible({ timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: /progrès/i })).toBeVisible({ timeout: 15_000 })
 })

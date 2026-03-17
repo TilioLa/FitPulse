@@ -338,7 +338,7 @@ function DashboardPageContent() {
               <>
                 <div className="mt-2 text-xl font-semibold text-gray-900">Naviguer rapidement</div>
                 <p className="mt-2 text-sm text-gray-600">
-                  Utilise la barre latérale pour passer entre Dashboard, Séances, Historique et Routines.
+                  Utilise la barre latérale pour passer entre Dashboard, recommandations, programmes et routines.
                 </p>
               </>
             )}

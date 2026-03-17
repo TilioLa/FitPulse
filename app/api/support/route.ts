@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       updatedAt,
       userEmail,
       appUrl,
+      attachment,
     } = payload as {
       id?: string
       title?: string
@@ -24,6 +25,11 @@ export async function POST(request: Request) {
       updatedAt?: string
       userEmail?: string | null
       appUrl?: string
+      attachment?: {
+        name?: string
+        mimeType?: string
+        dataUrl?: string
+      } | null
     }
 
     if (!id || !title || !description || !createdAt || !updatedAt || !appUrl) {
@@ -40,6 +46,14 @@ export async function POST(request: Request) {
       updatedAt,
       userEmail: userEmail || null,
       appUrl,
+      attachment:
+        attachment?.name && attachment?.dataUrl
+          ? {
+              name: attachment.name,
+              mimeType: attachment.mimeType || 'application/octet-stream',
+              dataUrl: attachment.dataUrl,
+            }
+          : null,
     })
 
     if (!result.sent) {

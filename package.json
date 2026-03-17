@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:e2e": "env -u FORCE_COLOR NO_COLOR=1 playwright test",
     "test:e2e:standard": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/public-pages.spec.ts e2e/workout-flow.spec.ts e2e/workout-recovery.spec.ts",
+    "test:e2e:postdeploy": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/public-pages.spec.ts e2e/profile-navigation.spec.ts e2e/auth-settings-smoke.spec.ts e2e/workout-flow.spec.ts",
     "test:e2e:auth-real": "env -u FORCE_COLOR NO_COLOR=1 playwright test e2e/auth-real.spec.ts",
     "test:e2e:ui": "env -u FORCE_COLOR NO_COLOR=1 playwright test --ui",
     "test:e2e:headed": "env -u FORCE_COLOR NO_COLOR=1 playwright test --headed",
