@@ -7,7 +7,7 @@ import Footer from '@/components/Footer'
 import { Star, User } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
-import WithSidebar from '@/components/layouts/WithSidebar'
+import ProfileSidebar from '@/components/profile/ProfileSidebar'
 import { computeXp, getLevelInfo } from '@/lib/levels'
 
 const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
@@ -93,104 +93,96 @@ export default function ProfilPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
-      <WithSidebar active="feed">
-        <main className="flex-grow py-12">
+      <div className="flex flex-1">
+        <ProfileSidebar />
+        <main className="flex-1 overflow-y-auto py-12">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Header */}
-          <div className="card-soft mb-8">
-            <div className="flex items-center space-x-6">
-              <div className="bg-primary-100 rounded-full p-6">
-                <User className="h-16 w-16 text-primary-600" />
-              </div>
-              <div className="flex-1">
-                <h1 className="section-title mb-2">
-                  {user?.name || 'Utilisateur FitPulse'}
-                </h1>
-                <p className="text-gray-600 mb-1">{user?.email}</p>
-                {user?.phone && (
-                  <p className="text-gray-600 mb-1">{user.phone}</p>
-                )}
-                <p className="text-sm text-gray-500">
-                  Membre depuis {(user?.createdAt ? new Date(user.createdAt) : new Date()).toLocaleDateString('fr-FR', {
-                    year: 'numeric',
-                    month: 'long',
-                  })}
-                </p>
-              </div>
-              <div className="text-right">
-                <button
-                  onClick={() => router.push('/dashboard')}
-                  className="btn-primary"
-                >
-                  Accéder au Dashboard
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {badges.length > 0 && (
             <div className="card-soft mb-8">
-              <h3 className="text-xl font-semibold text-gray-900 mb-3">Badges</h3>
-              <div className="flex flex-wrap gap-2">
-                {badges.map((badge) => (
-                  <span key={badge} className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold">
-                    {badge}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-10">
-            <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Streak</div>
-              <p className="text-3xl font-bold text-primary-600">{stats.streak} jours</p>
-            </div>
-            <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Séances</div>
-              <p className="text-3xl font-bold text-orange-600">{stats.completedWorkouts}</p>
-            </div>
-            <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Minutes</div>
-              <p className="text-3xl font-bold text-green-600">{stats.totalMinutes}</p>
-            </div>
-            <div className="card-soft bg-gradient-to-br from-amber-50 to-amber-100">
-              <div className="text-xs uppercase tracking-wide text-gray-500">Niveau</div>
-              <div className="flex items-center justify-between">
-                <p className="text-3xl font-bold text-amber-600">{level.level}</p>
-                <Star className="h-5 w-5 text-amber-500" />
-              </div>
-              <p className="text-sm text-gray-600">{level.name}</p>
-              <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
-              </div>
-            </div>
-          </section>
-
-          <section className="space-y-10 mt-12">
-            <div className="card-soft">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
-                  <h3 className="text-2xl font-semibold text-gray-900">Progrès détaillé</h3>
+              <div className="flex items-center space-x-6">
+                <div className="bg-primary-100 rounded-full p-6">
+                  <User className="h-16 w-16 text-primary-600" />
+                </div>
+                <div className="flex-1">
+                  <h1 className="section-title mb-2">{user?.name || 'Utilisateur FitPulse'}</h1>
+                  <p className="text-gray-600 mb-1">{user?.email}</p>
+                  {user?.phone && <p className="text-gray-600 mb-1">{user.phone}</p>}
+                  <p className="text-sm text-gray-500">
+                    Membre depuis{' '}
+                    {(user?.createdAt ? new Date(user.createdAt) : new Date()).toLocaleDateString('fr-FR', {
+                      year: 'numeric',
+                      month: 'long',
+                    })}
+                  </p>
                 </div>
               </div>
-              <Progress />
             </div>
-            <div className="card-soft">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
-                  <h3 className="text-2xl font-semibold text-gray-900">Historique complet</h3>
+
+            {badges.length > 0 && (
+              <div className="card-soft mb-8">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Badges</h3>
+                <div className="flex flex-wrap gap-2">
+                  {badges.map((badge) => (
+                    <span
+                      key={badge}
+                      className="rounded-full bg-emerald-100 text-emerald-700 px-3 py-1 text-xs font-semibold"
+                    >
+                      {badge}
+                    </span>
+                  ))}
                 </div>
               </div>
-              <History />
-            </div>
-          </section>
-        </div>
-      </main>
-    </WithSidebar>
-    <Footer />
-  </div>
-)
+            )}
+
+            <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-10">
+              <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Streak</div>
+                <p className="text-3xl font-bold text-primary-600">{stats.streak} jours</p>
+              </div>
+              <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Séances</div>
+                <p className="text-3xl font-bold text-orange-600">{stats.completedWorkouts}</p>
+              </div>
+              <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Minutes</div>
+                <p className="text-3xl font-bold text-green-600">{stats.totalMinutes}</p>
+              </div>
+              <div className="card-soft bg-gradient-to-br from-amber-50 to-amber-100">
+                <div className="text-xs uppercase tracking-wide text-gray-500">Niveau</div>
+                <div className="flex items-center justify-between">
+                  <p className="text-3xl font-bold text-amber-600">{level.level}</p>
+                  <Star className="h-5 w-5 text-amber-500" />
+                </div>
+                <p className="text-sm text-gray-600">{level.name}</p>
+                <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
+                  <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
+                </div>
+              </div>
+            </section>
+
+            <section className="space-y-10 mt-12">
+              <div className="card-soft">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+                    <h3 className="text-2xl font-semibold text-gray-900">Progrès</h3>
+                  </div>
+                </div>
+                <Progress />
+              </div>
+              <div className="card-soft">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+                    <h3 className="text-2xl font-semibold text-gray-900">Historique</h3>
+                  </div>
+                </div>
+                <History />
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+      <Footer />
+    </div>
+  )
 }
