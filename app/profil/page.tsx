@@ -4,12 +4,10 @@ import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
-import Link from 'next/link'
-import { ArrowRight, Calendar, Trophy, TrendingUp, Clock, Star, User } from 'lucide-react'
+import { User } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import WithSidebar from '@/components/layouts/WithSidebar'
-import { computeXp, getLevelInfo } from '@/lib/levels'
 
 const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
   loading: () => <div className="py-10 text-center text-sm text-gray-500">Chargement des progrès...</div>,
@@ -27,8 +25,6 @@ const History = dynamic(() => import('@/components/dashboard/History'), {
 export default function ProfilPage() {
   const router = useRouter()
   const { user, status } = useAuth()
-  const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
-  const [level, setLevel] = useState({ name: 'Bronze', level: 1, progress: 0 })
   const [badges, setBadges] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
 
@@ -46,14 +42,6 @@ export default function ProfilPage() {
       try {
         const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
         const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
-        setStats({
-          streak,
-          completedWorkouts: totalWorkouts,
-          totalMinutes,
-        })
-        const xp = computeXp(totalMinutes, totalWorkouts)
-        const levelInfo = getLevelInfo(xp)
-        setLevel({ name: levelInfo.current.name, level: levelInfo.current.level, progress: levelInfo.progress })
         const nextBadges = [
           totalWorkouts >= 1 ? 'Première séance' : null,
           streak >= 7 ? 'Streak 7 jours' : null,
@@ -61,7 +49,6 @@ export default function ProfilPage() {
         ].filter(Boolean) as string[]
         setBadges(nextBadges)
       } catch {
-        setStats({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
         setBadges([])
       }
     })
@@ -128,55 +115,6 @@ export default function ProfilPage() {
             </div>
           </div>
 
-          {/* Statistiques */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Streak actuel</div>
-                  <div className="text-4xl font-bold text-primary-600">{stats.streak}</div>
-                  <div className="text-sm text-gray-600 mt-1">jours consécutifs</div>
-                </div>
-                <TrendingUp className="h-12 w-12 text-primary-600" />
-              </div>
-            </div>
-
-            <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Séances complétées</div>
-                  <div className="text-4xl font-bold text-orange-600">{stats.completedWorkouts}</div>
-                  <div className="text-sm text-gray-600 mt-1">séances au total</div>
-                </div>
-                <Trophy className="h-12 w-12 text-orange-600" />
-              </div>
-            </div>
-
-            <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Temps total</div>
-                  <div className="text-4xl font-bold text-green-600">{stats.totalMinutes}</div>
-                  <div className="text-sm text-gray-600 mt-1">minutes d&apos;entraînement</div>
-                </div>
-                <Clock className="h-12 w-12 text-green-600" />
-              </div>
-            </div>
-            <div className="card-soft bg-gradient-to-br from-amber-50 to-amber-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="text-sm text-gray-600 mb-1">Niveau</div>
-                  <div className="text-4xl font-bold text-amber-600">{level.level}</div>
-                  <div className="text-sm text-gray-600 mt-1">{level.name}</div>
-                </div>
-                <Star className="h-12 w-12 text-amber-600" />
-              </div>
-              <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
-                <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
-              </div>
-            </div>
-          </div>
-
           {badges.length > 0 && (
             <div className="card-soft mb-8">
               <h3 className="text-xl font-semibold text-gray-900 mb-3">Badges</h3>
@@ -190,88 +128,6 @@ export default function ProfilPage() {
             </div>
           )}
 
-          <section className="card-soft mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-xs uppercase tracking-wide text-gray-500">Progrès</p>
-                <h3 className="text-2xl font-semibold text-gray-900">Vue d’ensemble</h3>
-              </div>
-              <div className="text-sm text-gray-500">
-                {stats.completedWorkouts} séances · {stats.totalMinutes} min
-              </div>
-            </div>
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-lg border border-gray-200 bg-white p-4">
-                <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  Objectif de la semaine
-                </div>
-                <p className="text-sm text-gray-600 mt-1">3 séances pour garder le rythme.</p>
-                <div className="mt-3 h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-primary-600"
-                    style={{ width: `${Math.min((stats.completedWorkouts / 3) * 100, 100)}%` }}
-                  />
-                </div>
-                <p className="text-sm text-gray-600 mt-2">
-                  {Math.min(stats.completedWorkouts, 3)} / 3 séances
-                </p>
-              </div>
-              <div className="rounded-lg border border-gray-200 bg-gradient-to-br from-accent-50 to-primary-50 p-4 flex flex-col justify-between">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-1">Prochaine étape</h4>
-                  <p className="text-sm text-gray-600">Planifie ta prochaine séance pour garder ta streak.</p>
-                </div>
-                <Link href="/dashboard" className="mt-4 inline-flex items-center text-sm font-semibold text-primary-600">
-                  Accéder au Dashboard <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </section>
-
-          <section className="grid gap-6 lg:grid-cols-2">
-            <div className="card-soft">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">Historique</p>
-                  <h3 className="text-2xl font-semibold text-gray-900">Dernières séances</h3>
-                </div>
-                <Calendar className="h-6 w-6 text-primary-600" />
-              </div>
-              <HistoryList limit={4} className="space-y-3" />
-            </div>
-            <div className="card-soft">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">Paramètres</p>
-                  <h3 className="text-2xl font-semibold text-gray-900">Gérer le compte</h3>
-                </div>
-              </div>
-              <div className="grid gap-3">
-                <Link
-                  href="/connexion"
-                  className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-600"
-                >
-                  Modifier mes informations
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-600"
-                >
-                  Gérer mon abonnement
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/tickets"
-                  className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-600"
-                >
-                  Contacter l’assistance
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </section>
-
           <section className="space-y-6 mt-10">
             <div className="card-soft">
               <Progress />
@@ -280,66 +136,10 @@ export default function ProfilPage() {
               <History />
             </div>
           </section>
-
-          </div>
-        </main>
-      </WithSidebar>
-      <Footer />
-    </div>
-  )
-}
-
-type HistoryListProps = {
-  limit?: number
-  className?: string
-}
-
-function HistoryList({ limit = 5, className }: HistoryListProps) {
-  const [history, setHistory] = useState<any[]>([])
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      try {
-        const storedHistory = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
-        const { deduped } = computeHistoryStats(storedHistory as WorkoutHistoryItem[])
-        setHistory(
-          deduped
-            .slice()
-            .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-            .slice(0, limit)
-        )
-      } catch {
-        setHistory([])
-      }
-    })
-  }, [limit])
-
-  if (history.length === 0) {
-    return (
-      <div className={`text-center py-12 ${className ?? ''}`}>
-        <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-        <p className="text-gray-600 text-lg mb-2">Aucune séance enregistrée</p>
-        <p className="text-gray-500">Commencez votre première séance pour voir votre historique ici !</p>
-      </div>
-    )
-  }
-
-  const containerClass = className ?? 'space-y-4'
-  return (
-    <div className={containerClass}>
-      {history.map((workout) => (
-        <div key={workout.id} className="border-l-4 border-primary-600 pl-4 py-2">
-          <h3 className="font-semibold text-gray-900">{workout.workoutName}</h3>
-          <p className="text-sm text-gray-600">
-            {new Date(workout.date).toLocaleDateString('fr-FR', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })} • {workout.duration} minutes
-          </p>
         </div>
-      ))}
-    </div>
-  )
+      </main>
+    </WithSidebar>
+    <Footer />
+  </div>
+)
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles, History, TrendingUp } from 'lucide-react'
+import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles, History, TrendingUp } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -124,44 +124,34 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
         })}
       </nav>
 
-      <div className="hidden lg:grid mt-4 lg:mt-8 pt-3 lg:pt-4 border-t">
+      <div className="hidden lg:grid mt-6 pt-4 border-t gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+          <h3 className="text-sm font-semibold text-gray-900">Mon espace personnel</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center font-semibold">
+            {initials}
+          </div>
+          <div>
+            <div className="text-sm font-semibold text-gray-900">{displayName}</div>
+            <span className="text-xs text-gray-500">{user?.email || ''}</span>
+          </div>
+        </div>
+        <Link
+          href="/profil"
+          className="inline-flex items-center justify-between rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-600"
+        >
+          Voir mon profil
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Link>
         <button
           onClick={handleLogout}
-          className="w-full flex items-center justify-center lg:justify-start space-x-3 px-3 lg:px-4 py-2.5 lg:py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+          className="w-full flex items-center justify-center space-x-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
         >
-          <span className="text-sm font-medium">{t('logout')}</span>
+          <span>{t('logout')}</span>
+          <span className="text-xs">↗</span>
         </button>
-      </div>
-
-      <div className="hidden lg:block mt-6 pt-4 border-t">
-        <div className="rounded-2xl bg-primary-50 border border-primary-200 px-4 py-3">
-          <div className="text-sm font-bold text-gray-900">FitPulse</div>
-          <div className="text-xs text-primary-800 mt-1">
-            Accès complet gratuit.
-          </div>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between px-2">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gray-300 text-gray-700 flex items-center justify-center font-semibold">
-              {initials}
-            </div>
-            <div className="flex flex-col">
-              <div className="text-sm font-semibold text-gray-900">{displayName}</div>
-              <Link href="/profil" className="text-xs font-medium text-primary-600 hover:text-primary-700">
-                Profil
-              </Link>
-            </div>
-          </div>
-          <button
-            onClick={handleLogout}
-            className="h-9 w-9 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100"
-            aria-label="Déconnexion"
-            title="Déconnexion"
-          >
-            ↗
-          </button>
-        </div>
       </div>
 
       <MobileBottomNav

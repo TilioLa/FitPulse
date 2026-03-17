@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import WithSidebar from '@/components/layouts/WithSidebar'
+import { useAuth } from '@/components/SupabaseAuthProvider'
 import { LifeBuoy, Plus, CheckCircle2, MessageSquare, Clock, AlertTriangle } from 'lucide-react'
 
 type TicketStatus = 'open' | 'waiting' | 'closed'
@@ -48,6 +49,7 @@ const persistTickets = (tickets: Ticket[]) => {
 }
 
 export default function TicketsPage() {
+  const { user } = useAuth()
   const [tickets, setTickets] = useState<Ticket[]>([])
   const [activeStatus, setActiveStatus] = useState<TicketStatus | 'all'>('open')
   const [title, setTitle] = useState('')
@@ -89,6 +91,22 @@ export default function TicketsPage() {
     setPriority('normal')
     setCategory('Compte & accès')
     setSubmittedId(newTicket.id)
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'https://fitpulse.app')
+    void fetch('/api/support', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...newTicket,
+        userEmail: user?.email || null,
+        appUrl,
+      }),
+    }).catch((error) => {
+      console.error('Support ticket email failed', error)
+    })
   }
 
   const updateStatus = (id: string, status: TicketStatus) => {
