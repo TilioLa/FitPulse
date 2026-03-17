@@ -26,8 +26,10 @@ type UserStateRow = {
 }
 
 let cloudStateDisabled = false
+const CLOUD_STATE_ENABLED_BY_ENV = process.env.NEXT_PUBLIC_ENABLE_CLOUD_STATE_SYNC === 'true'
 
 function shouldUseCloudState() {
+  if (!CLOUD_STATE_ENABLED_BY_ENV) return false
   if (cloudStateDisabled) return false
   if (typeof window === 'undefined') return true
   return localStorage.getItem('fitpulse_disable_cloud_state') !== 'true'

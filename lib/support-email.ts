@@ -29,23 +29,15 @@ export async function sendSupportEmail(input: SupportEmailInput) {
   const smtpHost = process.env.SMTP_HOST
   const smtpPort = Number(process.env.SMTP_PORT || 587)
   const smtpUser = process.env.SMTP_USER
-  const smtpPass = process.env.SMTP_PASS
+  const smtpPass = (process.env.SMTP_PASS || '').replace(/\s+/g, '')
   const emailFrom = process.env.EMAIL_FROM || 'FitPulse <no-reply@fitpulse.app>'
-  const toEmail = process.env.SUPPORT_EMAIL || smtpUser || ''
+  const supportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase()
+  const smtpUserEmail = (smtpUser || '').trim().toLowerCase()
+  const toEmailList = Array.from(new Set([supportEmail, smtpUserEmail].filter(Boolean)))
 
-  if (!smtpHost || !smtpUser || !smtpPass || !toEmail) {
+  if (!smtpHost || !smtpUser || !smtpPass || toEmailList.length === 0) {
     return { sent: false, reason: 'missing_smtp_env' as const }
   }
-
-  const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: {
-      user: smtpUser,
-      pass: smtpPass,
-    },
-  })
 
   const safeDesc = escapeHtml(input.description)
   const safeTitle = escapeHtml(input.title)
@@ -95,10 +87,27 @@ ${input.description}
     }
   }
 
-  try {
-    await transporter.sendMail({
+  const createTransport = (port: number) =>
+    nodemailer.createTransport({
+      host: smtpHost,
+      port,
+      secure: port === 465,
+      requireTLS: port !== 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      connectionTimeout: 15_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
+    })
+
+  const sendWithPort = async (port: number) => {
+    const transporter = createTransport(port)
+    return transporter.sendMail({
       from: emailFrom,
-      to: toEmail,
+      to: toEmailList.join(', '),
+      replyTo: input.userEmail || undefined,
       subject,
       text,
       html,
@@ -107,8 +116,27 @@ ${input.description}
       },
       attachments,
     })
+  }
+
+  try {
+    await sendWithPort(smtpPort)
     return { sent: true as const }
   } catch (error) {
+    const errorCode = (error as { code?: string }).code || ''
+    const shouldRetryOn465 =
+      smtpPort !== 465 && ['ESOCKET', 'ECONNECTION', 'ETIMEDOUT', 'ECONNREFUSED'].includes(errorCode)
+    if (shouldRetryOn465) {
+      try {
+        await sendWithPort(465)
+        return { sent: true as const }
+      } catch (retryError) {
+        const retryCode = (retryError as { code?: string }).code || ''
+        if (retryCode === 'EAUTH') return { sent: false as const, reason: 'smtp_auth_failed' as const }
+        if (retryCode === 'ETIMEDOUT') return { sent: false as const, reason: 'smtp_timeout' as const }
+        return { sent: false as const, reason: 'smtp_connection_failed' as const }
+      }
+    }
+
     const code = (error as { code?: string }).code || ''
     if (code === 'EAUTH') return { sent: false as const, reason: 'smtp_auth_failed' as const }
     if (code === 'ESOCKET') return { sent: false as const, reason: 'smtp_connection_failed' as const }
