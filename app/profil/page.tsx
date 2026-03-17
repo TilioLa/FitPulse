@@ -1,5 +1,6 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
@@ -8,6 +9,19 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { computeXp, getLevelInfo } from '@/lib/levels'
+
+const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
+  loading: () => <div className="py-10 text-center text-sm text-gray-500">Chargement des progrès...</div>,
+  ssr: false,
+})
+const History = dynamic(() => import('@/components/dashboard/History'), {
+  loading: () => (
+    <div className="py-10 text-center text-sm text-gray-500">
+      Chargement de l&apos;historique...
+    </div>
+  ),
+  ssr: false,
+})
 
 export default function ProfilPage() {
   const router = useRouter()
@@ -150,6 +164,27 @@ export default function ProfilPage() {
               <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
                 <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
               </div>
+            </div>
+          </section>
+
+          <section className="space-y-10 mt-12">
+            <div className="card-soft">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+                  <h3 className="text-2xl font-semibold text-gray-900">Progrès détaillé</h3>
+                </div>
+              </div>
+              <Progress />
+            </div>
+            <div className="card-soft">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+                  <h3 className="text-2xl font-semibold text-gray-900">Historique complet</h3>
+                </div>
+              </div>
+              <History />
             </div>
           </section>
         </div>
