@@ -7,7 +7,6 @@ import VercelAnalytics from '@/components/VercelAnalytics'
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
   description: 'Programmes personnalisés pour la musculation au poids du corps, avec élastiques et machines. Transformez votre corps avec des séances adaptées à votre niveau.',
-  manifest: '/manifest.webmanifest',
   icons: {
     icon: '/favicon.svg',
     apple: '/apple-touch-icon.png',
