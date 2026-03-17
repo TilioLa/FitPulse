@@ -30,9 +30,23 @@ export default function ProfilPage() {
   const [level, setLevel] = useState({ name: 'Bronze', level: 1, progress: 0 })
   const [badges, setBadges] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
+  const [activeView, setActiveView] = useState<'progress' | 'history'>('progress')
 
   useEffect(() => {
     setMounted(true)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const applyView = () => {
+      const params = new URLSearchParams(window.location.search)
+      setActiveView(params.get('view') === 'history' ? 'history' : 'progress')
+    }
+    applyView()
+    window.addEventListener('popstate', applyView)
+    return () => {
+      window.removeEventListener('popstate', applyView)
+    }
   }, [])
 
   useEffect(() => {
@@ -94,7 +108,7 @@ export default function ProfilPage() {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <div className="flex flex-1">
-        <ProfileSidebar />
+        <ProfileSidebar activeView={activeView} />
         <main className="flex-1 overflow-y-auto py-12">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="card-soft mb-8">
@@ -134,24 +148,27 @@ export default function ProfilPage() {
             )}
 
             <section className="space-y-10 mt-12">
-              <div className="card-soft">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
-                    <h3 className="text-2xl font-semibold text-gray-900">Progrès</h3>
+              {activeView === 'progress' ? (
+                <div className="card-soft">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+                      <h3 className="text-2xl font-semibold text-gray-900">Progrès</h3>
+                    </div>
                   </div>
+                  <Progress />
                 </div>
-                <Progress />
-              </div>
-              <div className="card-soft">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
-                    <h3 className="text-2xl font-semibold text-gray-900">Historique</h3>
+              ) : (
+                <div className="card-soft">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
+                      <h3 className="text-2xl font-semibold text-gray-900">Historique</h3>
+                    </div>
                   </div>
+                  <History />
                 </div>
-                <History />
-              </div>
+              )}
             </section>
             <div className="mt-8 flex justify-end">
               <button

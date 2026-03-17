@@ -4,7 +4,11 @@ import Link from 'next/link'
 import { ArrowRight, Mail, Settings, History, Target, Clock11 } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 
-export default function ProfileSidebar() {
+type ProfileSidebarProps = {
+  activeView: 'progress' | 'history'
+}
+
+export default function ProfileSidebar({ activeView }: ProfileSidebarProps) {
   const { user, signOut } = useAuth()
 
   return (
@@ -24,8 +28,12 @@ export default function ProfileSidebar() {
         <ul className="mt-3 space-y-2">
           <li>
             <Link
-              href="#progress"
-              className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700"
+              href="/profil?view=progress"
+              className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${
+                activeView === 'progress'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700'
+              }`}
             >
               <span className="flex items-center gap-2">
                 <Target className="h-4 w-4 text-gray-400" />
@@ -36,8 +44,12 @@ export default function ProfileSidebar() {
           </li>
           <li>
             <Link
-              href="#history"
-              className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-primary-50 hover:text-primary-700"
+              href="/profil?view=history"
+              className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${
+                activeView === 'history'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700'
+              }`}
             >
               <span className="flex items-center gap-2">
                 <History className="h-4 w-4 text-gray-400" />
