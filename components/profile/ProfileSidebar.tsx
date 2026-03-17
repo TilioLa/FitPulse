@@ -6,9 +6,10 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 
 type ProfileSidebarProps = {
   activeView: 'progress' | 'history'
+  onSelectView: (view: 'progress' | 'history') => void
 }
 
-export default function ProfileSidebar({ activeView }: ProfileSidebarProps) {
+export default function ProfileSidebar({ activeView, onSelectView }: ProfileSidebarProps) {
   const { user, signOut } = useAuth()
 
   return (
@@ -29,6 +30,7 @@ export default function ProfileSidebar({ activeView }: ProfileSidebarProps) {
           <li>
             <Link
               href="/profil?view=progress"
+              onClick={() => onSelectView('progress')}
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${
                 activeView === 'progress'
                   ? 'bg-primary-50 text-primary-700'
@@ -45,6 +47,7 @@ export default function ProfileSidebar({ activeView }: ProfileSidebarProps) {
           <li>
             <Link
               href="/profil?view=history"
+              onClick={() => onSelectView('history')}
               className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium ${
                 activeView === 'history'
                   ? 'bg-primary-50 text-primary-700'
