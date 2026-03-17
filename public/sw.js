@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fitpulse-v1'
+const CACHE_NAME = 'fitpulse-v2'
 const OFFLINE_FALLBACKS = ['/', '/dashboard?view=feed', '/connexion', '/inscription']
 
 self.addEventListener('install', (event) => {
@@ -19,11 +19,17 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const request = event.request
   if (request.method !== 'GET') return
+  const url = new URL(request.url)
+  const isSameOrigin = url.origin === self.location.origin
+  const isManifest = url.pathname.endsWith('/manifest.webmanifest')
+  const isApi = url.pathname.startsWith('/api/')
+  const isSupabase = url.hostname.endsWith('.supabase.co')
+  const shouldCache = isSameOrigin && !isManifest && !isApi && !isSupabase
 
   event.respondWith(
     fetch(request)
       .then((response) => {
-        if (request.url.startsWith(self.location.origin)) {
+        if (shouldCache && response.ok) {
           const cloned = response.clone()
           caches.open(CACHE_NAME).then((cache) => cache.put(request, cloned)).catch(() => {})
         }

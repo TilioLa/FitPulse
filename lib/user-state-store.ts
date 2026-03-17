@@ -25,6 +25,35 @@ type UserStateRow = {
   updated_at?: string
 }
 
+let cloudStateDisabled = false
+
+function shouldUseCloudState() {
+  if (cloudStateDisabled) return false
+  if (typeof window === 'undefined') return true
+  return localStorage.getItem('fitpulse_disable_cloud_state') !== 'true'
+}
+
+function disableCloudStateSync() {
+  cloudStateDisabled = true
+  if (typeof window !== 'undefined') {
+    try {
+      localStorage.setItem('fitpulse_disable_cloud_state', 'true')
+    } catch {
+      // ignore localStorage write failures
+    }
+  }
+}
+
+function isMissingUserStateTable(error: unknown) {
+  if (!error || typeof error !== 'object') return false
+  const status = Number((error as { status?: number }).status)
+  const code = String((error as { code?: string }).code || '')
+  const message = String((error as { message?: string }).message || '')
+  if (status === 404) return true
+  if (code.toUpperCase().startsWith('PGRST')) return true
+  return /user_state|relation .*user_state.*does not exist|404/i.test(message)
+}
+
 function readJson<T>(key: string, fallback: T): T {
   if (typeof window === 'undefined') return fallback
   try {
@@ -130,10 +159,11 @@ export function writeLocalProgressState(state: Record<string, string>) {
 }
 
 async function upsertUserState(userId: string, patch: Partial<UserStateRow>) {
+  if (!shouldUseCloudState()) return
   if (!isSupabaseConfigured()) return
   try {
     const supabase = getSupabaseBrowserClient()
-    await supabase.from('user_state').upsert(
+    const { error } = await supabase.from('user_state').upsert(
       {
         user_id: userId,
         updated_at: new Date().toISOString(),
@@ -141,6 +171,9 @@ async function upsertUserState(userId: string, patch: Partial<UserStateRow>) {
       },
       { onConflict: 'user_id' }
     )
+    if (error && isMissingUserStateTable(error)) {
+      disableCloudStateSync()
+    }
   } catch {
     // local fallback only
   }
@@ -176,6 +209,7 @@ export async function persistProgressStateForUser(userId: string) {
 }
 
 export async function syncUserStateForUser(userId: string) {
+  if (!shouldUseCloudState()) return
   if (!isSupabaseConfigured()) return
   const localSettings = readLocalSettings()
   const localWorkout = readLocalCurrentWorkout()
@@ -190,7 +224,12 @@ export async function syncUserStateForUser(userId: string) {
       .eq('user_id', userId)
       .maybeSingle()
 
-    if (error) return
+    if (error) {
+      if (isMissingUserStateTable(error)) {
+        disableCloudStateSync()
+      }
+      return
+    }
 
     const remoteSettings = (data?.settings || {}) as Record<string, unknown>
     const remoteProgress =

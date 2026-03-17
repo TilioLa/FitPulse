@@ -9,7 +9,10 @@ export default function PwaRegister() {
 
     const register = async () => {
       try {
-        await navigator.serviceWorker.register('/sw.js')
+        const registration = await navigator.serviceWorker.register('/sw.js')
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: 'SKIP_WAITING' })
+        }
       } catch {
         // no-op: app remains functional without SW
       }
