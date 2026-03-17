@@ -1,30 +1,19 @@
 'use client'
 
-import dynamic from 'next/dynamic'
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
-import { User } from 'lucide-react'
+import { Star, User } from 'lucide-react'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import { computeHistoryStats, WorkoutHistoryItem } from '@/lib/history'
 import WithSidebar from '@/components/layouts/WithSidebar'
-
-const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
-  loading: () => <div className="py-10 text-center text-sm text-gray-500">Chargement des progrès...</div>,
-  ssr: false,
-})
-const History = dynamic(() => import('@/components/dashboard/History'), {
-  loading: () => (
-    <div className="py-10 text-center text-sm text-gray-500">
-      Chargement de l&apos;historique...
-    </div>
-  ),
-  ssr: false,
-})
+import { computeXp, getLevelInfo } from '@/lib/levels'
 
 export default function ProfilPage() {
   const router = useRouter()
   const { user, status } = useAuth()
+  const [stats, setStats] = useState({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+  const [level, setLevel] = useState({ name: 'Bronze', level: 1, progress: 0 })
   const [badges, setBadges] = useState<string[]>([])
   const [mounted, setMounted] = useState(false)
 
@@ -42,6 +31,14 @@ export default function ProfilPage() {
       try {
         const history = JSON.parse(localStorage.getItem('fitpulse_history') || '[]')
         const { totalMinutes, totalWorkouts, streak } = computeHistoryStats(history as WorkoutHistoryItem[])
+        setStats({
+          streak,
+          completedWorkouts: totalWorkouts,
+          totalMinutes,
+        })
+        const xp = computeXp(totalMinutes, totalWorkouts)
+        const levelInfo = getLevelInfo(xp)
+        setLevel({ name: levelInfo.current.name, level: levelInfo.current.level, progress: levelInfo.progress })
         const nextBadges = [
           totalWorkouts >= 1 ? 'Première séance' : null,
           streak >= 7 ? 'Streak 7 jours' : null,
@@ -49,6 +46,8 @@ export default function ProfilPage() {
         ].filter(Boolean) as string[]
         setBadges(nextBadges)
       } catch {
+        setStats({ streak: 0, completedWorkouts: 0, totalMinutes: 0 })
+        setLevel({ name: 'Bronze', level: 1, progress: 0 })
         setBadges([])
       }
     })
@@ -128,12 +127,29 @@ export default function ProfilPage() {
             </div>
           )}
 
-          <section className="space-y-6 mt-10">
-            <div className="card-soft">
-              <Progress />
+          <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-10">
+            <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Streak</div>
+              <p className="text-3xl font-bold text-primary-600">{stats.streak} jours</p>
             </div>
-            <div className="card-soft">
-              <History />
+            <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Séances</div>
+              <p className="text-3xl font-bold text-orange-600">{stats.completedWorkouts}</p>
+            </div>
+            <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Minutes</div>
+              <p className="text-3xl font-bold text-green-600">{stats.totalMinutes}</p>
+            </div>
+            <div className="card-soft bg-gradient-to-br from-amber-50 to-amber-100">
+              <div className="text-xs uppercase tracking-wide text-gray-500">Niveau</div>
+              <div className="flex items-center justify-between">
+                <p className="text-3xl font-bold text-amber-600">{level.level}</p>
+                <Star className="h-5 w-5 text-amber-500" />
+              </div>
+              <p className="text-sm text-gray-600">{level.name}</p>
+              <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
+              </div>
             </div>
           </section>
         </div>

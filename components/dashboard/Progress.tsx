@@ -13,13 +13,17 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import { useToast } from '@/components/ui/ToastProvider'
 import { computeXp, getLevelInfo } from '@/lib/levels'
 
+type ProgressProps = {
+  compact?: boolean
+}
+
 type TrendDay = {
   day: string
   sessions: number
   minutes: number
 }
 
-export default function Progress() {
+export default function Progress({ compact = false }: ProgressProps) {
   const { user } = useAuth()
   const { push } = useToast()
   const [stats, setStats] = useState({
@@ -321,13 +325,15 @@ export default function Progress() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-4 mb-8">
-        <div className="card-compact">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-[11px] uppercase tracking-wide text-gray-500">Calendrier mensuel</div>
-            <CalendarDays className="h-5 w-5 text-primary-500" />
+        {!compact && (
+          <div className="card-compact">
+            <div className="flex items-center justify-between mb-3">
+              <div className="text-[11px] uppercase tracking-wide text-gray-500">Calendrier mensuel</div>
+              <CalendarDays className="h-5 w-5 text-primary-500" />
+            </div>
+            <DashboardCalendar />
           </div>
-          <DashboardCalendar />
-        </div>
+        )}
 
         <div className="card-compact">
           <div className="flex items-center justify-between mb-3">
