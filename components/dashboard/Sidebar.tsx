@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles, History, TrendingUp } from 'lucide-react'
+import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -10,7 +10,7 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 
-type DashboardSection = 'feed' | 'progress' | 'recommendations' | 'session' | 'history' | 'programs' | 'routines' | 'exercises'
+type DashboardSection = 'feed' | 'recommendations' | 'session' | 'programs' | 'routines' | 'exercises'
 
 type MenuItem = {
   id: DashboardSection
@@ -26,10 +26,8 @@ interface SidebarProps {
 
 const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
-  { id: 'progress', labelKey: 'progress', icon: TrendingUp },
   { id: 'recommendations', labelKey: 'recommendations', icon: Sparkles },
   { id: 'session', labelKey: 'session', icon: Activity },
-  { id: 'history', labelKey: 'history', icon: History },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },
   { id: 'routines', labelKey: 'routines', icon: FolderPlus },
   { id: 'exercises', labelKey: 'exercises', icon: Dumbbell, href: '/exercices' },

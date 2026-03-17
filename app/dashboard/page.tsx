@@ -20,13 +20,7 @@ import {
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
 })
-const Progress = dynamic(() => import('@/components/dashboard/Progress'), {
-  loading: () => <SectionSkeleton />,
-})
 const Recommendations = dynamic(() => import('@/components/dashboard/Recommendations'), {
-  loading: () => <SectionSkeleton />,
-})
-const History = dynamic(() => import('@/components/dashboard/History'), {
   loading: () => <SectionSkeleton />,
 })
 const MySessions = dynamic(() => import('@/components/dashboard/MySessions'), {
@@ -286,12 +280,8 @@ function DashboardPageContent() {
     switch (activeSection) {
       case 'feed':
         return <Feed />
-      case 'progress':
-        return <Progress />
       case 'recommendations':
         return <Recommendations />
-      case 'history':
-        return <History />
       case 'session':
         return <MySessions />
       case 'programs':
