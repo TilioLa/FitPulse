@@ -42,9 +42,6 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="hidden sm:inline-flex rounded-lg px-3 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100">
-            Dashboard
-          </Link>
           <Link href="/connexion" className="btn-secondary hidden sm:inline-flex px-4 py-2 text-sm">
             Connexion
           </Link>
