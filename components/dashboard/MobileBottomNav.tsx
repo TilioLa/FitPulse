@@ -13,7 +13,7 @@ type NavItem = {
 }
 
 const navItems: NavItem[] = [
-  { id: 'feed', label: 'Accueil', icon: Home },
+  { id: 'feed', label: 'Dashboard', icon: Home },
   { id: 'recommendations', label: 'Reco', icon: Sparkles },
   { id: 'session', label: 'Séance', icon: Activity },
   { id: 'programs', label: 'Programmes', icon: BookOpen },

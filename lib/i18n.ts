@@ -3,7 +3,7 @@ export type Locale = 'fr' | 'en'
 export const messages = {
   fr: {
     common: {
-      feed: 'Feed',
+      feed: 'Dashboard',
       progress: 'Progrès',
       recommendations: 'Recommandations',
       session: 'Séance',
@@ -46,7 +46,7 @@ export const messages = {
   },
   en: {
     common: {
-      feed: 'Feed',
+      feed: 'Dashboard',
       progress: 'Progress',
       recommendations: 'Recommendations',
       session: 'Session',
