@@ -127,7 +127,12 @@ export default function TicketsPage() {
       .catch((error) => {
         console.error('Support ticket email failed', error)
         setSendState('error')
-        setSendError(error instanceof Error ? error.message : 'send_failed')
+        const code = error instanceof Error ? error.message : 'send_failed'
+        if (code === 'missing_smtp_env') {
+          setSendError('configuration_email_incomplete')
+        } else {
+          setSendError(code)
+        }
       })
       .finally(() => {
         setAttachment(null)

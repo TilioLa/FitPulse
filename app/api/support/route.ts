@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { sendSupportEmail } from '@/lib/support-email'
 
+export const runtime = 'nodejs'
+
 export async function POST(request: Request) {
   try {
     const payload = await request.json().catch(() => ({}))

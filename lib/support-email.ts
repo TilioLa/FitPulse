@@ -31,9 +31,9 @@ export async function sendSupportEmail(input: SupportEmailInput) {
   const smtpUser = process.env.SMTP_USER
   const smtpPass = process.env.SMTP_PASS
   const emailFrom = process.env.EMAIL_FROM || 'FitPulse <no-reply@fitpulse.app>'
-  const toEmail = process.env.SUPPORT_EMAIL || 'fitpulset@gmail.com'
+  const toEmail = process.env.SUPPORT_EMAIL || smtpUser || ''
 
-  if (!smtpHost || !smtpUser || !smtpPass) {
+  if (!smtpHost || !smtpUser || !smtpPass || !toEmail) {
     return { sent: false, reason: 'missing_smtp_env' as const }
   }
 
