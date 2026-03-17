@@ -133,32 +133,6 @@ export default function ProfilPage() {
               </div>
             )}
 
-            <section className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-10">
-              <div className="card-soft bg-gradient-to-br from-primary-50 to-primary-100">
-                <div className="text-xs uppercase tracking-wide text-gray-500">Streak</div>
-                <p className="text-3xl font-bold text-primary-600">{stats.streak} jours</p>
-              </div>
-              <div className="card-soft bg-gradient-to-br from-orange-50 to-orange-100">
-                <div className="text-xs uppercase tracking-wide text-gray-500">Séances</div>
-                <p className="text-3xl font-bold text-orange-600">{stats.completedWorkouts}</p>
-              </div>
-              <div className="card-soft bg-gradient-to-br from-green-50 to-green-100">
-                <div className="text-xs uppercase tracking-wide text-gray-500">Minutes</div>
-                <p className="text-3xl font-bold text-green-600">{stats.totalMinutes}</p>
-              </div>
-              <div className="card-soft bg-gradient-to-br from-amber-50 to-amber-100">
-                <div className="text-xs uppercase tracking-wide text-gray-500">Niveau</div>
-                <div className="flex items-center justify-between">
-                  <p className="text-3xl font-bold text-amber-600">{level.level}</p>
-                  <Star className="h-5 w-5 text-amber-500" />
-                </div>
-                <p className="text-sm text-gray-600">{level.name}</p>
-                <div className="mt-3 h-2 w-full bg-white/70 rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500" style={{ width: `${level.progress}%` }} />
-                </div>
-              </div>
-            </section>
-
             <section className="space-y-10 mt-12">
               <div className="card-soft">
                 <div className="flex items-center justify-between mb-4">
@@ -179,6 +153,14 @@ export default function ProfilPage() {
                 <History />
               </div>
             </section>
+            <div className="mt-8 flex justify-end">
+              <button
+                onClick={() => router.push('/dashboard')}
+                className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+              >
+                Retour au dashboard
+              </button>
+            </div>
           </div>
         </main>
       </div>
