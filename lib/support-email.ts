@@ -95,17 +95,24 @@ ${input.description}
     }
   }
 
-  await transporter.sendMail({
-    from: emailFrom,
-    to: toEmail,
-    subject,
-    text,
-    html,
-    headers: {
-      'X-Entity-Ref-ID': `fitpulse-support-${input.id}`,
-    },
-    attachments,
-  })
-
-  return { sent: true as const }
+  try {
+    await transporter.sendMail({
+      from: emailFrom,
+      to: toEmail,
+      subject,
+      text,
+      html,
+      headers: {
+        'X-Entity-Ref-ID': `fitpulse-support-${input.id}`,
+      },
+      attachments,
+    })
+    return { sent: true as const }
+  } catch (error) {
+    const code = (error as { code?: string }).code || ''
+    if (code === 'EAUTH') return { sent: false as const, reason: 'smtp_auth_failed' as const }
+    if (code === 'ESOCKET') return { sent: false as const, reason: 'smtp_connection_failed' as const }
+    if (code === 'ETIMEDOUT') return { sent: false as const, reason: 'smtp_timeout' as const }
+    return { sent: false as const, reason: 'send_failed' as const }
+  }
 }
