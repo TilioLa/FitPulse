@@ -22,22 +22,22 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Navigation</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/" className="hover:text-primary-400 transition-colors">
+                <Link href="/" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Accueil
                 </Link>
               </li>
               <li>
-                <Link href="/dashboard" className="hover:text-primary-400 transition-colors">
+                <Link href="/dashboard" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Dashboard
                 </Link>
               </li>
               <li>
-                <Link href="/programmes" className="hover:text-primary-400 transition-colors">
+                <Link href="/programmes" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Programmes
                 </Link>
               </li>
               <li>
-                <Link href="/exercices" className="hover:text-primary-400 transition-colors">
+                <Link href="/exercices" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Exercices
                 </Link>
               </li>
@@ -49,17 +49,17 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Légal</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/mentions-legales" className="hover:text-primary-400 transition-colors">
+                <Link href="/mentions-legales" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Mentions légales
                 </Link>
               </li>
               <li>
-                <Link href="/confidentialite" className="hover:text-primary-400 transition-colors">
+                <Link href="/confidentialite" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Confidentialité
                 </Link>
               </li>
               <li>
-                <Link href="/cgv" className="hover:text-primary-400 transition-colors">
+                <Link href="/cgv" className="text-gray-300 hover:text-primary-400 transition-colors">
                   CGV
                 </Link>
               </li>
@@ -71,17 +71,17 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Contact</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/contact" className="hover:text-primary-400 transition-colors">
+                <Link href="/contact" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Nous contacter
                 </Link>
               </li>
               <li>
-                <Link href="/aide" className="hover:text-primary-400 transition-colors">
+                <Link href="/aide" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Centre d&apos;aide
                 </Link>
               </li>
               <li>
-                <Link href="/tickets" className="hover:text-primary-400 transition-colors">
+                <Link href="/tickets" className="text-gray-300 hover:text-primary-400 transition-colors">
                   Tickets support
                 </Link>
               </li>
