@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles } from 'lucide-react'
+import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles, LifeBuoy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useI18n } from '@/components/I18nProvider'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
@@ -34,12 +34,14 @@ const menuItems: MenuItem[] = [
 
 export default function Sidebar({ activeSection, setActiveSection }: SidebarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const { user, signOut } = useAuth()
   const { t } = useI18n()
   const [mounted, setMounted] = useState(false)
   const displayName = mounted && user?.name ? user.name : 'Utilisateur'
   const initials = displayName.trim().charAt(0).toUpperCase() || 'U'
   const [sessionInProgress, setSessionInProgress] = useState(false)
+  const [contactOpen, setContactOpen] = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -55,6 +57,14 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
       window.removeEventListener('storage', syncInProgress)
     }
   }, [])
+
+  useEffect(() => {
+    if (!pathname) return
+    const isContactRoute = pathname === '/contact' || pathname === '/aide' || pathname === '/tickets'
+    if (isContactRoute) {
+      setContactOpen(true)
+    }
+  }, [pathname])
 
   const handleLogout = async () => {
     await signOut()
@@ -124,6 +134,55 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
           )
         })}
       </nav>
+
+      <div className="hidden lg:block mt-6 border-t pt-4">
+        <button
+          onClick={() => setContactOpen((current) => !current)}
+          className="w-full rounded-xl border border-gray-200 px-4 py-3 text-left hover:border-primary-200"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+              <LifeBuoy className="h-4 w-4 text-primary-600" />
+              Contact
+            </span>
+            <ArrowRight className={`h-4 w-4 text-gray-400 transition-transform ${contactOpen ? 'rotate-90' : ''}`} />
+          </div>
+        </button>
+        {contactOpen && (
+          <div className="mt-2 space-y-1">
+            <Link
+              href="/contact"
+              className={`block rounded-lg px-3 py-2 text-sm font-medium ${
+                pathname === '/contact'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700'
+              }`}
+            >
+              Nous contacter
+            </Link>
+            <Link
+              href="/aide"
+              className={`block rounded-lg px-3 py-2 text-sm font-medium ${
+                pathname === '/aide'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700'
+              }`}
+            >
+              Centre d&apos;aide
+            </Link>
+            <Link
+              href="/tickets"
+              className={`block rounded-lg px-3 py-2 text-sm font-medium ${
+                pathname === '/tickets'
+                  ? 'bg-primary-50 text-primary-700'
+                  : 'text-gray-700 hover:bg-primary-50 hover:text-primary-700'
+              }`}
+            >
+              Tickets support
+            </Link>
+          </div>
+        )}
+      </div>
 
       <div className="hidden lg:grid mt-6 pt-4 border-t gap-3">
         <div>
