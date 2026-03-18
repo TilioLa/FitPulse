@@ -247,7 +247,8 @@ function getSupportEmailEnv(): SupportEmailEnv | null {
   const sameDomain = fromEmail && smtpUserEmail && fromEmail.split('@')[1] === smtpUserEmail.split('@')[1]
   const emailFrom = sameDomain ? rawEmailFrom : smtpUserEmail
   const supportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase()
-  const toEmailList = Array.from(new Set([supportEmail, smtpUserEmail].filter(Boolean)))
+  // Priorité à la boîte support dédiée; fallback sur SMTP_USER si absente.
+  const toEmailList = supportEmail ? [supportEmail] : smtpUserEmail ? [smtpUserEmail] : []
 
   if (!smtpHost || !smtpUser || !smtpPass || toEmailList.length === 0) {
     return null
