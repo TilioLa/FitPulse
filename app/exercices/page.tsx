@@ -8,7 +8,7 @@ import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
 import { Search, Plus, Dumbbell, Star, Download } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
-import { getExerciseInsights, type ExerciseGoal } from '@/lib/exercise-insights'
+import { getExerciseInsights } from '@/lib/exercise-insights'
 import { readLocalHistory } from '@/lib/history-store'
 import {
   readLocalCustomExercises,
@@ -30,6 +30,49 @@ type HistoryItem = {
   exercises?: HistoryExercise[]
 }
 
+const EQUIPMENT_LABELS: Record<string, string> = {
+  Bodyweight: 'Poids du corps',
+  Machine: 'Machine',
+  Dumbbell: 'Haltère',
+  Assisted: 'Assisté',
+  Weighted: 'Lesté',
+  Band: 'Élastique',
+  Barbell: 'Barre',
+  Cable: 'Poulie',
+  'Smith Machine': 'Machine Smith',
+  Suspension: 'Suspension',
+  'Trap Bar': 'Barre trap',
+  Kettlebell: 'Kettlebell',
+}
+
+const MUSCLE_LABELS: Record<string, string> = {
+  Abdominals: 'Abdominaux',
+  Biceps: 'Biceps',
+  Cardio: 'Cardio',
+  Shoulders: 'Épaules',
+  Chest: 'Pectoraux',
+  Quadriceps: 'Quadriceps',
+  'Lower Back': 'Bas du dos',
+  'Full Body': 'Corps complet',
+  Forearms: 'Avant-bras',
+  Triceps: 'Triceps',
+  Hamstrings: 'Ischio-jambiers',
+  Glutes: 'Fessiers',
+  Back: 'Dos',
+  Lats: 'Dorsaux',
+  Traps: 'Trapèzes',
+  Calves: 'Mollets',
+  Neck: 'Cou',
+}
+
+function toFrenchEquipment(value: string) {
+  return EQUIPMENT_LABELS[value] || value
+}
+
+function toFrenchMuscle(value: string) {
+  return MUSCLE_LABELS[value] || value
+}
+
 export default function ExercicesPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Chargement...</div>}>
@@ -45,7 +88,6 @@ function ExercicesPageContent() {
   const [query, setQuery] = useState('')
   const [equipment, setEquipment] = useState('all')
   const [muscle, setMuscle] = useState('all')
-  const [goal, setGoal] = useState<'all' | ExerciseGoal>('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
   const [favorites, setFavorites] = useState<string[]>(() => readLocalExerciseFavorites())
@@ -107,20 +149,10 @@ function ExercicesPageContent() {
       const matchQuery = !term || ex.name.toLowerCase().includes(term)
       const matchEquip = equipment === 'all' || ex.equipment.includes(equipment)
       const matchMuscle = muscle === 'all' || ex.tags.includes(muscle)
-      const insights = getExerciseInsights(ex)
-      const matchGoal = goal === 'all' || insights.goals.includes(goal)
       const matchFav = !onlyFavorites || favorites.includes(ex.id)
-      return matchQuery && matchEquip && matchMuscle && matchGoal && matchFav
+      return matchQuery && matchEquip && matchMuscle && matchFav
     })
-  }, [allExercises, query, equipment, muscle, goal, onlyFavorites, favorites])
-
-  const goalOptions = useMemo(() => {
-    const set = new Set<ExerciseGoal>()
-    allExercises.forEach((item) => {
-      getExerciseInsights(item).goals.forEach((itemGoal) => set.add(itemGoal))
-    })
-    return ['all', ...Array.from(set)] as Array<'all' | ExerciseGoal>
-  }, [allExercises])
+  }, [allExercises, query, equipment, muscle, onlyFavorites, favorites])
 
   const history = useMemo(() => {
     return readLocalHistory() as HistoryItem[]
@@ -331,7 +363,7 @@ function ExercicesPageContent() {
                       <div>
                         <h2 className="text-2xl font-semibold text-gray-900">{selected.name}</h2>
                         <p className="text-sm text-gray-500 mt-1">
-                          {selected.tags.join(', ')} · {selected.equipment.join(', ')}
+                          {selected.tags.map(toFrenchMuscle).join(', ')} · {selected.equipment.map(toFrenchEquipment).join(', ')}
                         </p>
                         {selectedInsights && (
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -529,7 +561,7 @@ function ExercicesPageContent() {
 
             <div className="card p-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-gray-900">Library</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Librairie</h3>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                     <Dumbbell className="h-4 w-4" />
                     Exercices
@@ -544,7 +576,7 @@ function ExercicesPageContent() {
                   >
                     {equipmentOptions.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt === 'all' ? 'Tout matériel' : opt}
+                        {opt === 'all' ? 'Tout matériel' : toFrenchEquipment(opt)}
                       </option>
                     ))}
                   </select>
@@ -555,31 +587,10 @@ function ExercicesPageContent() {
                   >
                     {muscleOptions.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt === 'all' ? 'Tous les muscles' : opt}
+                        {opt === 'all' ? 'Tous les muscles' : toFrenchMuscle(opt)}
                       </option>
                     ))}
                     </select>
-                  <select
-                    value={goal}
-                    onChange={(e) => setGoal(e.target.value as 'all' | ExerciseGoal)}
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                  >
-                    {goalOptions.map((opt) => (
-                      <option key={opt} value={opt}>
-                        {opt === 'all'
-                          ? 'Tous objectifs'
-                          : opt === 'strength'
-                            ? 'Force'
-                            : opt === 'hypertrophy'
-                              ? 'Prise de masse'
-                              : opt === 'cardio'
-                                ? 'Cardio'
-                                : opt === 'mobility'
-                                  ? 'Mobilité'
-                                  : 'Abdominaux'}
-                      </option>
-                    ))}
-                  </select>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                     <input
@@ -623,7 +634,7 @@ function ExercicesPageContent() {
                             <div>
                               <div className="text-sm font-semibold text-gray-900">{item.name}</div>
                               <div className="text-xs text-gray-500">
-                                {item.tags.join(', ')} · {item.equipment[0] || 'Autre'}
+                                {item.tags.map(toFrenchMuscle).join(', ')} · {toFrenchEquipment(item.equipment[0] || 'Autre')}
                               </div>
                             </div>
                           </button>

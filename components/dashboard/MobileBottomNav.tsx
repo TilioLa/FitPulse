@@ -21,7 +21,7 @@ type StaticNavItem = {
 }
 
 const navItems: NavItem[] = [
-  { id: 'feed', label: 'Dashboard', icon: Home },
+  { id: 'feed', label: 'Accueil', icon: Home },
   { id: 'programs', label: 'Programmes', icon: BookOpen },
   { id: 'exercises', label: 'Exercices', icon: Dumbbell },
 ]

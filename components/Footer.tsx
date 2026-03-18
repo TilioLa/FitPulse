@@ -28,7 +28,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/dashboard" className="text-gray-300 hover:text-primary-400 transition-colors">
-                  Dashboard
+                  Tableau de bord
                 </Link>
               </li>
               <li>

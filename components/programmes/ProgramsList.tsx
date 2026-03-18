@@ -33,6 +33,15 @@ export default function ProgramsList() {
     Array<{ id: string; title: string; subtitle: string; href: string; reasons: string[] }>
   >([])
   const [routinePicks, setRoutinePicks] = useState<typeof routineTemplates>([])
+  const uniquePrograms = useMemo(() => {
+    const bySlug = new Map<string, (typeof allPrograms)[number]>()
+    allPrograms.forEach((program) => {
+      if (!bySlug.has(program.slug)) {
+        bySlug.set(program.slug, program)
+      }
+    })
+    return Array.from(bySlug.values())
+  }, [])
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Machines', 'Haltères', 'Barres', 'Aucun matériel']
@@ -65,7 +74,7 @@ export default function ProgramsList() {
     }
     const history = readLocalHistory() as { programId?: string }[]
     const historyProgramIds = history.map((item) => item.programId).filter(Boolean) as string[]
-    const ranked = rankPrograms(allPrograms, {
+    const ranked = rankPrograms(uniquePrograms, {
       level: settings.level,
       goals: settings.goals,
       equipment: settings.equipment,
@@ -88,9 +97,9 @@ export default function ProgramsList() {
       equipment ? tpl.equipment.toLowerCase().includes(String(equipment).toLowerCase()) : true
     )
     setRoutinePicks(routines.slice(0, 2))
-  }, [mounted])
+  }, [mounted, uniquePrograms])
 
-  const filteredPrograms = allPrograms.filter(program => {
+  const filteredPrograms = uniquePrograms.filter(program => {
     const levelMatch = selectedLevel === 'all' || program.level === selectedLevel
     const equipmentMatch = selectedEquipment === 'all' || program.equipment === selectedEquipment
     const bodyPartMatch = selectedBodyPart === 'all' || program.bodyParts.includes(selectedBodyPart)
@@ -117,7 +126,7 @@ export default function ProgramsList() {
       }
       const history = readLocalHistory() as { programId?: string }[]
       const historyProgramIds = history.map((item) => item.programId).filter(Boolean) as string[]
-      const recommendation = recommendProgram(allPrograms, {
+      const recommendation = recommendProgram(uniquePrograms, {
         level: settings.level,
         goals: settings.goals,
         equipment: settings.equipment,
@@ -132,7 +141,7 @@ export default function ProgramsList() {
     } catch {
       return { recommendedProgram: null as (typeof allPrograms)[number] | null, showQuickStart: false }
     }
-  }, [mounted])
+  }, [mounted, uniquePrograms])
   const [communityHighlights, setCommunityHighlights] = useState<CommunityProgramHighlight[]>([])
 
   useEffect(() => {
