@@ -147,17 +147,60 @@ const clampPositiveInt = (value: number, fallback = 1) => {
   return Math.max(1, Math.round(value))
 }
 
-const buildInputsForExercises = (exercises: Exercise[], source?: ExerciseInputs): ExerciseInputs => {
+const bodyweightExerciseKeywords = [
+  'pompe',
+  'planche',
+  'burpee',
+  'crunch',
+  'abdos',
+  'gainage',
+  'mountain climber',
+  'jumping jack',
+  'superman',
+  'fente',
+  'squat',
+  'dip',
+]
+
+const isBodyweightExerciseName = (name: string) => {
+  const normalized = name.toLowerCase()
+  return bodyweightExerciseKeywords.some((keyword) => normalized.includes(keyword))
+}
+
+const getDefaultWeightKg = (exerciseName: string, workoutEquipment?: string) => {
+  const name = exerciseName.toLowerCase()
+  const equipment = (workoutEquipment || '').toLowerCase()
+
+  if (isBodyweightExerciseName(exerciseName)) return 0
+
+  if (/curl|elevation|élévation|extension triceps|triceps/.test(name)) return 10
+  if (/deadlift|soulev|squat|presse|leg press|hack squat/.test(name)) return 40
+  if (/row|rowing|tirage|développé|developpe|press/.test(name)) return 20
+
+  if (equipment.includes('halt')) return 10
+  if (equipment.includes('barre')) return 30
+  if (equipment.includes('machine')) return 25
+  if (equipment.includes('élast') || equipment.includes('elast')) return 5
+
+  return 0
+}
+
+const buildInputsForExercises = (
+  exercises: Exercise[],
+  source?: ExerciseInputs,
+  workoutEquipment?: string
+): ExerciseInputs => {
   const inputs: ExerciseInputs = {}
   exercises.forEach((exercise) => {
     const existingRows = source?.[exercise.id] || []
     const targetSets = clampPositiveInt(exercise.sets, 1)
     const targetReps = clampPositiveInt(exercise.reps, 1)
+    const defaultWeightKg = getDefaultWeightKg(exercise.name, workoutEquipment)
     inputs[exercise.id] = Array.from({ length: targetSets }).map((_, idx) => {
       const row = existingRows[idx]
       const rowReps = Number(row?.reps)
       return {
-        weight: row?.weight ?? 0,
+        weight: row?.weight ?? defaultWeightKg,
         reps: Number.isFinite(rowReps) && rowReps > 0 ? rowReps : targetReps,
         completed: row?.completed ?? false,
       }
@@ -364,7 +407,11 @@ export default function MySessions() {
       if (activeWorkout) {
         setWorkout(activeWorkout)
         if (activeWorkout.exercises?.length) {
-          const inputs = buildInputsForExercises(activeWorkout.exercises, activeDraft?.exerciseInputs)
+          const inputs = buildInputsForExercises(
+            activeWorkout.exercises,
+            activeDraft?.exerciseInputs,
+            activeWorkout.equipment
+          )
           setExerciseInputs(inputs)
         }
         if (activeDraft?.exerciseNotes) {
@@ -452,7 +499,7 @@ export default function MySessions() {
         if (user?.id) {
           void persistCurrentWorkoutForUser(user.id, nextWorkout as unknown as Record<string, unknown>)
         }
-        setExerciseInputs(buildInputsForExercises(nextWorkout.exercises))
+        setExerciseInputs(buildInputsForExercises(nextWorkout.exercises, undefined, nextWorkout.equipment))
         setSessionCheckIn(defaultSessionCheckIn())
       } else {
         // Séance par défaut
@@ -472,7 +519,7 @@ export default function MySessions() {
         }
         setWorkout(defaultWorkout)
         writeLocalCurrentWorkout(defaultWorkout as unknown as Record<string, unknown>)
-        setExerciseInputs(buildInputsForExercises(defaultWorkout.exercises))
+        setExerciseInputs(buildInputsForExercises(defaultWorkout.exercises, undefined, defaultWorkout.equipment))
         setSessionCheckIn(defaultSessionCheckIn())
       }
     }
@@ -725,7 +772,7 @@ export default function MySessions() {
     if (!nextWorkout) return
     if (showSummary) return
     setWorkout(nextWorkout)
-    setExerciseInputs(buildInputsForExercises(nextWorkout.exercises))
+    setExerciseInputs(buildInputsForExercises(nextWorkout.exercises, undefined, nextWorkout.equipment))
     setExerciseNotes({})
     setSessionCheckIn(defaultSessionCheckIn())
     setCurrentExerciseIndex(0)
@@ -1028,7 +1075,7 @@ export default function MySessions() {
       void persistCurrentWorkoutForUser(user.id, updated as unknown as Record<string, unknown>)
     }
     setExerciseInputs((prev) => {
-      const next = buildInputsForExercises(nextExercises, prev)
+      const next = buildInputsForExercises(nextExercises, prev, workout?.equipment)
       const exerciseId = options?.resetRepsForExerciseId
       if (!exerciseId) return next
       const matchingExercise = nextExercises.find((exercise) => exercise.id === exerciseId)
@@ -1402,8 +1449,15 @@ export default function MySessions() {
   const currentInputs = currentExercise ? (exerciseInputs[currentExercise.id] || []) : []
   const currentSetCount = currentExercise ? currentInputs.length || clampPositiveInt(currentExercise.sets, 1) : 0
   const currentRepsLabel = currentExercise ? getRepsLabel(currentInputs, currentExercise.reps) : '0'
-  const currentVolume = currentInputs.reduce((sum, set) => sum + set.weight * set.reps, 0)
-  const currentBestOneRm = currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
+  const isBodyweightExercise =
+    Boolean(workout?.equipment?.toLowerCase().includes('poids du corps')) ||
+    Boolean(currentExercise && isBodyweightExerciseName(currentExercise.name))
+  const currentVolume = isBodyweightExercise
+    ? 0
+    : currentInputs.reduce((sum, set) => sum + set.weight * set.reps, 0)
+  const currentBestOneRm = isBodyweightExercise
+    ? 0
+    : currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
   const isLastExercise = workout ? currentExerciseIndex === workout.exercises.length - 1 : false
 
   function toggleSetCompleted(setIndex: number, checked: boolean) {
@@ -2048,14 +2102,14 @@ export default function MySessions() {
 
           <div className="mb-6">
             <div className="text-sm font-semibold text-gray-700 mb-2">Charge par série</div>
-            <div className="grid grid-cols-3 gap-3 text-[11px] uppercase tracking-wide text-gray-500 mb-2">
+            <div className={`grid ${isBodyweightExercise ? 'grid-cols-2' : 'grid-cols-3'} gap-3 text-[11px] uppercase tracking-wide text-gray-500 mb-2`}>
               <span></span>
-              <span>Poids ({weightUnit})</span>
+              {!isBodyweightExercise && <span>Poids ({weightUnit})</span>}
               <span>Répétitions</span>
             </div>
             <div className="space-y-2">
               {currentInputs.map((set, index) => (
-                <div key={index} className="grid grid-cols-3 gap-3 items-center">
+                <div key={index} className={`grid ${isBodyweightExercise ? 'grid-cols-2' : 'grid-cols-3'} gap-3 items-center`}>
                   <label className="flex items-center gap-2 text-xs text-gray-500">
                     <input
                       type="checkbox"
@@ -2069,24 +2123,26 @@ export default function MySessions() {
                     />
                     Série {index + 1}
                   </label>
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.5}
-                    value={set.weight}
-                    disabled={sessionPaused}
-                    onChange={(event) => {
-                      const value = Number(event.target.value)
-                      setExerciseInputs((prev) => ({
-                        ...prev,
-                        [currentExercise.id]: prev[currentExercise.id].map((row, idx) =>
-                          idx === index ? { ...row, weight: value } : row
-                        ),
-                      }))
-                    }}
-                    className="w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
-                    placeholder={weightUnit}
-                  />
+                  {!isBodyweightExercise && (
+                    <input
+                      type="number"
+                      min={0}
+                      step={0.5}
+                      value={set.weight}
+                      disabled={sessionPaused}
+                      onChange={(event) => {
+                        const value = Number(event.target.value)
+                        setExerciseInputs((prev) => ({
+                          ...prev,
+                          [currentExercise.id]: prev[currentExercise.id].map((row, idx) =>
+                            idx === index ? { ...row, weight: value } : row
+                          ),
+                        }))
+                      }}
+                      className="w-full rounded-lg border-2 border-gray-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                      placeholder={weightUnit}
+                    />
+                  )}
                   <input
                     type="number"
                     min={1}
