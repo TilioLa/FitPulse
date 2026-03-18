@@ -23,6 +23,7 @@ type SupportEmailEnv = {
   smtpUser: string
   smtpPass: string
   emailFrom: string
+  senderEmail: string
   toEmailList: string[]
 }
 
@@ -109,8 +110,13 @@ ${input.description}
     const transporter = createTransport(port)
     return transporter.sendMail({
       from: emailFrom,
+      sender: smtpUser,
       to: toEmailList.join(', '),
       replyTo: input.userEmail || undefined,
+      envelope: {
+        from: env.senderEmail,
+        to: toEmailList,
+      },
       subject,
       text,
       html,
@@ -182,9 +188,12 @@ function getSupportEmailEnv(): SupportEmailEnv | null {
   const smtpPort = Number(process.env.SMTP_PORT || 587)
   const smtpUser = process.env.SMTP_USER
   const smtpPass = (process.env.SMTP_PASS || '').replace(/\s+/g, '')
-  const emailFrom = process.env.EMAIL_FROM || 'FitPulse <no-reply@fitpulse.app>'
-  const supportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase()
+  const rawEmailFrom = process.env.EMAIL_FROM || ''
   const smtpUserEmail = (smtpUser || '').trim().toLowerCase()
+  const fromEmail = extractEmailAddress(rawEmailFrom)?.toLowerCase() || ''
+  const sameDomain = fromEmail && smtpUserEmail && fromEmail.split('@')[1] === smtpUserEmail.split('@')[1]
+  const emailFrom = sameDomain ? rawEmailFrom : smtpUserEmail
+  const supportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase()
   const toEmailList = Array.from(new Set([supportEmail, smtpUserEmail].filter(Boolean)))
 
   if (!smtpHost || !smtpUser || !smtpPass || toEmailList.length === 0) {
@@ -197,6 +206,15 @@ function getSupportEmailEnv(): SupportEmailEnv | null {
     smtpUser,
     smtpPass,
     emailFrom,
+    senderEmail: smtpUserEmail,
     toEmailList,
   }
+}
+
+function extractEmailAddress(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) return ''
+  const match = trimmed.match(/<([^>]+)>/)
+  if (match) return match[1].trim()
+  return trimmed.includes('@') ? trimmed : ''
 }
