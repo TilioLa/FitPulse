@@ -49,8 +49,8 @@ export async function sendSupportEmail(input: SupportEmailInput) {
   const safePriority = escapeHtml(input.priority)
   const safeUser = escapeHtml(input.userEmail || 'Utilisateur non identifié')
 
-  const subject = `[Ticket FitPulse] ${safePriority.toUpperCase()} - ${safeTitle}`
-  const text = `
+  const supportSubject = `[Ticket FitPulse] ${safePriority.toUpperCase()} - ${safeTitle}`
+  const supportText = `
 Ticket ${input.id}
 Catégorie: ${safeCategory}
 Priorité: ${safePriority}
@@ -59,7 +59,7 @@ Lien: ${input.appUrl}/tickets
 
 ${input.description}
   `
-  const html = `
+  const supportHtml = `
     <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
       <h2>Nouvelle demande de support</h2>
       <p><strong>ID :</strong> ${input.id}</p>
@@ -70,6 +70,37 @@ ${input.description}
       <h3>${safeTitle}</h3>
       <p>${safeDesc.replace(/\n/g, '<br />')}</p>
       <p style="font-size: 12px; color: #6b7280;">Créé le ${new Date(input.createdAt).toLocaleString('fr-FR')}</p>
+    </div>
+  `
+  const userSubject = `[FitPulse] Ticket reçu - ${safeTitle}`
+  const userText = `
+Bonjour,
+
+Nous avons bien reçu ton ticket ${input.id}.
+Notre équipe te répondra sous 24 à 48h ouvrées.
+
+Résumé:
+- Titre: ${input.title}
+- Catégorie: ${input.category}
+- Priorité: ${input.priority}
+- Date: ${new Date(input.createdAt).toLocaleString('fr-FR')}
+
+Tu peux suivre ton ticket ici: ${input.appUrl}/tickets
+  `
+  const userHtml = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.5; color: #111827;">
+      <h2>Ticket bien reçu</h2>
+      <p>Nous avons bien reçu ton ticket <strong>${input.id}</strong>.</p>
+      <p>Notre équipe te répondra sous 24 à 48h ouvrées.</p>
+      <h3>Résumé</h3>
+      <ul>
+        <li><strong>Titre :</strong> ${safeTitle}</li>
+        <li><strong>Catégorie :</strong> ${safeCategory}</li>
+        <li><strong>Priorité :</strong> ${safePriority}</li>
+        <li><strong>Date :</strong> ${new Date(input.createdAt).toLocaleString('fr-FR')}</li>
+      </ul>
+      <p><a href="${input.appUrl}/tickets">Voir mes tickets</a></p>
+      <p style="font-size: 12px; color: #6b7280;">Email automatique FitPulse</p>
     </div>
   `
 
@@ -108,7 +139,7 @@ ${input.description}
 
   const sendWithPort = async (port: number) => {
     const transporter = createTransport(port)
-    return transporter.sendMail({
+    await transporter.sendMail({
       from: emailFrom,
       sender: smtpUser,
       to: toEmailList.join(', '),
@@ -117,27 +148,49 @@ ${input.description}
         from: env.senderEmail,
         to: toEmailList,
       },
-      subject,
-      text,
-      html,
+      subject: supportSubject,
+      text: supportText,
+      html: supportHtml,
       headers: {
         'X-Entity-Ref-ID': `fitpulse-support-${input.id}`,
       },
       attachments,
     })
+
+    const trimmedUserEmail = (input.userEmail || '').trim().toLowerCase()
+    if (!isValidEmail(trimmedUserEmail)) {
+      return { userCopySent: false as const }
+    }
+
+    await transporter.sendMail({
+      from: emailFrom,
+      sender: smtpUser,
+      to: trimmedUserEmail,
+      envelope: {
+        from: env.senderEmail,
+        to: [trimmedUserEmail],
+      },
+      subject: userSubject,
+      text: userText,
+      html: userHtml,
+      headers: {
+        'X-Entity-Ref-ID': `fitpulse-support-user-${input.id}`,
+      },
+    })
+    return { userCopySent: true as const }
   }
 
   try {
-    await sendWithPort(smtpPort)
-    return { sent: true as const }
+    const result = await sendWithPort(smtpPort)
+    return { sent: true as const, ...result }
   } catch (error) {
     const errorCode = (error as { code?: string }).code || ''
     const shouldRetryOn465 =
       smtpPort !== 465 && ['ESOCKET', 'ECONNECTION', 'ETIMEDOUT', 'ECONNREFUSED'].includes(errorCode)
     if (shouldRetryOn465) {
       try {
-        await sendWithPort(465)
-        return { sent: true as const }
+        const result = await sendWithPort(465)
+        return { sent: true as const, ...result }
       } catch (retryError) {
         const retryCode = (retryError as { code?: string }).code || ''
         if (retryCode === 'EAUTH') return { sent: false as const, reason: 'smtp_auth_failed' as const }
@@ -217,4 +270,8 @@ function extractEmailAddress(value: string) {
   const match = trimmed.match(/<([^>]+)>/)
   if (match) return match[1].trim()
   return trimmed.includes('@') ? trimmed : ''
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
 }
