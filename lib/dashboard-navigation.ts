@@ -1,6 +1,5 @@
 export type DashboardSection =
   | 'feed'
-  | 'recommendations'
   | 'session'
   | 'programs'
   | 'routines'
@@ -11,7 +10,7 @@ export function viewToSection(view: string | null): DashboardSection | null {
     case 'feed':
       return 'feed'
     case 'recommendations':
-      return 'recommendations'
+      return 'programs'
     case 'session':
       return 'session'
     case 'programs':

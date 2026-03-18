@@ -1,12 +1,12 @@
 'use client'
 
-import { Activity, BookOpen, Dumbbell, Home, LifeBuoy, Sparkles } from 'lucide-react'
+import { Activity, BookOpen, Dumbbell, Home, LifeBuoy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
-type DashboardSection = 'feed' | 'recommendations' | 'session' | 'programs' | 'routines' | 'exercises'
+type DashboardSection = 'feed' | 'session' | 'programs' | 'routines' | 'exercises'
 
 type NavItem = {
   id: DashboardSection
@@ -22,7 +22,6 @@ type StaticNavItem = {
 
 const navItems: NavItem[] = [
   { id: 'feed', label: 'Dashboard', icon: Home },
-  { id: 'recommendations', label: 'Reco', icon: Sparkles },
   { id: 'programs', label: 'Programmes', icon: BookOpen },
   { id: 'exercises', label: 'Exercices', icon: Dumbbell },
 ]
@@ -40,7 +39,7 @@ export default function MobileBottomNav({
   const pathname = usePathname()
   const [contactOpen, setContactOpen] = useState(false)
   const visibleNavItems: NavItem[] = sessionInProgress
-    ? [...navItems.slice(0, 2), { id: 'session', label: 'Séance', icon: Activity }, ...navItems.slice(2)]
+    ? [...navItems.slice(0, 1), { id: 'session', label: 'Séance', icon: Activity }, ...navItems.slice(1)]
     : navItems
   const contactItem: StaticNavItem = { id: 'contact', label: 'Contact', icon: LifeBuoy }
   const ContactIcon = contactItem.icon
@@ -68,7 +67,9 @@ export default function MobileBottomNav({
       <div className="grid gap-1 px-2 py-2" style={{ gridTemplateColumns: `repeat(${visibleNavItems.length + 1}, minmax(0, 1fr))` }}>
         {visibleNavItems.map((item) => {
           const Icon = item.icon
-          const isActive = activeSection === item.id
+          const onDashboardRoute = pathname?.startsWith('/dashboard') ?? false
+          const isActive =
+            activeSection === item.id && (item.id !== 'feed' || onDashboardRoute)
           return (
             <button
               key={item.id}

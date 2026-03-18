@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, Sparkles, LifeBuoy } from 'lucide-react'
+import { ArrowRight, Home, BookOpen, Activity, FolderPlus, Dumbbell, LifeBuoy } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
@@ -10,7 +10,7 @@ import { useAuth } from '@/components/SupabaseAuthProvider'
 import MobileBottomNav from '@/components/dashboard/MobileBottomNav'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 
-type DashboardSection = 'feed' | 'recommendations' | 'session' | 'programs' | 'routines' | 'exercises'
+type DashboardSection = 'feed' | 'session' | 'programs' | 'routines' | 'exercises'
 
 type MenuItem = {
   id: DashboardSection
@@ -26,7 +26,6 @@ interface SidebarProps {
 
 const menuItems: MenuItem[] = [
   { id: 'feed', labelKey: 'feed', icon: Home },
-  { id: 'recommendations', labelKey: 'recommendations', icon: Sparkles },
   { id: 'programs', labelKey: 'programs', icon: BookOpen },
   { id: 'routines', labelKey: 'routines', icon: FolderPlus },
   { id: 'exercises', labelKey: 'exercises', icon: Dumbbell, href: '/exercices' },
@@ -72,7 +71,7 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
   }
 
   const visibleMenuItems: MenuItem[] = sessionInProgress
-    ? [...menuItems.slice(0, 2), { id: 'session', labelKey: 'session', icon: Activity }, ...menuItems.slice(2)]
+    ? [...menuItems.slice(0, 1), { id: 'session', labelKey: 'session', icon: Activity }, ...menuItems.slice(1)]
     : menuItems
 
   return (
@@ -85,7 +84,9 @@ export default function Sidebar({ activeSection, setActiveSection }: SidebarProp
       <nav className="hidden lg:grid lg:grid-cols-1 gap-2 lg:space-y-1">
         {visibleMenuItems.map((item) => {
           const Icon = item.icon
-          const isActive = activeSection === item.id
+          const onDashboardRoute = pathname?.startsWith('/dashboard') ?? false
+          const isActive =
+            activeSection === item.id && (item.id !== 'feed' || onDashboardRoute)
           if (item.href) {
             return (
               <Link
