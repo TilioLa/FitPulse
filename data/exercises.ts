@@ -5,7 +5,7 @@ export type ExerciseCatalogItem = {
   tags: string[]
 }
 
-export const exerciseCatalog: ExerciseCatalogItem[] = [
+const exerciseCatalogRaw: ExerciseCatalogItem[] = [
   {
     "id": "21s-bicep-curl",
     "name": "21s Bicep Curl",
@@ -4305,3 +4305,7 @@ export const exerciseCatalog: ExerciseCatalogItem[] = [
     ]
   }
 ]
+
+export const exerciseCatalog: ExerciseCatalogItem[] = exerciseCatalogRaw.filter(
+  (exercise) => !exercise.equipment.includes('Band')
+)
