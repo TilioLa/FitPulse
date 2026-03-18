@@ -3,6 +3,7 @@ import './globals.css'
 import Providers from '@/components/Providers'
 import PwaRegister from '@/components/PwaRegister'
 import VercelAnalytics from '@/components/VercelAnalytics'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
@@ -32,6 +33,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body>
         <VercelAnalytics />
+        <SpeedInsights />
         <PwaRegister />
         <Providers>{children}</Providers>
       </body>
