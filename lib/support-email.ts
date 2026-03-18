@@ -17,6 +17,15 @@ type SupportEmailInput = {
   } | null
 }
 
+type SupportEmailEnv = {
+  smtpHost: string
+  smtpPort: number
+  smtpUser: string
+  smtpPass: string
+  emailFrom: string
+  toEmailList: string[]
+}
+
 const escapeHtml = (value: string) =>
   value
     .replaceAll('&', '&amp;')
@@ -26,18 +35,12 @@ const escapeHtml = (value: string) =>
     .replaceAll("'", '&#39;')
 
 export async function sendSupportEmail(input: SupportEmailInput) {
-  const smtpHost = process.env.SMTP_HOST
-  const smtpPort = Number(process.env.SMTP_PORT || 587)
-  const smtpUser = process.env.SMTP_USER
-  const smtpPass = (process.env.SMTP_PASS || '').replace(/\s+/g, '')
-  const emailFrom = process.env.EMAIL_FROM || 'FitPulse <no-reply@fitpulse.app>'
-  const supportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase()
-  const smtpUserEmail = (smtpUser || '').trim().toLowerCase()
-  const toEmailList = Array.from(new Set([supportEmail, smtpUserEmail].filter(Boolean)))
-
-  if (!smtpHost || !smtpUser || !smtpPass || toEmailList.length === 0) {
+  const env = getSupportEmailEnv()
+  if (!env) {
     return { sent: false, reason: 'missing_smtp_env' as const }
   }
+
+  const { smtpHost, smtpPort, smtpUser, smtpPass, emailFrom, toEmailList } = env
 
   const safeDesc = escapeHtml(input.description)
   const safeTitle = escapeHtml(input.title)
@@ -142,5 +145,58 @@ ${input.description}
     if (code === 'ESOCKET') return { sent: false as const, reason: 'smtp_connection_failed' as const }
     if (code === 'ETIMEDOUT') return { sent: false as const, reason: 'smtp_timeout' as const }
     return { sent: false as const, reason: 'send_failed' as const }
+  }
+}
+
+export async function verifySupportEmailTransport() {
+  const env = getSupportEmailEnv()
+  if (!env) {
+    return { ok: false as const, reason: 'missing_smtp_env' as const }
+  }
+
+  const { smtpHost, smtpPort, smtpUser, smtpPass } = env
+  try {
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpPort === 465,
+      requireTLS: smtpPort !== 465,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+      connectionTimeout: 15_000,
+      greetingTimeout: 10_000,
+      socketTimeout: 20_000,
+    })
+    await transporter.verify()
+    return { ok: true as const, port: smtpPort }
+  } catch (error) {
+    const code = (error as { code?: string }).code || 'verify_failed'
+    return { ok: false as const, reason: code }
+  }
+}
+
+function getSupportEmailEnv(): SupportEmailEnv | null {
+  const smtpHost = process.env.SMTP_HOST
+  const smtpPort = Number(process.env.SMTP_PORT || 587)
+  const smtpUser = process.env.SMTP_USER
+  const smtpPass = (process.env.SMTP_PASS || '').replace(/\s+/g, '')
+  const emailFrom = process.env.EMAIL_FROM || 'FitPulse <no-reply@fitpulse.app>'
+  const supportEmail = (process.env.SUPPORT_EMAIL || '').trim().toLowerCase()
+  const smtpUserEmail = (smtpUser || '').trim().toLowerCase()
+  const toEmailList = Array.from(new Set([supportEmail, smtpUserEmail].filter(Boolean)))
+
+  if (!smtpHost || !smtpUser || !smtpPass || toEmailList.length === 0) {
+    return null
+  }
+
+  return {
+    smtpHost,
+    smtpPort,
+    smtpUser,
+    smtpPass,
+    emailFrom,
+    toEmailList,
   }
 }

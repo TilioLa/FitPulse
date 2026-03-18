@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server'
-import { sendSupportEmail } from '@/lib/support-email'
+import { sendSupportEmail, verifySupportEmailTransport } from '@/lib/support-email'
 
 export const runtime = 'nodejs'
 
-export async function GET() {
+export async function GET(request: Request) {
+  const url = new URL(request.url)
+  const probe = url.searchParams.get('probe') === '1'
   const smtp = {
     host: Boolean(process.env.SMTP_HOST),
     port: Boolean(process.env.SMTP_PORT),
@@ -12,11 +14,19 @@ export async function GET() {
     from: Boolean(process.env.EMAIL_FROM),
     to: Boolean(process.env.SUPPORT_EMAIL || process.env.SMTP_USER),
   }
-  return NextResponse.json({
+  const base = {
     ok: true,
     route: '/api/support',
     methods: ['POST'],
     smtp,
+  }
+
+  if (!probe) return NextResponse.json(base)
+
+  const verify = await verifySupportEmailTransport()
+  return NextResponse.json({
+    ...base,
+    probe: verify,
   })
 }
 
