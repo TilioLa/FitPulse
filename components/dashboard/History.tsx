@@ -502,10 +502,13 @@ export default function History() {
           <div className="space-y-4">
             {filteredHistory.map((workout) => {
               const program = (workout as any).programId ? programsById[(workout as any).programId] : undefined
+              const isCustomRoutine = workout.workoutName.toLowerCase().startsWith('routine')
               const href =
                 program && (workout as any).workoutId
                   ? `/programmes/${program.slug}/seances/${(workout as any).workoutId}`
-                  : '/dashboard?view=session'
+                  : isCustomRoutine
+                    ? '/dashboard?view=routines'
+                    : '/dashboard?view=programs'
               return (
                 <Link key={workout.id} href={href} className="block">
                 <div className="card-soft hover:shadow-md transition-shadow">

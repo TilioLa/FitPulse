@@ -45,7 +45,7 @@ export default function ProgramsList() {
 
   const levels = ['all', 'Débutant', 'Intermédiaire', 'Avancé', 'Tous niveaux']
   const equipments = ['all', 'Poids du corps', 'Machines', 'Haltères', 'Barres', 'Aucun matériel']
-  const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Abdominaux', 'Mobilité']
+  const bodyParts = ['all', 'Tout le corps', 'Haut du corps', 'Jambes', 'Bras', 'Cardio', 'Fessiers', 'Abdos', 'Mobilité']
 
   useEffect(() => {
     setMounted(true)
@@ -112,6 +112,12 @@ export default function ProgramsList() {
     const favMatch = !onlyFavorites || favorites.includes(program.id)
     return levelMatch && equipmentMatch && bodyPartMatch && queryMatch && favMatch
   })
+  const hasActiveFilters =
+    selectedLevel !== 'all' ||
+    selectedEquipment !== 'all' ||
+    selectedBodyPart !== 'all' ||
+    query.trim().length > 0 ||
+    onlyFavorites
 
   const { recommendedProgram, showQuickStart } = useMemo(() => {
     if (!mounted || typeof window === 'undefined') {
@@ -178,7 +184,7 @@ export default function ProgramsList() {
 
   return (
     <div>
-      {showQuickStart && recommendedProgram && (
+      {!hasActiveFilters && showQuickStart && recommendedProgram && (
         <div className="card-soft mb-8 border border-primary-200 bg-primary-50/40">
           <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">
             Démarrage rapide
@@ -199,7 +205,7 @@ export default function ProgramsList() {
           </div>
         </div>
       )}
-      {communityHighlights.length > 0 && (
+      {!hasActiveFilters && communityHighlights.length > 0 && (
         <div className="card-soft mb-8 border border-primary-100 bg-white">
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -228,6 +234,7 @@ export default function ProgramsList() {
         </div>
       )}
 
+      {!hasActiveFilters && (
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-8">
         <div className="card-soft">
           <div className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-3">Recommandations programmes</div>
@@ -286,6 +293,7 @@ export default function ProgramsList() {
           )}
         </div>
       </div>
+      )}
 
       {/* Filtres */}
       <div className="card-soft mb-8">
