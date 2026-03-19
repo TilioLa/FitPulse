@@ -28,21 +28,52 @@ export function getDefaultOnboardingAnswers() {
 }
 
 export function readOnboardingState(): OnboardingState {
-  if (typeof window === 'undefined') return {}
+  const settings = readLocalSettings() as {
+    onboardingCompletedAt?: string
+    onboardingDismissedAt?: string
+    onboardingAnswers?: OnboardingAnswers
+  }
+  const fallbackState: OnboardingState = {
+    completed: typeof settings.onboardingCompletedAt === 'string' && settings.onboardingCompletedAt.length > 0,
+    dismissed: typeof settings.onboardingDismissedAt === 'string' && settings.onboardingDismissedAt.length > 0,
+    answers: settings.onboardingAnswers,
+  }
+  if (typeof window === 'undefined') return fallbackState
   try {
-    return JSON.parse(localStorage.getItem(ONBOARDING_STATE_KEY) || '{}') as OnboardingState
+    const localState = JSON.parse(localStorage.getItem(ONBOARDING_STATE_KEY) || '{}') as OnboardingState
+    return {
+      ...fallbackState,
+      ...localState,
+      completed: Boolean(localState.completed || fallbackState.completed),
+      dismissed: Boolean(localState.dismissed || fallbackState.dismissed),
+      answers: localState.answers || fallbackState.answers,
+    }
   } catch {
-    return {}
+    return fallbackState
   }
 }
 
 export function writeOnboardingState(state: OnboardingState) {
   if (typeof window === 'undefined') return
+  const nowIso = new Date().toISOString()
+  const existingSettings = readLocalSettings()
+  writeLocalSettings({
+    ...existingSettings,
+    onboardingCompletedAt:
+      state.completed === true
+        ? nowIso
+        : (existingSettings.onboardingCompletedAt as string | undefined),
+    onboardingDismissedAt:
+      state.dismissed === true
+        ? nowIso
+        : (existingSettings.onboardingDismissedAt as string | undefined),
+    onboardingAnswers: state.answers || (existingSettings.onboardingAnswers as OnboardingAnswers | undefined),
+  })
   localStorage.setItem(
     ONBOARDING_STATE_KEY,
     JSON.stringify({
       ...state,
-      updatedAt: new Date().toISOString(),
+      updatedAt: nowIso,
     })
   )
   window.dispatchEvent(new Event('fitpulse-onboarding'))
@@ -50,6 +81,9 @@ export function writeOnboardingState(state: OnboardingState) {
 
 export function isOnboardingProfileComplete() {
   const settings = readLocalSettings()
+  const completedFlag =
+    typeof settings.onboardingCompletedAt === 'string' && settings.onboardingCompletedAt.length > 0
+  if (completedFlag) return true
   const hasGoal = typeof settings.goal === 'string' && settings.goal.trim().length > 0
   const hasLevel = typeof settings.level === 'string' && settings.level.trim().length > 0
   const hasEquipment = Array.isArray(settings.equipment) && settings.equipment.length > 0
