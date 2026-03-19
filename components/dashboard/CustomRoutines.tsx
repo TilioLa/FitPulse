@@ -15,6 +15,7 @@ import {
   writeLocalCustomRoutines,
   writeLocalCurrentWorkout,
 } from '@/lib/user-state-store'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
 type RoutineExercise = {
   name: string
@@ -222,7 +223,10 @@ export default function CustomRoutines() {
       const matchesQuery =
         normalized.length === 0 ||
         routine.name.toLowerCase().includes(normalized) ||
-        routine.exercises.some((exercise) => exercise.name.toLowerCase().includes(normalized))
+        routine.exercises.some((exercise) =>
+          exercise.name.toLowerCase().includes(normalized) ||
+          localizeExerciseNameFr(exercise.name).toLowerCase().includes(normalized)
+        )
       const matchesEquipment = equipmentFilter === 'Tous' || routine.equipment === equipmentFilter
       const matchesSessions =
         sessionsFilter === 'Tous' || routine.sessionsPerWeek === Number(sessionsFilter)
@@ -358,7 +362,7 @@ export default function CustomRoutines() {
               <div className="mt-4 flex flex-wrap gap-2">
                 {routine.exercises.slice(0, 6).map((exercise) => (
                   <span key={exercise.name} className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full">
-                    {exercise.name}
+                    {localizeExerciseNameFr(exercise.name)}
                   </span>
                 ))}
                 {routine.exercises.length > 6 && (

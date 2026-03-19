@@ -22,6 +22,7 @@ import {
   writeLocalCurrentWorkout,
 } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
 type SessionExercise = { name: string; sets: number; reps: number; rest: number }
 
@@ -326,7 +327,7 @@ export default function SessionDetailPage() {
                               <Dumbbell className="h-5 w-5 text-gray-400" />
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{exercise.name}</div>
+                              <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(exercise.name)}</div>
                               <div className="text-xs text-gray-500">
                                 {exercise.sets} séries · {exercise.reps} reps ·{' '}
                                 <RestTimeDisplay defaultRest={exercise.rest} />

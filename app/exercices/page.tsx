@@ -17,6 +17,7 @@ import {
   saveLocalExerciseFavorites,
 } from '@/lib/exercise-preferences-store'
 import { hrefForDashboardSection } from '@/lib/dashboard-navigation'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
 type HistoryExercise = {
   id?: string
@@ -146,7 +147,8 @@ function ExercicesPageContent() {
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase()
     return allExercises.filter((ex) => {
-      const matchQuery = !term || ex.name.toLowerCase().includes(term)
+      const localized = localizeExerciseNameFr(ex.name).toLowerCase()
+      const matchQuery = !term || ex.name.toLowerCase().includes(term) || localized.includes(term)
       const matchEquip = equipment === 'all' || ex.equipment.includes(equipment)
       const matchMuscle = muscle === 'all' || ex.tags.includes(muscle)
       const matchFav = !onlyFavorites || favorites.includes(ex.id)
@@ -361,7 +363,7 @@ function ExercicesPageContent() {
                         <Dumbbell className="h-6 w-6 text-gray-500" />
                       </div>
                       <div>
-                        <h2 className="text-2xl font-semibold text-gray-900">{selected.name}</h2>
+                        <h2 className="text-2xl font-semibold text-gray-900">{localizeExerciseNameFr(selected.name)}</h2>
                         <p className="text-sm text-gray-500 mt-1">
                           {selected.tags.map(toFrenchMuscle).join(', ')} · {selected.equipment.map(toFrenchEquipment).join(', ')}
                         </p>
@@ -539,7 +541,7 @@ function ExercicesPageContent() {
                             onClick={() => setSelected(item)}
                             className="rounded-full border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
                           >
-                            {item.name}
+                            {localizeExerciseNameFr(item.name)}
                           </button>
                         ))}
                       </div>
@@ -632,7 +634,7 @@ function ExercicesPageContent() {
                               <Dumbbell className="h-5 w-5 text-gray-400" />
                             </div>
                             <div>
-                              <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                              <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(item.name)}</div>
                               <div className="text-xs text-gray-500">
                                 {item.tags.map(toFrenchMuscle).join(', ')} · {toFrenchEquipment(item.equipment[0] || 'Autre')}
                               </div>

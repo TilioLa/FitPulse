@@ -24,6 +24,7 @@ import {
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
 import { encodeSharedSession } from '@/lib/session-share'
 import { slugify } from '@/lib/slug'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
 const playBeep = () => {
   try {
@@ -1403,7 +1404,7 @@ export default function MySessions() {
         const bestWeight = Math.max(...sets.map((set) => set.weight || 0), 0)
         ctx.fillStyle = '#374151'
         ctx.font = '600 24px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial'
-        ctx.fillText(`• ${exercise.name}`, 64, y)
+        ctx.fillText(`• ${localizeExerciseNameFr(exercise.name)}`, 64, y)
         ctx.fillStyle = '#1d4ed8'
         ctx.fillText(`${exercise.sets}x${exercise.reps} • max ${bestWeight}${weightUnit}`, 620, y)
       })
@@ -1505,7 +1506,7 @@ export default function MySessions() {
       if (checked && !wasCompleted) {
         setLastCompletedSet({
           exerciseId: currentExercise.id,
-          exerciseName: currentExercise.name,
+          exerciseName: localizeExerciseNameFr(currentExercise.name),
           setIndex,
         })
       }
@@ -1599,7 +1600,7 @@ export default function MySessions() {
                       <Dumbbell className="h-4 w-4 text-gray-500" />
                     </div>
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">{exercise.name}</div>
+                      <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(exercise.name)}</div>
                       <div className="text-xs text-gray-500">
                         {exercise.sets} sets · {exercise.reps} reps · Rest {exercise.rest}s
                       </div>
@@ -1792,7 +1793,7 @@ export default function MySessions() {
       {!showSummary && !trainingMode && (
         <div className="sticky top-0 z-20 -mx-4 px-4 py-2 bg-gray-50/95 backdrop-blur border-b border-gray-200 lg:hidden">
           <div className="flex items-center justify-between text-xs font-semibold text-gray-700">
-            <span className="truncate pr-2">{currentExercise.name}</span>
+            <span className="truncate pr-2">{localizeExerciseNameFr(currentExercise.name)}</span>
             <span>{currentExerciseIndex + 1}/{workout.exercises.length}</span>
           </div>
           <div className="mt-2 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
@@ -1988,7 +1989,7 @@ export default function MySessions() {
             onClick={() => {
               setTrainingMode((prev) => !prev)
               if (!trainingMode) {
-                speak(`Mode entraînement activé pour ${currentExercise.name}`)
+                speak(`Mode entraînement activé pour ${localizeExerciseNameFr(currentExercise.name)}`)
               }
             }}
             className="btn-primary px-4 py-2 text-sm"
@@ -2001,7 +2002,7 @@ export default function MySessions() {
             {workout.exercises.map((exercise, index) => (
               <div key={exercise.id} className="rounded-lg border border-gray-200 bg-white p-3">
                 <div className="flex items-center justify-between">
-                  <div className="text-sm font-semibold text-gray-900">{exercise.name}</div>
+                  <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(exercise.name)}</div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
@@ -2093,7 +2094,7 @@ export default function MySessions() {
               Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
             </span>
             <h2 className="text-3xl font-bold text-gray-900 mt-2">
-              {currentExercise.name}
+              {localizeExerciseNameFr(currentExercise.name)}
             </h2>
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <SupersetToggle
@@ -2132,7 +2133,7 @@ export default function MySessions() {
                 <div>2. Lance le repos pour garder un rythme régulier.</div>
                 <div>3. Note tes sensations pour suivre ta progression.</div>
                 <div className="text-xs text-gray-500">
-                  Astuce: reste concentré sur la technique de {currentExercise.name}.
+                  Astuce: reste concentré sur la technique de {localizeExerciseNameFr(currentExercise.name)}.
                 </div>
               </div>
             )}
@@ -2492,7 +2493,7 @@ export default function MySessions() {
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <div className="font-semibold text-gray-900">{exercise.name}</div>
+                      <div className="font-semibold text-gray-900">{localizeExerciseNameFr(exercise.name)}</div>
                       <div className="text-sm text-gray-600">
                         {displaySets} séries × {displayReps} reps
                       </div>
@@ -2534,7 +2535,7 @@ export default function MySessions() {
           <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{selectedExercise.name}</h3>
+                <h3 className="text-xl font-semibold text-gray-900">{localizeExerciseNameFr(selectedExercise.name)}</h3>
                 <p className="text-sm text-gray-500">1RM estimé et progression</p>
               </div>
               <button
@@ -2690,7 +2691,7 @@ export default function MySessions() {
       )}
       {trainingMode && workout && (
         <TrainingModeView
-          exerciseName={currentExercise.name}
+          exerciseName={localizeExerciseNameFr(currentExercise.name)}
           currentSet={currentExerciseIndex + 1}
           totalSets={workout.exercises.length}
           reps={currentExercise.reps}

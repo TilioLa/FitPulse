@@ -14,6 +14,7 @@ import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCurrentWorkout, readLocalSettings } from '@/lib/user-state-store'
 import { useToast } from '@/components/ui/ToastProvider'
 import type { SharedSessionPayload } from '@/lib/session-share'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 import {
   applyOnboardingAnswers,
   getDefaultOnboardingAnswers,
@@ -1391,7 +1392,7 @@ export default function Feed() {
             {exerciseProgress.map((exercise) => (
               <div key={exercise.name} className="rounded-lg border border-gray-200 bg-white px-3 py-3">
                 <div className="flex items-center justify-between gap-3">
-                  <div className="text-sm font-semibold text-gray-900">{exercise.name}</div>
+                  <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(exercise.name)}</div>
                   <div className={`text-xs font-semibold ${exercise.oneRmTrend >= 0 ? 'text-emerald-700' : 'text-amber-700'}`}>
                     {exercise.oneRmTrend >= 0 ? '+' : ''}{exercise.oneRmTrend}% 1RM
                   </div>

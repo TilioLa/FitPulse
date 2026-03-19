@@ -1,4 +1,5 @@
 import { exerciseCatalog, type ExerciseCatalogItem } from '@/data/exercises'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
 const RECENT_EXERCISES_KEY = 'fitpulse_recent_exercises_v1'
 
@@ -65,7 +66,7 @@ export function searchExercisesWithSynonyms(query: string, items: ExerciseCatalo
     }
   })
   return items.filter((item) => {
-    const haystack = `${item.name} ${item.tags.join(' ')} ${item.equipment.join(' ')}`.toLowerCase()
+    const haystack = `${item.name} ${localizeExerciseNameFr(item.name)} ${item.tags.join(' ')} ${item.equipment.join(' ')}`.toLowerCase()
     return Array.from(expandedTerms).some((value) => haystack.includes(value))
   })
 }

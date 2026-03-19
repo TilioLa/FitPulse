@@ -12,6 +12,7 @@ import {
   suggestExerciseSubstitutions,
 } from '@/lib/exercise-memory'
 import { readLocalSettings } from '@/lib/user-state-store'
+import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
 export default function ExerciseCatalog({
   onSelect,
@@ -101,7 +102,10 @@ export default function ExerciseCatalog({
 
   const handleSelect = (item: ExerciseCatalogItem) => {
     saveRecentExercise({ id: item.id, name: item.name })
-    onSelect?.(item)
+    onSelect?.({
+      ...item,
+      name: localizeExerciseNameFr(item.name),
+    })
   }
 
   return (
@@ -162,7 +166,7 @@ export default function ExerciseCatalog({
                 onClick={() => handleSelect(item)}
                 className="rounded-full border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:border-primary-200 hover:text-primary-700"
               >
-                {item.name}
+                {localizeExerciseNameFr(item.name)}
               </button>
             ))}
           </div>
@@ -183,7 +187,7 @@ export default function ExerciseCatalog({
                 onClick={() => handleSelect(item)}
                 className="rounded-xl border border-primary-100 bg-white px-4 py-3 text-left hover:border-primary-200"
               >
-                <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(item.name)}</div>
                 <div className="mt-1 text-xs text-gray-500">
                   {item.tags.join(', ')} · {item.equipment.join(', ')}
                 </div>
@@ -204,7 +208,7 @@ export default function ExerciseCatalog({
                     <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
                       <Dumbbell className="h-4 w-4 text-gray-400" />
                     </div>
-                    <div className="text-sm font-semibold text-gray-900">{item.name}</div>
+                    <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(item.name)}</div>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">{item.tags.join(', ')}</div>
                   <div className="text-[11px] text-gray-400 mt-1">{item.equipment.join(', ')}</div>
