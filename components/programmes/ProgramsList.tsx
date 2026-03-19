@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Dumbbell, Timer, Target, Filter, ArrowRight, Star } from 'lucide-react'
+import { Dumbbell, Timer, Target, Filter, ArrowRight, Star, Scale, Sparkles, CheckCircle2 } from 'lucide-react'
 import { programs as allPrograms } from '@/data/programs'
 import { routineTemplates } from '@/data/routine-templates'
 import { labelize } from '@/lib/labels'
@@ -29,6 +29,7 @@ export default function ProgramsList() {
   const [query, setQuery] = useState('')
   const [onlyFavorites, setOnlyFavorites] = useState(false)
   const [favorites, setFavorites] = useState<string[]>([])
+  const [compareIds, setCompareIds] = useState<string[]>([])
   const [recommendationCards, setRecommendationCards] = useState<
     Array<{ id: string; title: string; subtitle: string; href: string; reasons: string[] }>
   >([])
@@ -150,6 +151,59 @@ export default function ProgramsList() {
   }, [mounted, uniquePrograms])
   const [communityHighlights, setCommunityHighlights] = useState<CommunityProgramHighlight[]>([])
 
+  const userProfile = useMemo(() => {
+    const settings = readLocalSettings() as {
+      level?: string
+      goals?: string[]
+      goal?: string
+      equipment?: string[]
+      sessionsPerWeek?: number
+    }
+    const goals = Array.isArray(settings.goals) && settings.goals.length > 0
+      ? settings.goals
+      : settings.goal
+      ? [settings.goal]
+      : []
+    return {
+      level: settings.level,
+      goals,
+      equipment: Array.isArray(settings.equipment) ? settings.equipment : [],
+      sessionsPerWeek: Number(settings.sessionsPerWeek || 0),
+    }
+  }, [])
+
+  const comparePrograms = compareIds
+    .map((id) => uniquePrograms.find((program) => program.id === id))
+    .filter(Boolean) as (typeof uniquePrograms)[number][]
+
+  const getWhyItFits = (program: (typeof uniquePrograms)[number]) => {
+    const reasons: string[] = []
+    if (userProfile.level && program.level.toLowerCase().includes(String(userProfile.level).toLowerCase())) {
+      reasons.push('niveau cohérent')
+    }
+    if (userProfile.goals.some((goal) => program.goals.some((item) => item.toLowerCase().includes(goal.toLowerCase())))) {
+      reasons.push('objectif aligné')
+    }
+    if (userProfile.equipment.some((equipment) => program.equipment.toLowerCase().includes(equipment.toLowerCase()))) {
+      reasons.push('matériel compatible')
+    }
+    const weeklyMinutes = program.sessions.reduce((sum, session) => sum + session.duration, 0)
+    if (userProfile.sessionsPerWeek > 0 && Math.abs(program.sessionsPerWeek - userProfile.sessionsPerWeek) <= 1) {
+      reasons.push('rythme réaliste')
+    }
+    if (weeklyMinutes <= 160) {
+      reasons.push('volume gérable')
+    }
+    return reasons.slice(0, 3)
+  }
+
+  const toggleCompare = (programId: string) => {
+    setCompareIds((prev) => {
+      if (prev.includes(programId)) return prev.filter((id) => id !== programId)
+      return [...prev.slice(-1), programId]
+    })
+  }
+
   useEffect(() => {
     let active = true
     const loadShareHighlights = async () => {
@@ -202,6 +256,60 @@ export default function ProgramsList() {
             <Link href={`/programmes/${recommendedProgram.slug}`} className="btn-secondary w-full sm:w-auto text-center">
               Voir le détail
             </Link>
+          </div>
+        </div>
+      )}
+      {comparePrograms.length > 0 && (
+        <div className="card-soft mb-8 border border-gray-200 bg-white">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Comparateur</div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">
+                {comparePrograms.length === 1 ? 'Choisis un second programme à comparer' : 'Comparaison rapide'}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setCompareIds([])}
+              className="text-sm font-semibold text-gray-500 hover:text-gray-700"
+            >
+              Réinitialiser
+            </button>
+          </div>
+          <div className={`mt-4 grid gap-4 ${comparePrograms.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
+            {comparePrograms.map((program) => (
+              <div key={program.id} className="rounded-2xl border border-gray-200 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-lg font-semibold text-gray-900">{program.name}</div>
+                    <div className="text-sm text-gray-500">{program.level} · {program.equipment}</div>
+                  </div>
+                  <Link href={`/programmes/${program.slug}`} className="text-sm font-semibold text-primary-700">
+                    Ouvrir
+                  </Link>
+                </div>
+                <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
+                  <div className="rounded-xl bg-gray-50 p-3">
+                    <div className="text-xs text-gray-500">Temps hebdo</div>
+                    <div className="font-semibold text-gray-900">
+                      {program.sessions.reduce((sum, session) => sum + session.duration, 0)} min
+                    </div>
+                  </div>
+                  <div className="rounded-xl bg-gray-50 p-3">
+                    <div className="text-xs text-gray-500">Séances / semaine</div>
+                    <div className="font-semibold text-gray-900">{program.sessionsPerWeek}</div>
+                  </div>
+                </div>
+                <div className="mt-4 space-y-2">
+                  {getWhyItFits(program).map((reason) => (
+                    <div key={reason} className="flex items-center gap-2 text-sm text-gray-700">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      {reason}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -419,6 +527,12 @@ export default function ProgramsList() {
             <p className="text-gray-600 mb-4">{program.description}</p>
 
             <div className="space-y-2 mb-6">
+              {recommendedProgram?.id === program.id && (
+                <div className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Recommandé pour toi
+                </div>
+              )}
               <div className="flex items-center text-sm text-gray-600">
                 <Timer className="h-4 w-4 mr-2" />
                 <span>{program.duration}</span>
@@ -434,6 +548,9 @@ export default function ProgramsList() {
               <div className="text-sm text-gray-600">
                 {program.sessionsPerWeek} séances / semaine
               </div>
+              <div className="text-sm text-gray-600">
+                {program.sessions.reduce((sum, session) => sum + session.duration, 0)} min / semaine
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2 mb-6">
@@ -444,7 +561,33 @@ export default function ProgramsList() {
               ))}
             </div>
 
+            <div className="mb-6 rounded-xl border border-gray-100 bg-gray-50 p-4">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <Target className="h-3.5 w-3.5 text-primary-600" />
+                Pourquoi ce programme peut te convenir
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {getWhyItFits(program).map((reason) => (
+                  <span key={reason} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-gray-700 border border-gray-200">
+                    {reason}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => toggleCompare(program.id)}
+                className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-semibold ${
+                  compareIds.includes(program.id)
+                    ? 'border-primary-300 bg-primary-50 text-primary-700'
+                    : 'border-gray-200 text-gray-700 hover:border-primary-200'
+                }`}
+              >
+                <Scale className="h-4 w-4" />
+                {compareIds.includes(program.id) ? 'Retirer du comparatif' : 'Comparer'}
+              </button>
               <Link
                 href={programHref}
                 className="inline-flex items-center text-primary-600 font-semibold hover:text-primary-700 group-hover:translate-x-1 transition-transform"

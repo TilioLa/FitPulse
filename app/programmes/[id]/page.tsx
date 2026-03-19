@@ -4,7 +4,7 @@ import { programs, programsById, programsBySlug } from '@/data/programs'
 import { slugify } from '@/lib/slug'
 import { labelize } from '@/lib/labels'
 import EquipmentBadge from '@/components/exercises/EquipmentBadge'
-import { Dumbbell, Timer, CalendarCheck } from 'lucide-react'
+import { Dumbbell, Timer, CalendarCheck, BarChart3, CheckCircle2 } from 'lucide-react'
 import StartProgramButton from '@/components/programmes/StartProgramButton'
 import ProgramSessionsList from '@/components/programmes/ProgramSessionsList'
 import ProgramSchedulePicker from '@/components/programmes/ProgramSchedulePicker'
@@ -59,6 +59,14 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
   }
 
   const baseWeeks = Number(program.duration.match(/\d+/)?.[0] || program.sessionsPerWeek || 4)
+  const weeklyMinutes = program.sessions.reduce((sum, session) => sum + session.duration, 0)
+  const difficultyMeter =
+    program.level === 'Débutant' ? 1 : program.level === 'Intermédiaire' ? 2 : 3
+  const fitReasons = [
+    `Tu veux ${program.goals[0]?.toLowerCase() || 'progresser'} avec un cadre clair.`,
+    `Tu disposes de ${program.equipment.toLowerCase()} pour suivre les séances sans friction.`,
+    `${program.sessionsPerWeek} séance(s) par semaine pour garder un rythme réaliste.`,
+  ]
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -104,6 +112,42 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
                       </div>
                       <div className="text-lg font-semibold text-gray-900">{program.sessionsPerWeek} / semaine</div>
                     </div>
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center text-sm text-gray-600 mb-2">
+                        <Timer className="h-4 w-4 mr-2" />
+                        Temps hebdo estimé
+                      </div>
+                      <div className="text-lg font-semibold text-gray-900">{weeklyMinutes} min</div>
+                    </div>
+                  </div>
+
+                  <div className="mb-6 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                        <BarChart3 className="h-4 w-4 text-primary-600" />
+                        Difficulté
+                      </div>
+                      <div className="mt-3 flex items-center gap-2">
+                        {[1, 2, 3].map((step) => (
+                          <div
+                            key={step}
+                            className={`h-2 flex-1 rounded-full ${step <= difficultyMeter ? 'bg-primary-600' : 'bg-gray-200'}`}
+                          />
+                        ))}
+                      </div>
+                      <div className="mt-2 text-sm text-gray-600">{program.level}</div>
+                    </div>
+                    <div className="rounded-2xl border border-primary-100 bg-primary-50/40 p-4">
+                      <div className="text-sm font-semibold text-gray-900">Pourquoi ce programme est pour toi</div>
+                      <div className="mt-3 space-y-2">
+                        {fitReasons.map((reason) => (
+                          <div key={reason} className="flex items-start gap-2 text-sm text-gray-700">
+                            <CheckCircle2 className="mt-0.5 h-4 w-4 text-emerald-600" />
+                            <span>{reason}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   <div className="mb-6">
@@ -124,11 +168,11 @@ export default async function ProgramDetailPage({ params }: { params: { id?: str
             <div className="space-y-6">
               <div className="card">
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Ce programme est pour toi si…</h3>
-                <ul className="space-y-2 text-gray-600">
-                  <li>✔️ Tu veux un plan structuré et progressif</li>
-                  <li>✔️ Tu cherches des séances claires</li>
-                  <li>✔️ Tu veux suivre tes progrès</li>
-                </ul>
+                <div className="space-y-2 text-gray-600">
+                  <div>✔️ Tu veux un plan structuré et progressif</div>
+                  <div>✔️ Tu cherches des séances claires avec une charge de travail prévisible</div>
+                  <div>✔️ Tu veux suivre tes progrès séance après séance</div>
+                </div>
               </div>
 
               <div className="card bg-gradient-to-br from-primary-50 to-accent-50">

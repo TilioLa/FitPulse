@@ -1,5 +1,11 @@
+'use client'
+
 import Link from 'next/link'
-import { CheckCircle2, Target, CalendarCheck, Rocket } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { CheckCircle2, Target, CalendarCheck, Rocket, Sparkles } from 'lucide-react'
+import { programs } from '@/data/programs'
+import { recommendProgram } from '@/lib/recommendation'
+import { readLocalSettings } from '@/lib/user-state-store'
 
 const steps = [
   {
@@ -20,6 +26,34 @@ const steps = [
 ]
 
 export default function Onboarding() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const personalizedPick = useMemo(() => {
+    if (!mounted) return null
+    const settings = readLocalSettings() as {
+      level?: string
+      goals?: string[]
+      goal?: string
+      equipment?: string[]
+      sessionsPerWeek?: number
+    }
+    const goals = Array.isArray(settings.goals) && settings.goals.length > 0
+      ? settings.goals
+      : settings.goal
+      ? [settings.goal]
+      : []
+    return recommendProgram(programs, {
+      level: settings.level,
+      goals,
+      equipment: settings.equipment,
+      sessionsPerWeek: settings.sessionsPerWeek,
+    })?.program || null
+  }, [mounted])
+
   return (
     <section className="py-14 sm:py-20 bg-gray-50">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,6 +90,31 @@ export default function Onboarding() {
             )
           })}
         </div>
+
+        {personalizedPick && (
+          <div className="mt-8 rounded-3xl border border-primary-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full bg-primary-50 px-3 py-1 text-xs font-semibold text-primary-700">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Recommandation immédiate
+                </div>
+                <h3 className="mt-3 text-xl font-semibold text-gray-900">{personalizedPick.name}</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  {personalizedPick.sessionsPerWeek} séances par semaine, {personalizedPick.equipment.toLowerCase()}.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Link href={`/programmes/${personalizedPick.slug}`} className="btn-secondary text-center">
+                  Voir pourquoi
+                </Link>
+                <Link href="/dashboard?view=programs" className="btn-primary text-center">
+                  Lancer ce parcours
+                </Link>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

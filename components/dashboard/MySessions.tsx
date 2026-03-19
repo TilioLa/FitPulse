@@ -1459,6 +1459,29 @@ export default function MySessions() {
     ? 0
     : currentInputs.reduce((max, set) => Math.max(max, estimateOneRm(set.weight, set.reps)), 0)
   const isLastExercise = workout ? currentExerciseIndex === workout.exercises.length - 1 : false
+  const completedSets = (workout?.exercises || []).reduce(
+    (sum, exercise) => sum + (exerciseInputs[exercise.id] || []).filter((set) => set.completed).length,
+    0
+  )
+  const totalSets = (workout?.exercises || []).reduce(
+    (sum, exercise) => sum + Math.max((exerciseInputs[exercise.id] || []).length, clampPositiveInt(exercise.sets, 1)),
+    0
+  )
+  const remainingExercises = Math.max((workout?.exercises.length || 0) - (currentExerciseIndex + 1), 0)
+  const estimatedRemainingMinutes =
+    Math.max(
+      1,
+      Math.round(
+        (workout?.exercises || [])
+          .slice(currentExerciseIndex)
+          .reduce((sum, exercise, index) => {
+            const sets = Math.max((exerciseInputs[exercise.id] || []).length, clampPositiveInt(exercise.sets, 1))
+            const workMinutes = sets * 1.25
+            const restMinutes = ((index === 0 ? effectiveRest : exercise.rest) * Math.max(sets - 1, 0)) / 60
+            return sum + workMinutes + restMinutes
+          }, 0)
+      )
+    )
 
   function toggleSetCompleted(setIndex: number, checked: boolean) {
     if (!currentExercise) return
@@ -1660,8 +1683,25 @@ export default function MySessions() {
               <div className="mt-4 text-sm text-gray-600">
                 <div>Poids total : <span className="font-semibold text-gray-900">{lastSummary.volume} {weightUnit}</span></div>
                 <div>Calories : <span className="font-semibold text-gray-900">{lastSummary.calories} kcal</span></div>
+                <div>PR du jour : <span className="font-semibold text-gray-900">{formatWeight(lastSummary.bestPrKg)}</span></div>
               </div>
             </div>
+
+            {nextWorkout && (
+              <div className="card-soft border border-primary-100 bg-primary-50/40">
+                <h3 className="text-lg font-semibold text-gray-900">Prochaine séance conseillée</h3>
+                <div className="mt-2 text-sm text-gray-600">{nextWorkout.name}</div>
+                <button
+                  className="btn-primary mt-4 w-full"
+                  onClick={() => {
+                    setShowSummary(false)
+                    router.push('/dashboard?view=session')
+                  }}
+                >
+                  Enchaîner avec la suite
+                </button>
+              </div>
+            )}
 
             <div className="card-soft">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Groupes musculaires</h3>
@@ -1909,8 +1949,21 @@ export default function MySessions() {
               style={{ width: `${((currentExerciseIndex + 1) / workout.exercises.length) * 100}%` }}
             />
           </div>
-          <div className="text-sm text-gray-600 mt-2">
-            Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <div className="text-xs text-gray-500">Progression exercice</div>
+              <div className="text-sm font-semibold text-gray-900">
+                Exercice {currentExerciseIndex + 1} sur {workout.exercises.length}
+              </div>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <div className="text-xs text-gray-500">Séries validées</div>
+              <div className="text-sm font-semibold text-gray-900">{completedSets}/{totalSets}</div>
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white px-4 py-3">
+              <div className="text-xs text-gray-500">Temps restant estimé</div>
+              <div className="text-sm font-semibold text-gray-900">~ {estimatedRemainingMinutes} min</div>
+            </div>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap items-center gap-2">
@@ -2365,6 +2418,15 @@ export default function MySessions() {
         {/* Liste des exercices */}
         <div>
           <div className="card mb-4">
+            <div className="mb-4 rounded-xl border border-primary-100 bg-primary-50/50 px-4 py-3">
+              <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Vue d’ensemble</div>
+              <div className="mt-1 text-sm font-semibold text-gray-900">
+                {remainingExercises === 0 ? 'Dernière ligne droite' : `${remainingExercises} exercice(s) après celui-ci`}
+              </div>
+              <div className="mt-1 text-xs text-gray-600">
+                Auto-scroll actif, progression sauvegardée en direct et reprise au bon endroit.
+              </div>
+            </div>
             <div className="text-sm font-semibold text-gray-900">Partager la séance</div>
             <div className="mt-2 text-xs text-gray-500">
               Lien public et carte image pour partager ta progression.

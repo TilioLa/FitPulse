@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target } from 'lucide-react'
+import { Calendar, Clock, Play, Trophy, Activity, Flame, Timer, Target, Sparkles, ChevronRight } from 'lucide-react'
 import { computeHistoryStats, toLocalDateKey, WorkoutHistoryItem } from '@/lib/history'
 import Link from 'next/link'
 import { programsById, programs } from '@/data/programs'
@@ -14,6 +14,14 @@ import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCurrentWorkout, readLocalSettings } from '@/lib/user-state-store'
 import { useToast } from '@/components/ui/ToastProvider'
 import type { SharedSessionPayload } from '@/lib/session-share'
+import {
+  applyOnboardingAnswers,
+  getDefaultOnboardingAnswers,
+  isOnboardingProfileComplete,
+  readOnboardingState,
+  writeOnboardingState,
+  type OnboardingAnswers,
+} from '@/lib/onboarding'
 
 type FeedItem = {
   id: string
@@ -127,6 +135,9 @@ const suggestCatchUpDays = (remainingSessions: number, sessionsDoneToday: number
 
 export default function Feed() {
   const { push } = useToast()
+  const [onboardingOpen, setOnboardingOpen] = useState(false)
+  const [onboardingStep, setOnboardingStep] = useState(0)
+  const [onboardingAnswers, setOnboardingAnswers] = useState<OnboardingAnswers>(() => getDefaultOnboardingAnswers())
   const [items, setItems] = useState<FeedItem[]>([])
   const [globalStats, setGlobalStats] = useState({
     streak: 0,
@@ -206,6 +217,25 @@ export default function Feed() {
   const [exerciseProgress, setExerciseProgress] = useState<ExerciseProgress[]>([])
   const [entitlement, setEntitlement] = useState(() => getEntitlement())
   const [onboardingSteps, setOnboardingSteps] = useState<OnboardingStep[]>([])
+
+  useEffect(() => {
+    const syncOnboarding = () => {
+      const state = readOnboardingState()
+      if (!isOnboardingProfileComplete() && !state.dismissed && !state.completed) {
+        setOnboardingAnswers(state.answers || getDefaultOnboardingAnswers())
+        setOnboardingOpen(true)
+      } else {
+        setOnboardingOpen(false)
+      }
+    }
+    syncOnboarding()
+    window.addEventListener('fitpulse-onboarding', syncOnboarding)
+    window.addEventListener('fitpulse-settings', syncOnboarding)
+    return () => {
+      window.removeEventListener('fitpulse-onboarding', syncOnboarding)
+      window.removeEventListener('fitpulse-settings', syncOnboarding)
+    }
+  }, [])
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -942,6 +972,17 @@ export default function Feed() {
 
   const primarySessionHref = resumeSessionHref || '/dashboard?view=session'
   const primarySessionLabel = resumeSessionHref ? 'Reprendre la séance' : 'Démarrer une séance'
+  const todayActionTitle = resumeSessionHref
+    ? 'Séance en cours'
+    : focus
+    ? `${focus.title} · ${focus.subtitle}`
+    : 'Ton prochain entraînement'
+  const todayActionBody = resumeSessionHref
+    ? 'Continue exactement là où tu t’es arrêté.'
+    : focus
+    ? `${focus.duration || 30} min prévues. ${quickSummary}`
+    : quickSummary
+  const onboardingStepLabels = ['Objectif', 'Niveau', 'Matériel', 'Fréquence']
 
   return (
     <div className="page-wrap">
@@ -981,22 +1022,70 @@ export default function Feed() {
           Dernières séances
         </a>
       </div>
-      <div id="resume-jour" className="mb-8 rounded-2xl border border-primary-200 bg-gradient-to-r from-primary-50 to-white px-5 py-4 scroll-mt-6">
-        <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Résumé du jour</div>
-        <p className="mt-1 text-sm text-primary-900">{quickSummary}</p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link href={primarySessionHref} className="btn-primary inline-flex items-center gap-2 px-4 py-2 text-sm">
-            <Play className="h-4 w-4" />
-            {primarySessionLabel}
-          </Link>
-          <Link href="/profil?view=history" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
-            <Calendar className="h-4 w-4" />
-            Voir l’historique
-          </Link>
-          <Link href="/programmes" className="btn-secondary inline-flex items-center gap-2 px-4 py-2 text-sm">
-            <Activity className="h-4 w-4" />
-            Explorer les programmes
-          </Link>
+      <div id="resume-jour" className="mb-8 grid gap-4 lg:grid-cols-[1.45fr_0.95fr] scroll-mt-6">
+        <div className="rounded-3xl border border-primary-200 bg-gradient-to-br from-primary-50 via-white to-emerald-50 px-6 py-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-primary-700">
+                <Sparkles className="h-3.5 w-3.5" />
+                Aujourd&apos;hui
+              </div>
+              <div className="mt-3 text-2xl font-semibold text-gray-900">{todayActionTitle}</div>
+              <p className="mt-2 max-w-2xl text-sm text-gray-600">{todayActionBody}</p>
+            </div>
+            <div className={`rounded-full px-3 py-1 text-xs font-semibold ${recoveryBadgeClass}`}>
+              Récupération: {recovery.status}
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white bg-white/80 p-4">
+              <div className="text-xs text-gray-500">Objectif hebdo</div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">{weeklyGoal.completed}/{weeklyGoal.target}</div>
+            </div>
+            <div className="rounded-2xl border border-white bg-white/80 p-4">
+              <div className="text-xs text-gray-500">Durée estimée</div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">{focus?.duration || 30} min</div>
+            </div>
+            <div className="rounded-2xl border border-white bg-white/80 p-4">
+              <div className="text-xs text-gray-500">Streak actuel</div>
+              <div className="mt-1 text-lg font-semibold text-gray-900">{globalStats.streak} jour(s)</div>
+            </div>
+          </div>
+          <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <Link href={primarySessionHref} className="btn-primary inline-flex items-center justify-center gap-2 px-4 py-2 text-sm">
+              <Play className="h-4 w-4" />
+              {primarySessionLabel}
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+            <Link href="/programmes" className="btn-secondary inline-flex items-center justify-center gap-2 px-4 py-2 text-sm">
+              <Activity className="h-4 w-4" />
+              Voir le parcours conseillé
+            </Link>
+            <Link href="/profil?view=history" className="btn-secondary inline-flex items-center justify-center gap-2 px-4 py-2 text-sm">
+              <Calendar className="h-4 w-4" />
+              Voir l’historique
+            </Link>
+          </div>
+        </div>
+        <div className="rounded-3xl border border-gray-200 bg-white px-5 py-5">
+          <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Priorités</div>
+          <div className="mt-4 space-y-3">
+            {onboardingSteps.slice(0, 3).map((step) => (
+              <Link
+                key={step.id}
+                href={step.href}
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm ${
+                  step.done ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-gray-200 bg-gray-50 text-gray-700'
+                }`}
+              >
+                <span>{step.label}</span>
+                <span className="font-semibold">{step.done ? 'OK' : step.cta}</span>
+              </Link>
+            ))}
+          </div>
+          <div className="mt-4 rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {quickSummary}
+          </div>
         </div>
       </div>
       {quickStart && (
@@ -1581,6 +1670,152 @@ export default function Feed() {
               </Link>
             )
           })}
+        </div>
+      )}
+      {onboardingOpen && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/35 p-4 lg:items-center">
+          <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">Parcours guidé</div>
+                <div className="mt-1 text-xl font-semibold text-gray-900">
+                  Configure ton plan de départ
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  writeOnboardingState({ dismissed: true, answers: onboardingAnswers })
+                  setOnboardingOpen(false)
+                }}
+                className="text-sm font-semibold text-gray-500 hover:text-gray-700"
+              >
+                Plus tard
+              </button>
+            </div>
+            <div className="mt-4 flex items-center gap-2">
+              {onboardingStepLabels.map((label, index) => (
+                <div key={label} className="flex-1">
+                  <div className={`h-2 rounded-full ${index <= onboardingStep ? 'bg-primary-600' : 'bg-gray-200'}`} />
+                  <div className="mt-1 text-[11px] text-gray-500">{label}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-6">
+              {onboardingStep === 0 && (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-gray-900">Quel est ton objectif principal ?</div>
+                  {['Perte de poids', 'Prise de masse', 'Force', 'Remise en forme'].map((goal) => (
+                    <button
+                      key={goal}
+                      type="button"
+                      onClick={() => setOnboardingAnswers((prev) => ({ ...prev, goal }))}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left text-sm ${
+                        onboardingAnswers.goal === goal ? 'border-primary-300 bg-primary-50 text-primary-900' : 'border-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {goal}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {onboardingStep === 1 && (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-gray-900">Quel est ton niveau actuel ?</div>
+                  {[
+                    ['debutant', 'Débutant'],
+                    ['intermediaire', 'Intermédiaire'],
+                    ['avance', 'Avancé'],
+                  ].map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setOnboardingAnswers((prev) => ({ ...prev, level: value }))}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left text-sm ${
+                        onboardingAnswers.level === value ? 'border-primary-300 bg-primary-50 text-primary-900' : 'border-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {onboardingStep === 2 && (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-gray-900">Quel matériel as-tu vraiment ?</div>
+                  {['Poids du corps', 'Haltères', 'Barres', 'Machines'].map((value) => {
+                    const active = onboardingAnswers.equipment.includes(value)
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() =>
+                          setOnboardingAnswers((prev) => ({
+                            ...prev,
+                            equipment: active
+                              ? prev.equipment.filter((item) => item !== value)
+                              : [...prev.equipment, value],
+                          }))
+                        }
+                        className={`w-full rounded-2xl border px-4 py-3 text-left text-sm ${
+                          active ? 'border-primary-300 bg-primary-50 text-primary-900' : 'border-gray-200 text-gray-700'
+                        }`}
+                      >
+                        {value}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {onboardingStep === 3 && (
+                <div className="space-y-3">
+                  <div className="text-sm font-semibold text-gray-900">Combien de séances peux-tu tenir chaque semaine ?</div>
+                  {[2, 3, 4, 5].map((count) => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => setOnboardingAnswers((prev) => ({ ...prev, sessionsPerWeek: count }))}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left text-sm ${
+                        onboardingAnswers.sessionsPerWeek === count ? 'border-primary-300 bg-primary-50 text-primary-900' : 'border-gray-200 text-gray-700'
+                      }`}
+                    >
+                      {count} séance(s) par semaine
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="mt-6 flex items-center justify-between gap-3">
+              <button
+                type="button"
+                disabled={onboardingStep === 0}
+                onClick={() => setOnboardingStep((prev) => Math.max(prev - 1, 0))}
+                className="btn-secondary disabled:opacity-50"
+              >
+                Retour
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (onboardingStep < 3) {
+                    writeOnboardingState({ answers: onboardingAnswers, dismissed: false })
+                    setOnboardingStep((prev) => prev + 1)
+                    return
+                  }
+                  applyOnboardingAnswers({
+                    ...onboardingAnswers,
+                    equipment: onboardingAnswers.equipment.length > 0 ? onboardingAnswers.equipment : ['Poids du corps'],
+                  })
+                  setOnboardingOpen(false)
+                  setOnboardingStep(0)
+                  push('Profil configuré. Recommandation mise à jour.', 'success')
+                }}
+                className="btn-primary"
+              >
+                {onboardingStep === 3 ? 'Créer mon plan' : 'Continuer'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
       <div className="md:hidden">
