@@ -112,6 +112,16 @@ export default function InscriptionPage() {
         throw signUpError
       }
 
+      // Fire-and-forget: account creation should not fail if SMTP is temporarily unavailable.
+      void fetch('/api/signup-confirmation/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: normalizedEmail,
+          name: safeName,
+        }),
+      }).catch(() => {})
+
       localStorage.setItem('fitpulse_settings', JSON.stringify(initialSettings))
       setStoredPlan('free')
       ensureTrialStarted()
