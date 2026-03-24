@@ -7,10 +7,10 @@ test.use({
 
 test('record marketing walkthrough', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /transforme ton corps/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /un coach clair, des séances efficaces/i })).toBeVisible()
   await page.waitForTimeout(700)
 
-  await page.getByRole('button', { name: /visite guidée/i }).click()
+  await page.getByText('Visite guidée').first().click()
   await expect(page).toHaveURL(/\/dashboard\?tour=1/)
   await expect(page.getByText(/visite guidée 1\/3/i)).toBeVisible()
   await page.waitForTimeout(900)
