@@ -4,13 +4,29 @@ import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
-import { UserPlus, Mail, Lock, User } from 'lucide-react'
+import { UserPlus, Mail, Lock, User, Check, Dumbbell, Building2, CircleDot } from 'lucide-react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { persistSettingsForUser } from '@/lib/user-state-store'
 import { programs } from '@/data/programs'
 import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
 import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
+
+const focusZoneOptions = [
+  { label: 'Bras', details: 'Biceps • Triceps' },
+  { label: 'Poitrine', details: 'Pectoraux' },
+  { label: 'Dos', details: 'Lats • Trapèzes' },
+  { label: 'Abdos', details: 'Core' },
+  { label: 'Jambes', details: 'Quadriceps • Ischios' },
+  { label: 'Bas du corps', details: 'Jambes • Fessiers' },
+]
+
+const equipmentOptions = [
+  { label: 'Poids du corps', details: 'Sans matériel', icon: User },
+  { label: 'Haltères', details: 'Paire simple ou ajustable', icon: Dumbbell },
+  { label: 'Barres', details: 'Barre droite / EZ', icon: CircleDot },
+  { label: 'Machines de salle', details: 'Poulies • guidées', icon: Building2 },
+]
 
 export default function InscriptionPage() {
   const router = useRouter()
@@ -323,27 +339,46 @@ export default function InscriptionPage() {
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Zone à muscler</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Pectoraux', 'Dos', 'Bras', 'Jambes', 'Épaules', 'Abdos', 'Fessiers'].map((zone) => (
-                      <button
-                        type="button"
-                        key={zone}
-                        onClick={() =>
-                          setFocusZones((prev) =>
-                            prev.includes(zone) ? prev.filter((item) => item !== zone) : [...prev, zone]
-                          )
-                        }
-                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                          focusZones.includes(zone)
-                            ? 'bg-primary-600 text-white border-primary-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
-                        }`}
-                      >
-                        {zone}
-                      </button>
-                    ))}
+                <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900">Zones ciblées</label>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Sélectionne les zones que tu veux prioriser.
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold rounded-full bg-primary-50 text-primary-700 px-2.5 py-1">
+                      {focusZones.length} sélectionnée(s)
+                    </span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {focusZoneOptions.map((zone) => {
+                      const active = focusZones.includes(zone.label)
+                      return (
+                        <button
+                          type="button"
+                          key={zone.label}
+                          onClick={() =>
+                            setFocusZones((prev) =>
+                              active ? prev.filter((item) => item !== zone.label) : [...prev, zone.label]
+                            )
+                          }
+                          className={`relative rounded-xl border p-3 text-left transition ${
+                            active
+                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-100'
+                              : 'border-gray-200 bg-white hover:border-primary-300'
+                          }`}
+                        >
+                          {active && (
+                            <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-white">
+                              <Check className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          <div className="text-sm font-semibold text-gray-900">{zone.label}</div>
+                          <div className="text-xs text-gray-500 mt-1">{zone.details}</div>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
@@ -397,27 +432,52 @@ export default function InscriptionPage() {
                   <div className="text-sm text-gray-600 mt-2">{sessionsPerWeek} séance(s) / semaine</div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Équipement disponible</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Poids du corps', 'Haltères', 'Barres', 'Machines de salle'].map((item) => (
-                      <button
-                        type="button"
-                        key={item}
-                        onClick={() =>
-                          setEquipment((prev) =>
-                            prev.includes(item) ? prev.filter((value) => value !== item) : [...prev, item]
-                          )
-                        }
-                        className={`px-4 py-2 rounded-lg border-2 transition-colors ${
-                          equipment.includes(item)
-                            ? 'bg-primary-600 text-white border-primary-600'
-                            : 'bg-white text-gray-700 border-gray-300 hover:border-primary-500'
-                        }`}
-                      >
-                        {item}
-                      </button>
-                    ))}
+                <div className="rounded-2xl border border-gray-200 bg-white p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-900">Équipement disponible</label>
+                      <p className="text-xs text-gray-500 mt-1">Ajoute le matériel que tu as vraiment.</p>
+                    </div>
+                    <span className="text-xs font-semibold rounded-full bg-primary-50 text-primary-700 px-2.5 py-1">
+                      {equipment.length} sélectionné(s)
+                    </span>
+                  </div>
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {equipmentOptions.map((item) => {
+                      const active = equipment.includes(item.label)
+                      const Icon = item.icon
+                      return (
+                        <button
+                          type="button"
+                          key={item.label}
+                          onClick={() =>
+                            setEquipment((prev) =>
+                              active ? prev.filter((value) => value !== item.label) : [...prev, item.label]
+                            )
+                          }
+                          className={`relative rounded-xl border p-3 text-left transition ${
+                            active
+                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-100'
+                              : 'border-gray-200 bg-white hover:border-primary-300'
+                          }`}
+                        >
+                          {active && (
+                            <span className="absolute right-2 top-2 inline-flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-white">
+                              <Check className="h-3.5 w-3.5" />
+                            </span>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
+                              <Icon className="h-4 w-4" />
+                            </span>
+                            <div>
+                              <div className="text-sm font-semibold text-gray-900">{item.label}</div>
+                              <div className="text-xs text-gray-500">{item.details}</div>
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
