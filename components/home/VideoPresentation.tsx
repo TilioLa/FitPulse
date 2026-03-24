@@ -20,7 +20,9 @@ function toYoutubeEmbed(url: string) {
 export default function VideoPresentation() {
   const configured = process.env.NEXT_PUBLIC_PRESENTATION_VIDEO_URL?.trim() || ''
   const youtubeEmbed = configured ? toYoutubeEmbed(configured) : null
-  const videoSrc = configured && !youtubeEmbed ? configured : '/videos/fitpulse-presentation.mp4'
+  const localMp4 = '/videos/fitpulse-presentation.mp4'
+  const localWebm = '/videos/fitpulse-presentation.webm'
+  const videoSrc = configured && !youtubeEmbed ? configured : localMp4
 
   return (
     <section className="py-14 sm:py-20 bg-white border-y border-gray-200">
@@ -50,13 +52,14 @@ export default function VideoPresentation() {
             ) : (
               <video className="h-full w-full bg-black" controls preload="metadata">
                 <source src={videoSrc} type="video/mp4" />
+                <source src={localWebm} type="video/webm" />
               </video>
             )}
           </div>
         </div>
 
         <p className="mt-3 text-xs text-gray-500">
-          Fichier local attendu: <code>/public/videos/fitpulse-presentation.mp4</code>.
+          Fichier local attendu: <code>/public/videos/fitpulse-presentation.mp4</code> (ou `.webm`).
         </p>
       </div>
     </section>
