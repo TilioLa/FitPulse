@@ -20,8 +20,8 @@ function toYoutubeEmbed(url: string) {
 export default function VideoPresentation() {
   const configured = process.env.NEXT_PUBLIC_PRESENTATION_VIDEO_URL?.trim() || ''
   const youtubeEmbed = configured ? toYoutubeEmbed(configured) : null
-  const localMp4 = '/videos/fitpulse-presentation.mp4'
-  const localWebm = '/videos/fitpulse-presentation.webm'
+  const localMp4 = '/videos/fitpulse-presentation-complete.mp4'
+  const localWebm = '/videos/fitpulse-presentation-complete.webm'
   const videoSrc = configured && !youtubeEmbed ? configured : localMp4
 
   return (
@@ -59,7 +59,7 @@ export default function VideoPresentation() {
         </div>
 
         <p className="mt-3 text-xs text-gray-500">
-          Fichier local attendu: <code>/public/videos/fitpulse-presentation.mp4</code> (ou `.webm`).
+          Fichier local attendu: <code>/public/videos/fitpulse-presentation-complete.mp4</code> (ou `.webm`).
         </p>
       </div>
     </section>
