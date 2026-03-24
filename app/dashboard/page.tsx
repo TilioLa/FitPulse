@@ -60,22 +60,24 @@ function DashboardPageContent() {
   const { status, reload } = useAuth()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
+  const wantsTour =
+    searchParams.get('tour') === '1' ||
+    (typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_tour_pending') === 'true')
   const e2eBypass =
     process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' ||
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'e2e-anon-key' ||
     localBypass
   const forceE2EMode = e2eBypass && searchParams.get('e2e') === '1'
-  const effectiveStatus = forceE2EMode || (e2eBypass && status === 'unauthenticated') ? 'authenticated' : status
+  const effectiveStatus =
+    forceE2EMode || (e2eBypass && status === 'unauthenticated') || (wantsTour && status === 'unauthenticated')
+      ? 'authenticated'
+      : status
 
   useEffect(() => {
     if (effectiveStatus !== 'unauthenticated') return
     let active = true
     const timer = setTimeout(async () => {
       if (!active) return
-      const wantsTour =
-        searchParams.get('tour') === '1' ||
-        (typeof window !== 'undefined' &&
-          window.localStorage.getItem('fitpulse_tour_pending') === 'true')
       const justSignedInAtRaw = localStorage.getItem('fitpulse_login_just_signed_in_at')
       const justSignedInAt = Number(justSignedInAtRaw || 0)
       const withinLoginGrace = Number.isFinite(justSignedInAt) && Date.now() - justSignedInAt < 15_000
@@ -109,7 +111,7 @@ function DashboardPageContent() {
       }
 
       if (active) {
-        router.replace(wantsTour ? '/inscription?tour=1' : '/connexion')
+        router.replace('/connexion')
       }
     }, 900)
 
