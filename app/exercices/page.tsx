@@ -687,15 +687,6 @@ function ExercicesPageContent() {
 
                   <div className={`mt-6 space-y-4 ${activeTab === 'instructions' ? '' : 'hidden'}`}>
                     <div className="rounded-2xl border border-gray-200 overflow-hidden">
-                      <div className="bg-gray-100 flex items-center justify-center py-6">
-                        <Image
-                          src="/anatomy/front.svg"
-                          alt="Aperçu musculaire"
-                          width={220}
-                          height={220}
-                          className="h-44 w-auto"
-                        />
-                      </div>
                       <div className="bg-white px-5 py-4">
                         <h3 className="text-2xl font-semibold text-gray-900">{localizeExerciseNameFr(selected.name)}</h3>
                         <p className="mt-1 text-sm text-gray-500">Primaire: {inferPrimaryMuscle(selected)}</p>
