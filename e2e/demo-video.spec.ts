@@ -1,8 +1,11 @@
 import { expect, test } from '@playwright/test'
 
 test.use({
-  video: 'on',
-  viewport: { width: 1440, height: 900 },
+  video: {
+    mode: 'on',
+    size: { width: 1920, height: 1080 },
+  },
+  viewport: { width: 1920, height: 1080 },
 })
 
 test('record marketing walkthrough', async ({ page }) => {
