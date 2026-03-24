@@ -72,6 +72,10 @@ function DashboardPageContent() {
     let active = true
     const timer = setTimeout(async () => {
       if (!active) return
+      const wantsTour =
+        searchParams.get('tour') === '1' ||
+        (typeof window !== 'undefined' &&
+          window.localStorage.getItem('fitpulse_tour_pending') === 'true')
       const justSignedInAtRaw = localStorage.getItem('fitpulse_login_just_signed_in_at')
       const justSignedInAt = Number(justSignedInAtRaw || 0)
       const withinLoginGrace = Number.isFinite(justSignedInAt) && Date.now() - justSignedInAt < 15_000
@@ -104,14 +108,16 @@ function DashboardPageContent() {
         }
       }
 
-      if (active) router.replace('/connexion')
+      if (active) {
+        router.replace(wantsTour ? '/inscription?tour=1' : '/connexion')
+      }
     }, 900)
 
     return () => {
       active = false
       clearTimeout(timer)
     }
-  }, [router, effectiveStatus, reload])
+  }, [router, effectiveStatus, reload, searchParams])
 
   const scheduleSection = (section: DashboardSection) => {
     queueMicrotask(() => {

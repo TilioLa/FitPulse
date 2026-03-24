@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import Footer from '@/components/Footer'
 import Sidebar from '@/components/dashboard/Sidebar'
-import { Search, Plus, Dumbbell, Star, Download } from 'lucide-react'
+import { Search, Plus, Dumbbell, Star, Download, BookOpen, History, ListChecks } from 'lucide-react'
 import { exerciseCatalog, ExerciseCatalogItem } from '@/data/exercises'
 import { getExerciseInsights } from '@/lib/exercise-insights'
 import { readLocalHistory } from '@/lib/history-store'
@@ -30,6 +30,9 @@ type HistoryItem = {
   date: string
   exercises?: HistoryExercise[]
 }
+
+type ExerciseTab = 'summary' | 'history' | 'instructions'
+type HistoryWindow = '3m' | '6m' | '12m'
 
 const EQUIPMENT_LABELS: Record<string, string> = {
   Bodyweight: 'Poids du corps',
@@ -74,6 +77,63 @@ function toFrenchMuscle(value: string) {
   return MUSCLE_LABELS[value] || value
 }
 
+function inferPrimaryMuscle(item: ExerciseCatalogItem) {
+  const first = item.tags[0] || 'Full Body'
+  return toFrenchMuscle(first)
+}
+
+function buildExerciseInstructions(item: ExerciseCatalogItem) {
+  const key = item.name.toLowerCase()
+
+  if (key.includes('curl')) {
+    return [
+      'Prends une paire d haltères, pieds ancrés et buste droit.',
+      'Garde les coudes proches du corps et les épaules basses.',
+      'Fléchis les coudes jusqu en haut sans balancer le dos.',
+      'Redescends lentement en contrôlant toute l amplitude.',
+    ]
+  }
+  if (key.includes('squat') || key.includes('lunge')) {
+    return [
+      'Place tes pieds à largeur d épaules et gaine le tronc.',
+      'Descends en gardant les genoux alignés avec les orteils.',
+      'Contrôle le bas du mouvement, puis pousse fort dans le sol.',
+      'Remonte en gardant le buste stable et la respiration active.',
+    ]
+  }
+  if (key.includes('row') || key.includes('deadlift')) {
+    return [
+      'Place-toi en position stable avec dos neutre et nuque alignée.',
+      'Engage les omoplates avant de tirer ou de soulever.',
+      'Conserve la charge proche du corps pendant toute la rep.',
+      'Reviens en contrôle sans arrondir le bas du dos.',
+    ]
+  }
+  if (key.includes('press') || key.includes('push') || key.includes('dip')) {
+    return [
+      'Installe une base stable et gaine les abdos.',
+      'Démarre le mouvement avec trajectoire propre et épaules placées.',
+      'Pousse sans cambrer exagérément le bas du dos.',
+      'Redescends lentement et garde la tension musculaire.',
+    ]
+  }
+  if (key.includes('plank') || key.includes('ab') || key.includes('crunch')) {
+    return [
+      'Place le bassin neutre et serre les fessiers.',
+      'Active les abdos avant de démarrer la série.',
+      'Respire régulièrement en gardant la tension.',
+      'Arrête avant de perdre la posture lombaire.',
+    ]
+  }
+
+  return [
+    'Installe une position stable et un tempo contrôlé.',
+    'Démarre avec une charge maîtrisée sur amplitude complète.',
+    'Conserve la technique propre sur toutes les répétitions.',
+    'Termine la série sans compensation parasite.',
+  ]
+}
+
 export default function ExercicesPage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-600">Chargement...</div>}>
@@ -90,6 +150,8 @@ function ExercicesPageContent() {
   const [equipment, setEquipment] = useState('all')
   const [muscle, setMuscle] = useState('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
+  const [activeTab, setActiveTab] = useState<ExerciseTab>('summary')
+  const [historyWindow, setHistoryWindow] = useState<HistoryWindow>('3m')
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
   const [favorites, setFavorites] = useState<string[]>(() => readLocalExerciseFavorites())
   const [onlyFavorites, setOnlyFavorites] = useState(false)
@@ -104,6 +166,10 @@ function ExercicesPageContent() {
     const term = searchParams.get('q') || ''
     if (term) setQuery(term)
   }, [searchParams])
+
+  useEffect(() => {
+    setActiveTab('summary')
+  }, [selected?.id])
 
   useEffect(() => {
     const applyStored = (value: ExerciseCatalogItem[]) => {
@@ -278,6 +344,23 @@ function ExercicesPageContent() {
     return rows.slice(0, 6)
   }, [history, selected])
 
+  const selectedHistoryEntriesWindow = useMemo(() => {
+    if (selectedHistoryEntries.length === 0) return []
+    const now = new Date()
+    const start = new Date(now)
+    if (historyWindow === '3m') start.setMonth(now.getMonth() - 3)
+    if (historyWindow === '6m') start.setMonth(now.getMonth() - 6)
+    if (historyWindow === '12m') start.setMonth(now.getMonth() - 12)
+    return selectedHistoryEntries
+      .filter((row) => new Date(row.date).getTime() >= start.getTime())
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  }, [historyWindow, selectedHistoryEntries])
+
+  const selectedInstructionSteps = useMemo(
+    () => (selected ? buildExerciseInstructions(selected) : []),
+    [selected]
+  )
+
   const exportSelectedCsv = () => {
     if (!selected || selectedHistoryEntries.length === 0) return
     const rows = [
@@ -408,7 +491,46 @@ function ExercicesPageContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="mt-6 flex items-center gap-2 border-b border-gray-200 pb-2">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('summary')}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold ${
+                        activeTab === 'summary'
+                          ? 'text-primary-700 border-b-2 border-primary-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      Sommaire
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('history')}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold ${
+                        activeTab === 'history'
+                          ? 'text-primary-700 border-b-2 border-primary-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      <History className="h-4 w-4" />
+                      Historique
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('instructions')}
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 text-sm font-semibold ${
+                        activeTab === 'instructions'
+                          ? 'text-primary-700 border-b-2 border-primary-600'
+                          : 'text-gray-500'
+                      }`}
+                    >
+                      <ListChecks className="h-4 w-4" />
+                      Instructions
+                    </button>
+                  </div>
+
+                  <div className={`mt-6 grid grid-cols-1 sm:grid-cols-3 gap-4 ${activeTab === 'summary' ? '' : 'hidden'}`}>
                     <div className="rounded-lg border border-gray-200 p-4">
                       <div className="text-xs text-gray-500">Volume total</div>
                       <div className="text-xl font-semibold text-gray-900">{stats?.totalVolume ?? 0} kg</div>
@@ -425,48 +547,60 @@ function ExercicesPageContent() {
                     </div>
                   </div>
 
-                  <div className="mt-6 rounded-lg border border-gray-200 p-4">
-                    <div className="text-xs text-gray-500 mb-3">Progression récente (1RM)</div>
-                    {progression.length === 0 ? (
-                      <div className="text-sm text-gray-500">Pas encore de données.</div>
+                  <div className={`mt-6 rounded-lg border border-gray-200 p-4 ${activeTab === 'history' ? '' : 'hidden'}`}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <div className="text-xs text-gray-500">Progression récente (1RM)</div>
+                      <select
+                        value={historyWindow}
+                        onChange={(event) => setHistoryWindow(event.target.value as HistoryWindow)}
+                        className="rounded-lg border border-gray-300 px-2 py-1 text-xs font-semibold text-gray-700"
+                      >
+                        <option value="3m">3 derniers mois</option>
+                        <option value="6m">6 derniers mois</option>
+                        <option value="12m">12 derniers mois</option>
+                      </select>
+                    </div>
+                    {selectedHistoryEntriesWindow.length < 2 ? (
+                      <div className="text-sm text-gray-500">Pas assez de données pour tracer une courbe.</div>
                     ) : (
-                      <div className="flex items-end gap-2">
-                        {progression.map((point) => {
-                          const max = Math.max(...progression.map((p) => p.oneRm))
-                          const height = max > 0 ? Math.max(20, Math.round((point.oneRm / max) * 80)) : 20
-                          return (
-                            <div key={point.date} className="flex flex-col items-center gap-2">
-                              <div
-                                className="w-6 rounded-full bg-primary-500/80"
-                                style={{ height }}
-                                title={`${point.oneRm} kg`}
-                              />
-                              <div className="text-[10px] text-gray-400">
-                                {new Date(point.date).toLocaleDateString('fr-FR', {
-                                  day: '2-digit',
-                                  month: 'short',
-                                })}
-                              </div>
-                            </div>
-                          )
+                      <svg viewBox="0 0 100 40" className="h-40 w-full rounded-lg bg-gray-50 p-3">
+                        {selectedHistoryEntriesWindow.map((point, idx) => {
+                          const max = Math.max(...selectedHistoryEntriesWindow.map((p) => p.bestOneRm || 0), 1)
+                          const x = (idx / Math.max(1, selectedHistoryEntriesWindow.length - 1)) * 100
+                          const y = 35 - ((point.bestOneRm || 0) / max) * 30
+                          return <circle key={point.date} cx={x} cy={y} r="1.6" fill="#2563eb" />
                         })}
-                      </div>
+                        <polyline
+                          fill="none"
+                          stroke="#2563eb"
+                          strokeWidth="1.6"
+                          points={selectedHistoryEntriesWindow
+                            .map((point, idx) => {
+                              const max = Math.max(...selectedHistoryEntriesWindow.map((p) => p.bestOneRm || 0), 1)
+                              const x = (idx / Math.max(1, selectedHistoryEntriesWindow.length - 1)) * 100
+                              const y = 35 - ((point.bestOneRm || 0) / max) * 30
+                              return `${x},${y}`
+                            })
+                            .join(' ')}
+                        />
+                      </svg>
                     )}
                   </div>
 
-                  <div className="mt-6 rounded-lg border border-gray-200 p-4">
+                  <div className={`mt-6 rounded-lg border border-gray-200 p-4 ${activeTab === 'history' ? '' : 'hidden'}`}>
+                    <div className="text-xs text-gray-500 mb-3">Historique récent</div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-xs text-gray-500">Historique récent</div>
                       <button
                         onClick={exportSelectedCsv}
-                        disabled={selectedHistoryEntries.length === 0}
+                        disabled={selectedHistoryEntriesWindow.length === 0}
                         className="inline-flex items-center gap-2 text-xs font-semibold text-gray-600 disabled:text-gray-300"
                       >
                         <Download className="h-4 w-4" />
                         Exporter CSV
                       </button>
                     </div>
-                    {selectedHistoryEntries.length === 0 ? (
+                    {selectedHistoryEntriesWindow.length === 0 ? (
                       <div className="mt-3 text-sm text-gray-500">Aucune séance enregistrée.</div>
                     ) : (
                       <div className="mt-3 overflow-x-auto">
@@ -481,7 +615,10 @@ function ExercicesPageContent() {
                             </tr>
                           </thead>
                           <tbody className="text-gray-700">
-                            {selectedHistoryEntries.map((row) => (
+                            {selectedHistoryEntriesWindow
+                              .slice()
+                              .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                              .map((row) => (
                               <tr key={row.date} className="border-t border-gray-100">
                                 <td className="py-2 pr-4">
                                   {new Date(row.date).toLocaleDateString('fr-FR')}
@@ -498,12 +635,12 @@ function ExercicesPageContent() {
                     )}
                   </div>
 
-                  <div className="mt-6 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                  <div className={`mt-6 rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 ${activeTab === 'summary' ? '' : 'hidden'}`}>
                     Astuce : clique sur un exercice pour voir ton historique, tes PR et ton volume.
                   </div>
 
                   {selectedInsights && (
-                    <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4">
+                    <div className={`mt-6 grid grid-cols-1 lg:grid-cols-3 gap-4 ${activeTab === 'summary' ? '' : 'hidden'}`}>
                       <div className="rounded-lg border border-gray-200 p-4">
                         <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-2">Sécurité</div>
                         <ul className="space-y-2 text-sm text-gray-700">
@@ -532,7 +669,7 @@ function ExercicesPageContent() {
                   )}
 
                   {relatedExercises.length > 0 && (
-                    <div className="mt-4 rounded-lg border border-gray-200 p-4">
+                    <div className={`mt-4 rounded-lg border border-gray-200 p-4 ${activeTab === 'summary' ? '' : 'hidden'}`}>
                       <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 mb-3">Exercices proches</div>
                       <div className="flex flex-wrap gap-2">
                         {relatedExercises.map((item) => (
@@ -547,6 +684,35 @@ function ExercicesPageContent() {
                       </div>
                     </div>
                   )}
+
+                  <div className={`mt-6 space-y-4 ${activeTab === 'instructions' ? '' : 'hidden'}`}>
+                    <div className="rounded-2xl border border-gray-200 overflow-hidden">
+                      <div className="bg-gray-100 flex items-center justify-center py-6">
+                        <Image
+                          src="/anatomy/front.svg"
+                          alt="Aperçu musculaire"
+                          width={220}
+                          height={220}
+                          className="h-44 w-auto"
+                        />
+                      </div>
+                      <div className="bg-white px-5 py-4">
+                        <h3 className="text-2xl font-semibold text-gray-900">{localizeExerciseNameFr(selected.name)}</h3>
+                        <p className="mt-1 text-sm text-gray-500">Primaire: {inferPrimaryMuscle(selected)}</p>
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-gray-200 bg-white px-5 py-4">
+                      <div className="text-sm font-semibold text-gray-900 mb-3">Comment enregistrer cet exercice</div>
+                      <ol className="space-y-3 text-sm text-gray-700">
+                        {selectedInstructionSteps.map((step, index) => (
+                          <li key={step} className="grid grid-cols-[28px_1fr] gap-2">
+                            <span className="font-semibold text-gray-900">{index + 1}.</span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center text-center py-10">
