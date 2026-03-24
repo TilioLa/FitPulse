@@ -1,0 +1,19 @@
+[Script Info]
+Title: FitPulse Reels Viral 15s
+ScriptType: v4.00+
+PlayResX: 1080
+PlayResY: 1920
+WrapStyle: 2
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Main,Arial,78,&H00FFFFFF,&H000000FF,&H00000000,&H64000000,-1,0,0,0,100,100,0,0,1,8,0,2,60,60,200,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Dialogue: 0,0:00:00.00,0:00:02.00,Main,,0,0,200,,{\fad(80,120)\t(0,140,\fscx110\fscy110)}Les coachs vont DÉTESTER ce site.
+Dialogue: 0,0:00:02.00,0:00:05.00,Main,,0,0,200,,{\fad(80,120)\t(0,140,\fscx110\fscy110)}IA fitness: ton plan\Nen 10 secondes.
+Dialogue: 0,0:00:05.00,0:00:08.00,Main,,0,0,200,,{\fad(80,120)\t(0,140,\fscx110\fscy110)}Tu choisis. Ça génère.
+Dialogue: 0,0:00:08.00,0:00:11.00,Main,,0,0,200,,{\fad(60,100)\t(0,120,\fscx116\fscy116)}BOOM. Personnalisé pour toi.
+Dialogue: 0,0:00:11.00,0:00:15.00,Main,,0,0,200,,{\fad(80,180)\t(0,140,\fscx110\fscy110)}C'est gratuit pour l'instant.\NLIEN EN BIO.
