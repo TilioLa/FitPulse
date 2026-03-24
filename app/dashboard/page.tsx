@@ -68,6 +68,7 @@ function DashboardPageContent() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'e2e-anon-key' ||
     localBypass
   const forceE2EMode = e2eBypass && searchParams.get('e2e') === '1'
+  const isGuestTour = wantsTour && status === 'unauthenticated' && !e2eBypass
   const effectiveStatus =
     forceE2EMode || (e2eBypass && status === 'unauthenticated') || (wantsTour && status === 'unauthenticated')
       ? 'authenticated'
@@ -393,6 +394,15 @@ function DashboardPageContent() {
                 <button
                   className="btn-primary text-sm px-4 py-2"
                   onClick={() => {
+                    if (tourStep === 3 && isGuestTour) {
+                      if (typeof window !== 'undefined') {
+                        localStorage.setItem('fitpulse_tour_seen_v1', 'true')
+                        localStorage.setItem('fitpulse_tour_pending', 'false')
+                      }
+                      setTourStep(null)
+                      router.push('/inscription')
+                      return
+                    }
                     const next = tourStep + 1
                     if (next > 3) {
                       setTourStep(null)
@@ -406,7 +416,7 @@ function DashboardPageContent() {
                     }
                   }}
                 >
-                  {tourStep === 3 ? 'Terminer' : 'Suivant'}
+                  {tourStep === 3 ? (isGuestTour ? "S'inscrire" : 'Terminer') : 'Suivant'}
                 </button>
               </div>
             </div>
