@@ -1,6 +1,7 @@
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/home/Hero'
 import Benefits from '@/components/home/Benefits'
+import VideoPresentation from '@/components/home/VideoPresentation'
 import ProgramsPreview from '@/components/home/ProgramsPreview'
 import Onboarding from '@/components/home/Onboarding'
 import JourneyStarter from '@/components/home/JourneyStarter'
@@ -15,6 +16,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
+        <VideoPresentation />
         <Benefits />
         <ProgramsPreview />
         <Onboarding />
