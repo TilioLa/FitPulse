@@ -361,6 +361,26 @@ function ExercicesPageContent() {
     [selected]
   )
 
+  const liveRecommendations = useMemo(() => {
+    const lastSession = history
+      .slice()
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    const recentNames = new Set((lastSession?.exercises || []).map((ex) => ex.name))
+    const base = selected ? selected.tags : muscle !== 'all' ? [muscle] : []
+    const scored = allExercises
+      .filter((item) => !recentNames.has(item.name))
+      .map((item) => {
+        const overlap = base.length === 0 ? 0 : item.tags.filter((tag) => base.includes(tag)).length
+        const equipScore = equipment === 'all' || item.equipment.includes(equipment) ? 1 : 0
+        const favScore = favorites.includes(item.id) ? 1 : 0
+        return { item, score: overlap * 3 + equipScore * 2 + favScore }
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((entry) => entry.item)
+    return scored
+  }, [history, allExercises, selected, muscle, equipment, favorites])
+
   const exportSelectedCsv = () => {
     if (!selected || selectedHistoryEntries.length === 0) return
     const rows = [
@@ -426,6 +446,28 @@ function ExercicesPageContent() {
               Exercice custom
             </button>
           </div>
+
+          {liveRecommendations.length > 0 && (
+            <div className="mb-6 rounded-2xl border border-primary-100 bg-primary-50 px-5 py-4">
+              <div className="text-xs font-semibold uppercase tracking-wide text-primary-700">
+                Recommandation live
+              </div>
+              <div className="mt-2 text-sm text-gray-700">
+                Prochain exercice conseillé selon ton historique, ton matériel et ta zone active.
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {liveRecommendations.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => setSelected(item)}
+                    className="rounded-full border border-primary-200 bg-white px-3 py-1.5 text-xs font-semibold text-primary-700"
+                  >
+                    {localizeExerciseNameFr(item.name)}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-6">
             <div className="card">

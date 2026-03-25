@@ -15,6 +15,7 @@ import { readLocalCurrentWorkout, readLocalSettings } from '@/lib/user-state-sto
 import { useToast } from '@/components/ui/ToastProvider'
 import type { SharedSessionPayload } from '@/lib/session-share'
 import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
+import { trackEvent } from '@/lib/analytics-client'
 import {
   applyOnboardingAnswers,
   getDefaultOnboardingAnswers,
@@ -132,6 +133,18 @@ const suggestCatchUpDays = (remainingSessions: number, sessionsDoneToday: number
     picks.push(upcoming[picks.length])
   }
   return picks.slice(0, remainingSessions)
+}
+
+const challengeProgress = (dates: string[], days: number) => {
+  if (dates.length === 0) return { done: 0, target: days, percent: 0 }
+  const since = Date.now() - days * 24 * 60 * 60 * 1000
+  const done = new Set(
+    dates
+      .filter((date) => new Date(date).getTime() >= since)
+      .map((date) => toDayKey(date))
+  ).size
+  const target = Math.max(1, Math.floor(days / 2))
+  return { done, target, percent: Math.min(100, Math.round((done / target) * 100)) }
 }
 
 export default function Feed() {
@@ -984,6 +997,36 @@ export default function Feed() {
     ? `${focus.duration || 30} min prévues. ${quickSummary}`
     : quickSummary
   const onboardingStepLabels = ['Objectif', 'Niveau', 'Matériel', 'Fréquence']
+  const historyDates = items.map((item) => item.date)
+  const challenge7 = challengeProgress(historyDates, 7)
+  const challenge14 = challengeProgress(historyDates, 14)
+  const challenge30 = challengeProgress(historyDates, 30)
+
+  const handleShareProgress = async () => {
+    const text = `FitPulse: ${globalStats.streak}j de streak, ${globalStats.totalWorkouts} séances, ${globalStats.totalMinutes} min. Je garde le rythme cette semaine 💪`
+    trackEvent('social_share_progress_click', {
+      streak: globalStats.streak,
+      workouts: globalStats.totalWorkouts,
+      minutes: globalStats.totalMinutes,
+    })
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Ma progression FitPulse',
+          text,
+        })
+        return
+      } catch {
+        // fallback below
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(text)
+      push('Texte social copié.', 'success')
+    } catch {
+      push(text, 'info')
+    }
+  }
 
   return (
     <div className="page-wrap">
@@ -1022,6 +1065,43 @@ export default function Feed() {
         <a href="#seances-recentes" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
           Dernières séances
         </a>
+        <Link href="/notifications" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Notifications
+        </Link>
+        <Link href="/ops/health" className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50">
+          Santé produit
+        </Link>
+        <a
+          href={`/api/calendar/plan?sessions=${weeklyGoal.target}`}
+          className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Export calendrier
+        </a>
+        <button
+          type="button"
+          onClick={handleShareProgress}
+          className="rounded-full border border-gray-200 bg-white px-3 py-1 font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Partager progression
+        </button>
+      </div>
+      <div className="mb-6 rounded-2xl border border-gray-200 bg-white px-5 py-4">
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-500">Défis actifs</div>
+        <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+          {[
+            { label: 'Challenge 7 jours', data: challenge7 },
+            { label: 'Challenge 14 jours', data: challenge14 },
+            { label: 'Challenge 30 jours', data: challenge30 },
+          ].map((item) => (
+            <div key={item.label} className="rounded-xl border border-gray-100 p-3">
+              <div className="text-sm font-semibold text-gray-900">{item.label}</div>
+              <div className="mt-1 text-xs text-gray-500">{item.data.done}/{item.data.target} séances</div>
+              <div className="mt-2 h-2 w-full rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full bg-primary-600" style={{ width: `${item.data.percent}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
       <div id="resume-jour" className="mb-8 grid gap-4 lg:grid-cols-[1.45fr_0.95fr] scroll-mt-6">
         <div className="rounded-3xl border border-primary-200 bg-gradient-to-br from-primary-50 via-white to-emerald-50 px-6 py-6">

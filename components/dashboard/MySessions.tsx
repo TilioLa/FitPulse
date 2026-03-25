@@ -19,6 +19,7 @@ import {
   persistCurrentWorkoutForUser,
   readLocalCurrentWorkout,
   readLocalSettings,
+  writeLocalSettings,
   writeLocalCurrentWorkout,
 } from '@/lib/user-state-store'
 import { applyHistoryLimit, getEntitlement, hasProAccess } from '@/lib/subscription'
@@ -301,6 +302,7 @@ export default function MySessions() {
     duration: number
     muscleUsage: { id: string; percent: number }[]
     bestPrKg: number
+    qualityScore: number
   } | null>(null)
   const [nextWorkout, setNextWorkout] = useState<Workout | null>(null)
   const [shareUrl, setShareUrl] = useState<string | null>(null)
@@ -745,6 +747,14 @@ export default function MySessions() {
   }, [isRunning, timeRemaining, timerKind, soundEnabled, voiceEnabled])
 
   useEffect(() => {
+    if (!voiceEnabled) return
+    if (!workout) return
+    const current = workout.exercises[currentExerciseIndex]
+    if (!current) return
+    speak(`Exercice ${currentExerciseIndex + 1}. ${localizeExerciseNameFr(current.name)}.`)
+  }, [voiceEnabled, currentExerciseIndex, workout])
+
+  useEffect(() => {
     if (!workout) return
     if (showSummary) return
 
@@ -908,6 +918,23 @@ export default function MySessions() {
         bestWeight,
       }
     })
+    const totalSetsPlanned = workout.exercises.reduce((sum, exercise) => sum + exercise.sets, 0)
+    const totalSetsDone = workout.exercises.reduce(
+      (sum, exercise) => sum + (exerciseInputs[exercise.id] || []).filter((set) => set.completed).length,
+      0
+    )
+    const completionRatio = totalSetsPlanned > 0 ? totalSetsDone / totalSetsPlanned : 0
+    const intensityRatio = Math.min(1, sessionVolume / Math.max(1, totalSetsDone * 400))
+    const paceRatio = workout.duration > 0 ? Math.min(1, (workout.duration * 60) / Math.max(1, totalSetsDone * 75)) : 0
+    const qualityScore = Math.round(
+      Math.max(
+        0,
+        Math.min(
+          100,
+          completionRatio * 55 + intensityRatio * 30 + paceRatio * 15
+        )
+      )
+    )
 
     const muscleTotals = workout.exercises.reduce((acc, exercise) => {
       const muscles = inferMuscles(exercise.name)
@@ -1024,9 +1051,10 @@ export default function MySessions() {
       duration: workout.duration,
       muscleUsage,
       bestPrKg: Math.round(Math.max(...exerciseRecords.map((item) => item.bestOneRm || 0), 0)),
+      qualityScore,
     })
     setShowSummary(true)
-    push(`Séance terminée !`, 'success')
+    push(`Séance terminée ! Score qualité: ${qualityScore}/100`, 'success')
   }
 
   const handlePauseSession = () => {
@@ -1637,6 +1665,21 @@ export default function MySessions() {
                 <button className="btn-secondary w-full" onClick={downloadSessionShareCard}>
                   Télécharger la carte image
                 </button>
+                <button
+                  className="btn-secondary w-full"
+                  onClick={async () => {
+                    if (!lastSummary) return
+                    const text = `Séance terminée sur FitPulse 💪 ${lastSummary.duration} min · ${lastSummary.volume} ${weightUnit} · Score qualité ${lastSummary.qualityScore}/100`
+                    try {
+                      await navigator.clipboard.writeText(text)
+                      push('Texte Story/Reel copié.', 'success')
+                    } catch {
+                      push(text, 'info')
+                    }
+                  }}
+                >
+                  Copier texte Story/Reel
+                </button>
                 <button className="btn-secondary w-full" onClick={() => router.push('/dashboard?view=feed')}>
                   Retour au dashboard
                 </button>
@@ -1679,6 +1722,10 @@ export default function MySessions() {
                   <div className="text-xs text-gray-400">Durée estimée</div>
                   <div className="text-lg font-semibold text-gray-900">{lastSummary.duration} min</div>
                 </div>
+              </div>
+              <div className="mt-4 rounded-lg border border-primary-100 bg-primary-50 px-3 py-2">
+                <div className="text-xs uppercase tracking-wide text-primary-700 font-semibold">Score qualité</div>
+                <div className="mt-1 text-lg font-bold text-primary-800">{lastSummary.qualityScore}/100</div>
               </div>
 
               <div className="mt-4 text-sm text-gray-600">
@@ -1781,6 +1828,12 @@ export default function MySessions() {
       ? Math.max(1, Math.ceil(remainingSessions / sessionsPerWeek))
       : null
   const checkInRecommendation = getCheckInRecommendation(sessionCheckIn)
+  const injuryRisk =
+    sessionHint?.tone === 'amber'
+      ? 'élevé'
+      : sessionHint?.tone === 'blue'
+      ? 'modéré'
+      : 'faible'
   const checkInToneClass =
     checkInRecommendation.tone === 'amber'
       ? 'border-amber-200 bg-amber-50 text-amber-900'
@@ -1850,6 +1903,26 @@ export default function MySessions() {
             <span>Durée : {workout.duration} min</span>
           </div>
           <EquipmentBadge equipment={equipment} />
+          <button
+            type="button"
+            onClick={() => {
+              const next = !voiceEnabled
+              setVoiceEnabled(next)
+              const settings = readLocalSettings()
+              writeLocalSettings({
+                ...settings,
+                voiceEnabled: next,
+              })
+              push(next ? 'Coach vocal activé.' : 'Coach vocal désactivé.', 'info')
+            }}
+            className={`rounded-full px-3 py-1 text-xs font-semibold border ${
+              voiceEnabled
+                ? 'border-primary-300 bg-primary-50 text-primary-700'
+                : 'border-gray-200 bg-white text-gray-600'
+            }`}
+          >
+            Coach vocal {voiceEnabled ? 'ON' : 'OFF'}
+          </button>
         </div>
           <div className="mt-4 rounded-lg border border-primary-100 bg-primary-50 px-4 py-3 text-sm text-primary-800">
             Matériel requis : <span className="font-semibold">{equipment}</span>
@@ -1868,6 +1941,29 @@ export default function MySessions() {
             <div className="mt-1">{sessionHint.body}</div>
           </div>
         )}
+        <div className="mt-4 rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-900">
+          <div className="font-semibold">Prévention blessure: risque {injuryRisk}</div>
+          <div className="mt-1">
+            Réduis le volume en cas de fatigue/douleur pour protéger ta progression.
+          </div>
+          {injuryRisk !== 'faible' && (
+            <button
+              type="button"
+              className="mt-3 btn-secondary text-xs px-3 py-1.5"
+              onClick={() => {
+                if (!workout) return
+                const nextExercises = workout.exercises.map((exercise) => ({
+                  ...exercise,
+                  sets: Math.max(1, exercise.sets - 1),
+                }))
+                updateWorkoutExercises(nextExercises)
+                push('Mode prévention activé: volume réduit.', 'success')
+              }}
+            >
+              Activer deload sécurité
+            </button>
+          )}
+        </div>
         <div className={`mt-4 rounded-lg border px-4 py-3 ${checkInToneClass}`} data-testid="session-checkin">
           <div className="flex items-center justify-between gap-3">
             <div>
