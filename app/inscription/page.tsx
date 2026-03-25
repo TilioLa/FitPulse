@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
@@ -29,7 +29,7 @@ const equipmentOptions = [
   { label: 'Machines de salle', details: 'Poulies • guidées', icon: Building2 },
 ]
 
-export default function InscriptionPage() {
+function InscriptionPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [name, setName] = useState('')
@@ -550,5 +550,13 @@ export default function InscriptionPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function InscriptionPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50" />}>
+      <InscriptionPageContent />
+    </Suspense>
   )
 }
