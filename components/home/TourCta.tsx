@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowRight } from 'lucide-react'
+import { trackEvent } from '@/lib/analytics-client'
 
 export default function TourCta() {
   return (
@@ -9,6 +10,7 @@ export default function TourCta() {
       onClick={() => {
         if (typeof window !== 'undefined') {
           localStorage.setItem('fitpulse_tour_pending', 'true')
+          trackEvent('tour_start_click', { location: 'home_hero' })
           window.location.href = '/dashboard?tour=1'
         }
       }}

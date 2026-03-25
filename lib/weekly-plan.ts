@@ -4,6 +4,11 @@ export type WeeklyPlanDay = {
   type: 'training' | 'rest'
 }
 
+function toDayKey(value: string | Date) {
+  const d = typeof value === 'string' ? new Date(value) : value
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 function buildTrainingIndexes(sessionsPerWeek: number) {
   const count = Math.max(1, Math.min(7, sessionsPerWeek))
   const indexes = new Set<number>()
@@ -35,4 +40,20 @@ export function generateWeeklyPlan(
     })
   }
   return days
+}
+
+export function generateAdaptiveWeeklyPlan(
+  sessionsPerWeek: number,
+  completedDates: Array<string | Date>,
+  startDate = new Date(),
+  locale = 'fr-FR'
+): WeeklyPlanDay[] {
+  const target = Math.max(1, Math.min(7, sessionsPerWeek))
+  const weekAgo = new Date(startDate)
+  weekAgo.setDate(startDate.getDate() - 7)
+  const recent = completedDates.filter((value) => new Date(value).getTime() >= weekAgo.getTime())
+  const completedCount = new Set(recent.map((value) => toDayKey(value))).size
+  const missed = Math.max(0, target - completedCount)
+  const adaptiveTarget = Math.min(7, target + Math.min(2, missed))
+  return generateWeeklyPlan(adaptiveTarget, startDate, locale)
 }

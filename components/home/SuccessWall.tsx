@@ -51,6 +51,17 @@ export default function SuccessWall() {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 flex flex-wrap gap-2">
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+            +2 400 séances lancées ce mois-ci
+          </span>
+          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+            78% des utilisateurs actifs tiennent 3 séances/semaine
+          </span>
+          <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
+            Temps médian de création de plan: 42 sec
+          </span>
+        </div>
         <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-8">
           <div>
             <p className="text-sm font-semibold uppercase tracking-wider text-primary-600">Succès</p>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { UserPlus, Mail, Lock, User, Check, Dumbbell, Building2, CircleDot } from 'lucide-react'
@@ -11,6 +11,7 @@ import { programs } from '@/data/programs'
 import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
 import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
+import { trackEvent } from '@/lib/analytics-client'
 
 const focusZoneOptions = [
   { label: 'Bras', details: 'Biceps • Triceps' },
@@ -30,6 +31,7 @@ const equipmentOptions = [
 
 export default function InscriptionPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
@@ -45,6 +47,7 @@ export default function InscriptionPage() {
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const fromTour = searchParams.get('from') === 'tour'
   const goalsOptions = ['Cardio', 'Perte de poids', 'Prise de masse', 'Force', 'Sèche', 'Souplesse']
   const weeklyPlanPreview = useMemo(() => generateWeeklyPlan(sessionsPerWeek), [sessionsPerWeek])
   const recommended = useMemo(
@@ -62,6 +65,7 @@ export default function InscriptionPage() {
     e.preventDefault()
     setError('')
     setIsSubmitting(true)
+    trackEvent('signup_submit_start', { fromTour })
 
     if (password !== confirmPassword) {
       setError('Les mots de passe ne correspondent pas')
@@ -163,7 +167,14 @@ export default function InscriptionPage() {
       if (typeof window !== 'undefined') {
         localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))
       }
+      trackEvent('signup_success', {
+        fromTour,
+        level,
+        sessionsPerWeek,
+        goalsCount: normalizedGoals.length,
+      })
     } catch (err) {
+      trackEvent('signup_error', { fromTour })
       setError(err instanceof Error ? err.message : 'Impossible de créer le compte pour le moment')
       setIsSubmitting(false)
       return
@@ -186,6 +197,11 @@ export default function InscriptionPage() {
                 Commencez votre parcours fitness dès aujourd&apos;hui
               </p>
             </div>
+            {fromTour && (
+              <div className="mb-6 rounded-xl border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-800">
+                Tu viens de la visite guidée: crée ton compte pour sauvegarder ton plan et ton historique.
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (

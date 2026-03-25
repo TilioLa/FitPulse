@@ -9,13 +9,16 @@ import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
-import { readLocalCurrentWorkout } from '@/lib/user-state-store'
+import { readLocalCurrentWorkout, readLocalSettings, writeLocalSettings } from '@/lib/user-state-store'
+import { readLocalHistory } from '@/lib/history-store'
 import { programsById } from '@/data/programs'
 import {
   DashboardSection,
   sectionToView,
   viewToSection,
 } from '@/lib/dashboard-navigation'
+import { generateAdaptiveWeeklyPlan } from '@/lib/weekly-plan'
+import { trackEvent } from '@/lib/analytics-client'
 
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
@@ -55,6 +58,8 @@ function DashboardPageContent() {
     () => viewToSection(searchParams.get('view')) || 'feed'
   )
   const [tourStep, setTourStep] = useState<number | null>(null)
+  const [adaptiveHint, setAdaptiveHint] = useState<string | null>(null)
+  const [inactivityHint, setInactivityHint] = useState<string | null>(null)
   const [resumeSessionHref, setResumeSessionHref] = useState<string | null>(null)
   const [resumeSessionLabel, setResumeSessionLabel] = useState<string>('Reprendre la séance')
   const { status, reload } = useAuth()
@@ -150,6 +155,59 @@ function DashboardPageContent() {
     const lastSection = lastView ? viewToSection(lastView) : null
     if (lastSection) scheduleSection(lastSection)
   }, [effectiveStatus, searchParams])
+
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    if (typeof window === 'undefined') return
+    try {
+      const settings = readLocalSettings() as { sessionsPerWeek?: number; weeklyPlan?: unknown }
+      const sessionsPerWeek = Math.max(1, Math.min(7, Number(settings.sessionsPerWeek) || 3))
+      const history = readLocalHistory()
+      const now = Date.now()
+      const lastWeek = history.filter((item) => now - new Date(item.date).getTime() <= 7 * 24 * 60 * 60 * 1000)
+      const done = new Set(lastWeek.map((item) => new Date(item.date).toDateString())).size
+      const missed = Math.max(0, sessionsPerWeek - done)
+      if (missed <= 0) return
+
+      const nextPlan = generateAdaptiveWeeklyPlan(
+        sessionsPerWeek,
+        history.map((item) => item.date)
+      )
+      writeLocalSettings({
+        ...settings,
+        weeklyPlan: nextPlan,
+      })
+      const boost = Math.min(2, missed)
+      setAdaptiveHint(
+        `Plan ajusté automatiquement: +${boost} séance(s) cette semaine pour rattraper ton rythme.`
+      )
+      trackEvent('adaptive_plan_applied', { sessionsPerWeek, missed, boost })
+    } catch {
+      // ignore adaptive-plan failures
+    }
+  }, [effectiveStatus])
+
+  useEffect(() => {
+    if (effectiveStatus !== 'authenticated') return
+    if (typeof window === 'undefined') return
+    try {
+      const history = readLocalHistory()
+      const last = history
+        .slice()
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+      if (!last) {
+        setInactivityHint('Tu n’as pas encore de séance: lance ta première session aujourd’hui.')
+        return
+      }
+      const daysSince = Math.floor((Date.now() - new Date(last.date).getTime()) / (24 * 60 * 60 * 1000))
+      if (daysSince >= 3) {
+        setInactivityHint(`Tu es inactif depuis ${daysSince} jours. Reprends une séance courte pour relancer ta streak.`)
+        trackEvent('inactivity_nudge_shown', { daysSince })
+      }
+    } catch {
+      // ignore inactivity nudge errors
+    }
+  }, [effectiveStatus])
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
@@ -328,6 +386,27 @@ function DashboardPageContent() {
               </div>
             </div>
           )}
+          {adaptiveHint && (
+            <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4">
+              <div className="text-sm font-semibold text-amber-800">{adaptiveHint}</div>
+            </div>
+          )}
+          {inactivityHint && (
+            <div className="mb-6 rounded-2xl border border-blue-200 bg-blue-50 px-5 py-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-blue-800">{inactivityHint}</div>
+                <button
+                  onClick={() => {
+                    scheduleSection('session')
+                    trackEvent('inactivity_nudge_resume_click')
+                  }}
+                  className="btn-primary text-sm px-4 py-2"
+                >
+                  Reprendre maintenant
+                </button>
+              </div>
+            </div>
+          )}
           {renderSection()}
         </main>
       </div>
@@ -370,6 +449,7 @@ function DashboardPageContent() {
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('fitpulse_tour_seen_v1', 'true')
                   }
+                  trackEvent('tour_skip_click', { step: tourStep, guest: isGuestTour })
                 }}
               >
                 Passer
@@ -399,8 +479,9 @@ function DashboardPageContent() {
                         localStorage.setItem('fitpulse_tour_seen_v1', 'true')
                         localStorage.setItem('fitpulse_tour_pending', 'false')
                       }
+                      trackEvent('tour_complete_signup_click', { step: 3, guest: true })
                       setTourStep(null)
-                      router.push('/inscription')
+                      router.push('/inscription?from=tour')
                       return
                     }
                     const next = tourStep + 1
@@ -409,8 +490,10 @@ function DashboardPageContent() {
                       if (typeof window !== 'undefined') {
                         localStorage.setItem('fitpulse_tour_seen_v1', 'true')
                       }
+                      trackEvent('tour_complete', { guest: isGuestTour })
                     } else {
                       setTourStep(next)
+                      trackEvent('tour_step_next', { fromStep: tourStep, toStep: next, guest: isGuestTour })
                       if (next === 2) scheduleSection('session')
                       if (next === 3) scheduleSection('routines')
                     }
@@ -420,6 +503,11 @@ function DashboardPageContent() {
                 </button>
               </div>
             </div>
+            {tourStep === 3 && isGuestTour && (
+              <div className="mt-3 rounded-xl border border-primary-100 bg-primary-50 px-4 py-3 text-xs text-primary-800">
+                Crée ton compte pour sauvegarder ton plan, ton historique et reprendre tes séances sur tous tes appareils.
+              </div>
+            )}
           </div>
         </div>
       )}
