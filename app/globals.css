@@ -6,7 +6,6 @@
   body {
     @apply bg-gray-50 text-gray-900 overflow-x-hidden;
     font-family: "Manrope", "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
   }
 
@@ -109,6 +108,13 @@
 
 .reveal-3 {
   animation-delay: 240ms;
+}
+
+@supports (content-visibility: auto) {
+  .defer-render {
+    content-visibility: auto;
+    contain-intrinsic-size: 1px 900px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

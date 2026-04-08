@@ -32,10 +32,10 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body>
+        <Providers>{children}</Providers>
         <VercelAnalytics />
         <SpeedInsights />
         <PwaRegister />
-        <Providers>{children}</Providers>
       </body>
     </html>
   )
