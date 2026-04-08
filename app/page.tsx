@@ -1,14 +1,26 @@
+import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/home/Hero'
-import QuickStartExpress from '@/components/home/QuickStartExpress'
 import Benefits from '@/components/home/Benefits'
 import ProgramsPreview from '@/components/home/ProgramsPreview'
-import Onboarding from '@/components/home/Onboarding'
-import JourneyStarter from '@/components/home/JourneyStarter'
-import SuccessWall from '@/components/home/SuccessWall'
 import Testimonials from '@/components/home/Testimonials'
-import FAQ from '@/components/home/FAQ'
 import Footer from '@/components/Footer'
+
+const Onboarding = dynamic(() => import('@/components/home/Onboarding'), {
+  loading: () => <section className="py-14 sm:py-20 bg-gray-50" aria-hidden="true" />,
+})
+
+const JourneyStarter = dynamic(() => import('@/components/home/JourneyStarter'), {
+  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
+})
+
+const SuccessWall = dynamic(() => import('@/components/home/SuccessWall'), {
+  loading: () => <section className="py-16 bg-white" aria-hidden="true" />,
+})
+
+const FAQ = dynamic(() => import('@/components/home/FAQ'), {
+  loading: () => <section className="py-14 sm:py-20 bg-gray-50" aria-hidden="true" />,
+})
 
 export default function Home() {
   return (
@@ -16,18 +28,27 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <section className="py-6 bg-gray-50 border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-            <QuickStartExpress />
-          </div>
-        </section>
-        <Benefits />
-        <ProgramsPreview />
-        <Onboarding />
-        <JourneyStarter />
-        <SuccessWall />
-        <Testimonials />
-        <FAQ />
+        <div className="defer-render">
+          <Benefits />
+        </div>
+        <div className="defer-render">
+          <ProgramsPreview />
+        </div>
+        <div className="defer-render">
+          <Onboarding />
+        </div>
+        <div className="defer-render">
+          <JourneyStarter />
+        </div>
+        <div className="defer-render">
+          <SuccessWall />
+        </div>
+        <div className="defer-render">
+          <Testimonials />
+        </div>
+        <div className="defer-render">
+          <FAQ />
+        </div>
       </main>
       <Footer />
     </div>
