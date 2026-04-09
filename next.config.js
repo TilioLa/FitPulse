@@ -5,14 +5,16 @@ const nextConfig = {
   async headers() {
     const scriptSrc =
       process.env.NODE_ENV === 'development'
-        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
-        : "script-src 'self' 'unsafe-inline' https://js.stripe.com"
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://va.vercel-scripts.com"
+        : "script-src 'self' 'unsafe-inline' https://js.stripe.com https://va.vercel-scripts.com"
 
     const connectSources = [
       "'self'",
       "https://*.supabase.co",
       "wss://*.supabase.co",
       "https://api.stripe.com",
+      "https://vitals.vercel-insights.com",
+      "https://va.vercel-scripts.com",
     ]
     if (process.env.NEXT_PUBLIC_SUPABASE_URL) {
       try {

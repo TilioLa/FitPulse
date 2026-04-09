@@ -234,6 +234,14 @@ export default function Feed() {
 
   useEffect(() => {
     const syncOnboarding = () => {
+      const e2eBypassEnabled =
+        process.env.NEXT_PUBLIC_E2E_BYPASS_AUTH === 'true' ||
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY === 'e2e-anon-key' ||
+        (typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true')
+      if (e2eBypassEnabled) {
+        setOnboardingOpen(false)
+        return
+      }
       const state = readOnboardingState()
       if (!isOnboardingProfileComplete() && !state.dismissed && !state.completed) {
         setOnboardingAnswers(state.answers || getDefaultOnboardingAnswers())
@@ -502,7 +510,7 @@ export default function Feed() {
           })
         } else if (hasInProgressWorkout) {
           setNextAction({
-            title: 'Séance en cours détectée',
+            title: 'Séance interrompue détectée',
             body: 'Reprends là où tu t’es arrêté pour garder ton rythme.',
             cta: 'Reprendre la séance',
             href: resumeHref,
@@ -529,7 +537,7 @@ export default function Feed() {
 
         const shouldTrain = shouldTrainToday(settings)
         const didTrain = didWorkoutToday(stored)
-        if (shouldTrain && !didTrain) {
+        if (shouldTrain && !didTrain && !hasInProgressWorkout) {
           setReminderCard({
             title: 'Séance prévue aujourd’hui',
             body: 'Une séance est planifiée pour aujourd’hui. Lance une session pour garder ta streak.',
@@ -987,7 +995,7 @@ export default function Feed() {
   const primarySessionHref = resumeSessionHref || '/dashboard?view=session'
   const primarySessionLabel = resumeSessionHref ? 'Reprendre la séance' : 'Démarrer une séance'
   const todayActionTitle = resumeSessionHref
-    ? 'Séance en cours'
+    ? 'Séance active'
     : focus
     ? `${focus.title} · ${focus.subtitle}`
     : 'Ton prochain entraînement'
@@ -1037,7 +1045,7 @@ export default function Feed() {
         </div>
         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
           {resumeSessionHref && (
-            <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">Séance en cours</span>
+            <span className="rounded-full bg-emerald-100 px-2 py-1 font-semibold text-emerald-700">En cours</span>
           )}
           <div className="flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1">
             <span className="text-gray-700 font-semibold">Objectif</span>
@@ -1392,10 +1400,10 @@ export default function Feed() {
           </div>
           <div className="scroll-x-touch">
             <div className="grid min-w-[320px] grid-cols-7 gap-2 items-end h-24">
-              {weekTrend.map((day) => {
+              {weekTrend.map((day, index) => {
                 const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
                 return (
-                  <div key={day.day} className="flex flex-col items-center gap-1">
+                  <div key={`${day.day}-${index}`} className="flex flex-col items-center gap-1">
                     <span className="text-[10px] text-gray-500">{day.sessions}</span>
                     <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
                       <div

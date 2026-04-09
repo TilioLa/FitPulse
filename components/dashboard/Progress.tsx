@@ -259,10 +259,10 @@ export default function Progress({ compact = false }: ProgressProps) {
           </div>
           <div className="scroll-x-touch">
             <div className="grid min-w-[320px] grid-cols-7 gap-2 items-end h-24">
-              {weekTrend.map((day) => {
+              {weekTrend.map((day, index) => {
                 const barHeight = Math.max(8, Math.round((day.sessions / maxWeeklySessions) * 100))
                 return (
-                  <div key={day.day} className="flex flex-col items-center gap-1">
+                  <div key={`${day.day}-${index}`} className="flex flex-col items-center gap-1">
                     <span className="text-[10px] text-gray-500">{day.sessions}</span>
                     <div className="h-20 w-full rounded bg-primary-100 flex items-end overflow-hidden">
                       <div className="w-full bg-primary-600 rounded-t" style={{ height: `${barHeight}%` }} />

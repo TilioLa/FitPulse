@@ -1858,7 +1858,7 @@ export default function MySessions() {
         </div>
       )}
 
-      <div className="mb-8 reveal">
+          <div className="mb-8 reveal">
         <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
           <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">{workout.name}</h1>
           <div className="flex flex-col items-end gap-1">
@@ -1878,10 +1878,17 @@ export default function MySessions() {
               )}
             </div>
             {lastSavedAt && (
-              <div className="text-[11px] text-gray-500">
+                <div className="text-[11px] text-gray-500">
                 Dernière sauvegarde: {lastSavedAt}
               </div>
             )}
+            <button
+              type="button"
+              onClick={() => router.push('/profil?view=history')}
+              className="btn-secondary px-3 py-1 text-xs"
+            >
+              Historique
+            </button>
             {!isOnline && (
               <div className="text-[11px] font-semibold text-amber-700">
                 Hors ligne: les changements seront synchronisés au retour du réseau.

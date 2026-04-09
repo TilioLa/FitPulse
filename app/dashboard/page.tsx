@@ -291,14 +291,6 @@ function DashboardPageContent() {
 
   useEffect(() => {
     if (effectiveStatus !== 'authenticated') return
-    if (activeSection !== 'session') return
-    const currentWorkout = readLocalCurrentWorkout() as { status?: string } | null
-    if (currentWorkout?.status === 'in_progress') return
-    scheduleSection('feed')
-  }, [activeSection, effectiveStatus])
-
-  useEffect(() => {
-    if (effectiveStatus !== 'authenticated') return
     const view =
       searchParams.get('view') ||
       (typeof window !== 'undefined'

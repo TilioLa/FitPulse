@@ -78,6 +78,7 @@ export default function ProgramSessionsList({ program }: { program: Program }) {
             <StartProgramButton
               program={program}
               label="Démarrer la prochaine séance"
+              hrefOverride={`/programmes/${program.slug}/seances/${nextSession.id}`}
               className="btn-primary min-h-11 shadow-lg hover:shadow-xl"
             />
           </div>

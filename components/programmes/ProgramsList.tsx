@@ -278,7 +278,7 @@ export default function ProgramsList() {
           </div>
           <div className={`mt-4 grid gap-4 ${comparePrograms.length > 1 ? 'md:grid-cols-2' : 'grid-cols-1'}`}>
             {comparePrograms.map((program) => (
-              <div key={program.id} className="rounded-2xl border border-gray-200 p-4">
+              <div key={program.slug} className="rounded-2xl border border-gray-200 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-lg font-semibold text-gray-900">{program.name}</div>
@@ -488,7 +488,7 @@ export default function ProgramsList() {
           const isFav = favorites.includes(program.id)
           return (
           <div
-            key={program.id}
+            key={program.slug}
             className="card-soft group hover:shadow-md transition-transform duration-300 reveal border border-transparent hover:border-primary-200"
             style={{ animationDelay: `${index * 60}ms` }}
           >

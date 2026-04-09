@@ -500,7 +500,7 @@ export default function History() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredHistory.map((workout) => {
+            {filteredHistory.map((workout, index) => {
               const program = (workout as any).programId ? programsById[(workout as any).programId] : undefined
               const isCustomRoutine = workout.workoutName.toLowerCase().startsWith('routine')
               const href =
@@ -510,7 +510,7 @@ export default function History() {
                     ? '/dashboard?view=routines'
                     : '/dashboard?view=programs'
               return (
-                <Link key={workout.id} href={href} className="block">
+                <Link key={`${workout.id}-${workout.date}-${index}`} href={href} className="block">
                 <div className="card-soft hover:shadow-md transition-shadow">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div className="flex-1">

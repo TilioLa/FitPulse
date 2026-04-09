@@ -221,6 +221,7 @@ export default function ProfilPage() {
                   </p>
                 </div>
               </div>
+              <div className="mt-4 text-sm font-semibold text-gray-700">Historique récent</div>
             </div>
 
             {badges.length > 0 && (
@@ -298,7 +299,7 @@ export default function ProfilPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-gray-500">Profil</p>
-                      <h3 className="text-2xl font-semibold text-gray-900">Historique</h3>
+                      <h3 className="text-2xl font-semibold text-gray-900">Historique des séances</h3>
                     </div>
                   </div>
                   <History />
@@ -310,7 +311,7 @@ export default function ProfilPage() {
                 onClick={() => router.push('/dashboard')}
                 className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-full border border-gray-200 px-5 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
               >
-                Retour au dashboard
+                Accéder au Dashboard
               </button>
             </div>
           </div>
