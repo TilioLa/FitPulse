@@ -1,5 +1,7 @@
 'use client'
 
+import { hasAnalyticsConsent } from '@/lib/cookie-consent'
+
 type AnalyticsPayload = Record<string, unknown>
 
 const STORAGE_KEY = 'fitpulse_analytics_events_v1'
@@ -24,6 +26,8 @@ function persistLocally(name: string, payload: AnalyticsPayload) {
 }
 
 export function trackEvent(name: string, payload: AnalyticsPayload = {}) {
+  if (!hasAnalyticsConsent()) return
+
   const body = JSON.stringify({
     name,
     payload,

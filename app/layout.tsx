@@ -2,8 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import Providers from '@/components/Providers'
 import PwaRegister from '@/components/PwaRegister'
-import VercelAnalytics from '@/components/VercelAnalytics'
-import { SpeedInsights } from '@vercel/speed-insights/next'
+import CookieConsentManager from '@/components/CookieConsentManager'
 
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
@@ -33,8 +32,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
-        <VercelAnalytics />
-        <SpeedInsights />
+        <CookieConsentManager />
         <PwaRegister />
       </body>
     </html>

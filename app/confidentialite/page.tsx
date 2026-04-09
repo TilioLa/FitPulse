@@ -35,6 +35,14 @@ export default function ConfidentialitePage() {
             </section>
 
             <section>
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Cookies</h2>
+              <p>
+                Un bandeau de consentement vous permet d&apos;accepter ou de refuser les cookies de mesure
+                d&apos;audience. En cas de refus, les scripts analytics et les événements de suivi ne sont pas activés.
+              </p>
+            </section>
+
+            <section>
               <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Vos droits</h2>
               <p>
                 Vous pouvez demander l&apos;accès, la rectification ou la suppression de vos données en nous contactant.
