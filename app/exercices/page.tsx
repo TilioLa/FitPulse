@@ -13,6 +13,8 @@ import { getExerciseInsights, type ExerciseGoal, type ExerciseLevel } from '@/li
 import { readLocalHistory } from '@/lib/history-store'
 import { readLocalCustomExercises, saveLocalCustomExercises } from '@/lib/exercise-preferences-store'
 import { hrefForDashboardSection } from '@/lib/dashboard-navigation'
+import { readLocalSettings } from '@/lib/user-state-store'
+import { profileBiasForSex } from '@/lib/profile-preferences'
 
 type HistoryExercise = {
   id?: string
@@ -35,6 +37,7 @@ export default function ExercicesPage() {
   const [goal, setGoal] = useState<'all' | ExerciseGoal>('all')
   const [selected, setSelected] = useState<ExerciseCatalogItem | null>(null)
   const [customExercises, setCustomExercises] = useState<ExerciseCatalogItem[]>([])
+  const [sexPreference, setSexPreference] = useState<string>('non-renseigne')
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -57,6 +60,25 @@ export default function ExercicesPage() {
     }
   }, [])
 
+  useEffect(() => {
+    try {
+      const settings = readLocalSettings() as { sex?: string }
+      const sex = settings.sex || 'non-renseigne'
+      setSexPreference(sex)
+      const bias = profileBiasForSex(sex)
+      if (goal === 'all' && bias.exerciseGoals.length > 0) {
+        setGoal(bias.exerciseGoals[0])
+      }
+      if (muscle === 'all' && bias.exerciseTags.length > 0) {
+        setMuscle(bias.exerciseTags[0])
+      }
+    } catch {
+      // ignore
+    }
+    // initialize defaults only once
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const allExercises = useMemo(() => [...exerciseCatalog, ...customExercises], [customExercises])
 
   const equipmentOptions = useMemo(() => {
@@ -73,16 +95,27 @@ export default function ExercicesPage() {
 
   const filtered = useMemo(() => {
     const term = query.trim().toLowerCase()
-    return allExercises.filter((ex) => {
-      const matchQuery = !term || ex.name.toLowerCase().includes(term)
-      const matchEquip = equipment === 'all' || ex.equipment.includes(equipment)
-      const matchMuscle = muscle === 'all' || ex.tags.includes(muscle)
-      const insights = getExerciseInsights(ex)
-      const matchLevel = level === 'all' || insights.level === level
-      const matchGoal = goal === 'all' || insights.goals.includes(goal)
-      return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal
-    })
-  }, [allExercises, query, equipment, muscle, level, goal])
+    const bias = profileBiasForSex(sexPreference)
+    return allExercises
+      .filter((ex) => {
+        const matchQuery = !term || ex.name.toLowerCase().includes(term)
+        const matchEquip = equipment === 'all' || ex.equipment.includes(equipment)
+        const matchMuscle = muscle === 'all' || ex.tags.includes(muscle)
+        const insights = getExerciseInsights(ex)
+        const matchLevel = level === 'all' || insights.level === level
+        const matchGoal = goal === 'all' || insights.goals.includes(goal)
+        return matchQuery && matchEquip && matchMuscle && matchLevel && matchGoal
+      })
+      .map((ex) => {
+        const insights = getExerciseInsights(ex)
+        let rank = 0
+        if (bias.exerciseTags.some((tag) => ex.tags.includes(tag))) rank += 2
+        if (bias.exerciseGoals.some((g) => insights.goals.includes(g))) rank += 2
+        return { ex, rank }
+      })
+      .sort((a, b) => b.rank - a.rank || a.ex.name.localeCompare(b.ex.name))
+      .map((row) => row.ex)
+  }, [allExercises, query, equipment, muscle, level, goal, sexPreference])
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

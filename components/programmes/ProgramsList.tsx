@@ -38,12 +38,14 @@ export default function ProgramsList() {
         goals?: string[]
         equipment?: string[]
         sessionsPerWeek?: number
+        sex?: string
       }
       const recommendation = recommendProgram(allPrograms, {
         level: settings.level,
         goals: settings.goals,
         equipment: settings.equipment,
         sessionsPerWeek: settings.sessionsPerWeek,
+        sex: settings.sex,
       })
       const history = readLocalHistory() as unknown[]
       return {

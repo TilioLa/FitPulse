@@ -1,10 +1,12 @@
 import { Program } from '@/data/programs'
+import { normalizeSexPreference, profileBiasForSex } from '@/lib/profile-preferences'
 
 type RecommendationInput = {
   level?: string
   goals?: string[]
   equipment?: string[]
   sessionsPerWeek?: number
+  sex?: string
 }
 
 type RecommendationResult = {
@@ -38,6 +40,8 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
   const goals = (input.goals || []).map(normalize).filter(Boolean)
   const equipment = (input.equipment || []).map(normalize).filter(Boolean)
   const sessions = Number(input.sessionsPerWeek || 0)
+  const sex = normalizeSexPreference(input.sex)
+  const sexBias = profileBiasForSex(sex)
 
   const ranked = programs.map((program) => {
     let score = 0
@@ -45,6 +49,7 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
     const programLevel = normalize(program.level)
     const programEquipment = normalize(program.equipment)
     const programGoals = program.goals.map(normalize)
+    const programBodyParts = (program.bodyParts || []).map(normalize)
 
     if (level && programLevel.includes(level)) {
       score += 3
@@ -69,6 +74,22 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
     }
 
     if (program.recommended) score += 1
+
+    if (sexBias.programGoals.length > 0) {
+      const sexGoalHit = sexBias.programGoals.some((goal) => programGoals.some((pg) => goalMatches(goal, pg)))
+      if (sexGoalHit) {
+        score += 2
+        reasons.push('profil sexe pris en compte (objectifs)')
+      }
+    }
+
+    if (sexBias.programBodyParts.length > 0) {
+      const bodyPartHit = sexBias.programBodyParts.some((zone) => programBodyParts.some((part) => part.includes(zone)))
+      if (bodyPartHit) {
+        score += 1
+        reasons.push('profil sexe pris en compte (zones)')
+      }
+    }
 
     return { program, score, reasons }
   })

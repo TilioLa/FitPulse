@@ -215,6 +215,7 @@ export default function Feed() {
           equipment?: string[]
           sessionsPerWeek?: number
           monthlyGoalSessions?: number
+          sex?: string
         }
         const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
         const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
@@ -223,6 +224,7 @@ export default function Feed() {
           goals: settings.goals,
           equipment: settings.equipment,
           sessionsPerWeek: settings.sessionsPerWeek,
+          sex: settings.sex,
         })?.program
         const hasProfile =
           Boolean(settings.level) &&

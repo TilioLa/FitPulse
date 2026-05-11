@@ -12,6 +12,7 @@ import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
 import { ensureTrialStarted, setStoredPlan } from '@/lib/subscription'
 import { trackUxEvent } from '@/lib/ux-events'
+import { normalizeSexPreference } from '@/lib/profile-preferences'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -39,6 +40,7 @@ export default function InscriptionPage() {
   const [goals, setGoals] = useState<string[]>(['Cardio'])
   const [focusZones, setFocusZones] = useState<string[]>([])
   const [avoidZones, setAvoidZones] = useState<string[]>([])
+  const [sex, setSex] = useState<'femme' | 'homme' | 'non-binaire' | 'non-renseigne'>('non-renseigne')
   const [level, setLevel] = useState('debutant')
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
@@ -54,8 +56,9 @@ export default function InscriptionPage() {
         goals,
         equipment,
         sessionsPerWeek,
+        sex,
       }),
-    [level, goals, equipment, sessionsPerWeek]
+    [level, goals, equipment, sessionsPerWeek, sex]
   )
   const normalizedEmail = email.trim().toLowerCase()
   const isEmailValid = normalizedEmail.length > 0 && emailPattern.test(normalizedEmail)
@@ -92,6 +95,7 @@ export default function InscriptionPage() {
         avoidZones?: string[]
         weight?: number
         height?: number
+        sex?: string
       }
       if (Array.isArray(localSettings.goals) && localSettings.goals.length > 0) setGoals(localSettings.goals)
       if (Array.isArray(localSettings.equipment) && localSettings.equipment.length > 0) setEquipment(localSettings.equipment)
@@ -101,6 +105,7 @@ export default function InscriptionPage() {
       if (Number.isFinite(localSettings.sessionsPerWeek)) setSessionsPerWeek(Number(localSettings.sessionsPerWeek))
       if (Number.isFinite(localSettings.weight)) setWeight(String(localSettings.weight))
       if (Number.isFinite(localSettings.height)) setHeight(String(localSettings.height))
+      setSex(normalizeSexPreference(localSettings.sex))
     } catch {
       // ignore
     }
@@ -160,6 +165,7 @@ export default function InscriptionPage() {
       equipment,
       recommendedProgramId: recommended?.program.id,
       recommendedProgramSlug: recommended?.program.slug,
+      sex,
       weeklyPlan,
       reminderEmailsEnabled: true,
       pushRemindersEnabled: true,
@@ -413,6 +419,20 @@ export default function InscriptionPage() {
                 <h2 className="text-lg font-semibold text-gray-900">Profil fitness</h2>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="inscription-sex" className="block text-sm font-medium text-gray-700 mb-2">Sexe</label>
+                    <select
+                      id="inscription-sex"
+                      value={sex}
+                      onChange={(e) => setSex(normalizeSexPreference(e.target.value))}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="non-renseigne">Je préfère ne pas préciser</option>
+                      <option value="femme">Femme</option>
+                      <option value="homme">Homme</option>
+                      <option value="non-binaire">Non-binaire</option>
+                    </select>
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Poids (kg)</label>
                     <input
