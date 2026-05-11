@@ -3,18 +3,18 @@ import { ArrowRight, Dumbbell, Target, TrendingUp } from 'lucide-react'
 
 export default function Hero() {
   return (
-    <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-20">
+    <section className="bg-primary-700 text-white py-20">
       <div className="max-w-7xl mx-auto min-h-[560px] px-4 sm:px-6 lg:px-8">
         <div className="text-center">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight reveal">
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
             Un coach clair, des séances efficaces
           </h1>
-          <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto reveal reveal-1">
+          <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto">
             Des programmes structurés, adaptés à votre niveau.
             Poids du corps, élastiques ou machines.
             Avancez avec un plan simple et mesurable.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 reveal reveal-2">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
             <Link
               href="/inscription"
               data-cta-id="hero_primary_signup"
@@ -31,7 +31,7 @@ export default function Hero() {
               Découvrir les programmes
             </Link>
           </div>
-          <p className="text-sm text-primary-100 mb-10 reveal reveal-2">
+          <p className="text-sm text-primary-100 mb-10">
             Sans carte bancaire. Configure ton premier plan en moins de 2 minutes.
           </p>
           
