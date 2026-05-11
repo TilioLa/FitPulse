@@ -14,7 +14,9 @@ type Payload = {
 
 const RATE_LIMIT_WINDOW_MS = 30_000
 const RATE_LIMIT_MAX_REQUESTS = 3
+const RATE_LIMIT_MAX_TRACKED_IPS = 5_000
 const requestLog = new Map<string, number[]>()
+let requestCounter = 0
 
 function escapeHtml(value: string) {
   return value
@@ -43,8 +45,32 @@ function readIp(request: Request) {
 }
 
 function isRateLimited(ip: string) {
+  requestCounter += 1
   const now = Date.now()
   const windowStart = now - RATE_LIMIT_WINDOW_MS
+
+  // Periodically compact stale entries to avoid unbounded memory growth.
+  if (requestCounter % 100 === 0) {
+    requestLog.forEach((timestamps, key) => {
+      const fresh = timestamps.filter((ts: number) => ts >= windowStart)
+      if (fresh.length === 0) requestLog.delete(key)
+      else requestLog.set(key, fresh)
+    })
+  }
+
+  // Hard cap tracked keys to prevent memory-exhaustion DoS with spoofed IPs.
+  if (!requestLog.has(ip) && requestLog.size >= RATE_LIMIT_MAX_TRACKED_IPS) {
+    requestLog.forEach((timestamps, key) => {
+      const freshest = Math.max(...timestamps, 0)
+      if (freshest < windowStart) {
+        requestLog.delete(key)
+      }
+    })
+    if (requestLog.size >= RATE_LIMIT_MAX_TRACKED_IPS) {
+      return true
+    }
+  }
+
   const existing = (requestLog.get(ip) || []).filter((ts) => ts >= windowStart)
   existing.push(now)
   requestLog.set(ip, existing)
