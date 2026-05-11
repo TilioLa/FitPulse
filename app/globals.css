@@ -159,6 +159,11 @@
   animation: pulse-soft 1.2s ease-in-out infinite;
 }
 
+.content-auto {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 1800px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html:focus-within {
     scroll-behavior: auto;

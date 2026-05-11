@@ -5,8 +5,7 @@ import { ToastProvider } from '@/components/ui/ToastProvider'
 import { I18nProvider } from '@/components/I18nProvider'
 import { SupabaseAuthProvider } from '@/components/SupabaseAuthProvider'
 import { initA11yPreferences } from '@/lib/a11y-preferences'
-import SiteCommandPalette from '@/components/system/SiteCommandPalette'
-import SmartNudges from '@/components/system/SmartNudges'
+import PageTypeTelemetry from '@/components/system/PageTypeTelemetry'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -18,8 +17,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <I18nProvider>
         <ToastProvider>
           {children}
-          <SiteCommandPalette />
-          <SmartNudges />
+          <PageTypeTelemetry />
         </ToastProvider>
       </I18nProvider>
     </SupabaseAuthProvider>

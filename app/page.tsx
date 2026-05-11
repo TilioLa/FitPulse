@@ -1,11 +1,13 @@
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/home/Hero'
-import Benefits from '@/components/home/Benefits'
-import ProgramsPreview from '@/components/home/ProgramsPreview'
-import Onboarding from '@/components/home/Onboarding'
-import Testimonials from '@/components/home/Testimonials'
-import FAQ from '@/components/home/FAQ'
+import dynamic from 'next/dynamic'
 import Footer from '@/components/Footer'
+
+const Benefits = dynamic(() => import('@/components/home/Benefits'))
+const ProgramsPreview = dynamic(() => import('@/components/home/ProgramsPreview'))
+const Onboarding = dynamic(() => import('@/components/home/Onboarding'))
+const Testimonials = dynamic(() => import('@/components/home/Testimonials'))
+const FAQ = dynamic(() => import('@/components/home/FAQ'))
 
 export default function Home() {
   return (
@@ -13,11 +15,13 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <Benefits />
-        <ProgramsPreview />
-        <Onboarding />
-        <Testimonials />
-        <FAQ />
+        <section className="content-auto">
+          <Benefits />
+          <ProgramsPreview />
+          <Onboarding />
+          <Testimonials />
+          <FAQ />
+        </section>
       </main>
       <Footer />
     </div>

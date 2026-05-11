@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Activity, PlayCircle, LifeBuoy, UserCircle2 } from 'lucide-react'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 
 export default function Navbar() {
   const pathname = usePathname()
-  const router = useRouter()
   const [hasInProgressWorkout, setHasInProgressWorkout] = useState(false)
 
   const links = [
@@ -37,13 +36,6 @@ export default function Navbar() {
       window.removeEventListener('storage', check)
     }
   }, [])
-
-  useEffect(() => {
-    router.prefetch('/dashboard?view=session')
-    router.prefetch('/dashboard?view=feed')
-    router.prefetch('/programmes')
-    router.prefetch('/aide')
-  }, [router])
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200/70 bg-white/90 backdrop-blur">

@@ -4,7 +4,7 @@ import { ArrowRight, Dumbbell, Target, TrendingUp } from 'lucide-react'
 export default function Hero() {
   return (
     <section className="bg-gradient-to-br from-primary-600 via-primary-700 to-accent-600 text-white py-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto min-h-[560px] px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight reveal">
             Un coach clair, des séances efficaces

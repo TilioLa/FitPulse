@@ -10,6 +10,8 @@ import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
 import ConnectivityBanner from '@/components/system/ConnectivityBanner'
 import CommandPalette from '@/components/system/CommandPalette'
 import FeedbackWidget from '@/components/system/FeedbackWidget'
+import SiteCommandPalette from '@/components/system/SiteCommandPalette'
+import SmartNudges from '@/components/system/SmartNudges'
 import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 import {
   DashboardSection,
@@ -250,6 +252,8 @@ function DashboardPageContent() {
         </main>
       </div>
       <Footer />
+      <SiteCommandPalette />
+      <SmartNudges />
       <CommandPalette actions={paletteActions} />
       <FeedbackWidget />
     </div>
