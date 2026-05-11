@@ -18,7 +18,8 @@
     "mobile:add:android": "npx cap add android",
     "mobile:ios": "npx cap open ios",
     "mobile:android": "npx cap open android",
-    "postinstall": "echo \"postinstall complete\""
+    "postinstall": "echo \"postinstall complete\"",
+    "redeploy:qmx": "./scripts/redeploy-qmx.sh"
   },
   "dependencies": {
     "@capacitor/android": "^8.1.0",
