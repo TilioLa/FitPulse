@@ -63,12 +63,18 @@ export default function Navbar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {hasInProgressWorkout && (
-            <Link href="/dashboard?view=session" className="hidden sm:inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800">
-              <PlayCircle className="h-4 w-4" />
-              Continuer ma séance
-            </Link>
-          )}
+          <div className="hidden sm:block min-w-[172px]">
+            {hasInProgressWorkout ? (
+              <Link href="/dashboard?view=session" className="inline-flex items-center gap-1 rounded-lg bg-emerald-100 px-3 py-2 text-xs font-semibold text-emerald-800">
+                <PlayCircle className="h-4 w-4" />
+                Continuer ma séance
+              </Link>
+            ) : (
+              <span aria-hidden className="invisible inline-flex px-3 py-2 text-xs font-semibold">
+                Continuer ma séance
+              </span>
+            )}
+          </div>
           <Link href="/connexion" className="btn-secondary px-4 py-2 text-sm">
             Connexion
           </Link>
@@ -103,14 +109,20 @@ export default function Navbar() {
           </Link>
         </div>
         <div className="flex items-center gap-2 overflow-x-auto pb-1">
-          {hasInProgressWorkout && (
-            <Link
-              href="/dashboard?view=session"
-              className="whitespace-nowrap rounded-lg bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800"
-            >
-              Continuer séance
-            </Link>
-          )}
+          <div className="min-w-[132px]">
+            {hasInProgressWorkout ? (
+              <Link
+                href="/dashboard?view=session"
+                className="whitespace-nowrap rounded-lg bg-emerald-100 px-3 py-1.5 text-sm font-semibold text-emerald-800"
+              >
+                Continuer séance
+              </Link>
+            ) : (
+              <span aria-hidden className="invisible whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-semibold">
+                Continuer séance
+              </span>
+            )}
+          </div>
           {links.map((item) => (
             <Link
               key={`mobile-${item.href}`}
