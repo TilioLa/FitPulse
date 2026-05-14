@@ -15,6 +15,7 @@ export default function ConfidentialitePage() {
             <div className="flex flex-wrap gap-2 text-sm">
               <a href="#privacy-data" className="rounded-full bg-gray-100 px-3 py-1.5 text-gray-700 hover:bg-gray-200">Données</a>
               <a href="#privacy-usage" className="rounded-full bg-gray-100 px-3 py-1.5 text-gray-700 hover:bg-gray-200">Utilisation</a>
+              <a href="#privacy-cookies" className="rounded-full bg-gray-100 px-3 py-1.5 text-gray-700 hover:bg-gray-200">Cookies</a>
               <a href="#privacy-security" className="rounded-full bg-gray-100 px-3 py-1.5 text-gray-700 hover:bg-gray-200">Sécurité</a>
               <a href="#privacy-rights" className="rounded-full bg-gray-100 px-3 py-1.5 text-gray-700 hover:bg-gray-200">Vos droits</a>
             </div>
@@ -34,6 +35,14 @@ export default function ConfidentialitePage() {
               <p>
                 Les données sont utilisées pour personnaliser vos programmes, mesurer vos progrès et améliorer
                 l&apos;expérience FitPulse.
+              </p>
+            </section>
+
+            <section id="privacy-cookies">
+              <h2 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2">Cookies</h2>
+              <p>
+                FitPulse ne dépose pas de cookies de suivi marketing ou publicitaire. Les préférences de l&apos;application
+                sont conservées localement dans votre navigateur via localStorage.
               </p>
             </section>
 

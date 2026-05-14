@@ -38,6 +38,13 @@
     @apply outline-none;
   }
 
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+    line-height: 1.4;
+  }
+
   a:focus-visible,
   button:focus-visible,
   input:focus-visible,
@@ -57,11 +64,11 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-800 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-2;
+    @apply min-h-11 touch-manipulation bg-primary-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-800 transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-2;
   }
   
   .btn-secondary {
-    @apply bg-white text-primary-700 px-6 py-3 rounded-lg font-semibold border border-primary-200 hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-2;
+    @apply min-h-11 touch-manipulation bg-white text-primary-700 px-6 py-3 rounded-lg font-semibold border border-primary-200 hover:border-primary-300 hover:bg-primary-50 transition-all duration-200 active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-300 focus-visible:ring-offset-2;
   }
   
   .card {
