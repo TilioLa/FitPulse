@@ -6,6 +6,7 @@ import { I18nProvider } from '@/components/I18nProvider'
 import { SupabaseAuthProvider } from '@/components/SupabaseAuthProvider'
 import { initA11yPreferences } from '@/lib/a11y-preferences'
 import PageTypeTelemetry from '@/components/system/PageTypeTelemetry'
+import RemoveCookieBanner from '@/components/system/RemoveCookieBanner'
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -17,6 +18,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       <I18nProvider>
         <ToastProvider>
           {children}
+          <RemoveCookieBanner />
           <PageTypeTelemetry />
         </ToastProvider>
       </I18nProvider>
