@@ -5,6 +5,9 @@ process.env.NO_COLOR = '1'
 
 const port = Number(process.env.PORT || 3000)
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || `http://127.0.0.1:${port}`
+const webServerCommand = process.env.CI
+  ? `env -u FORCE_COLOR NO_COLOR=1 HOST=127.0.0.1 PORT=${port} npx next dev`
+  : `env -u FORCE_COLOR NO_COLOR=1 npm run dev -- --hostname 127.0.0.1 --port ${port}`
 
 export default defineConfig({
   testDir: './e2e',
@@ -17,10 +20,10 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: `env -u FORCE_COLOR NO_COLOR=1 npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    command: webServerCommand,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    timeout: 300_000,
     env: {
       NO_COLOR: '1',
       NEXT_PUBLIC_E2E_BYPASS_AUTH: process.env.PLAYWRIGHT_E2E_BYPASS_AUTH || 'true',
