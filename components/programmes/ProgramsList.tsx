@@ -39,6 +39,9 @@ export default function ProgramsList() {
         equipment?: string[]
         sessionsPerWeek?: number
         sex?: string
+        focusZones?: string[]
+        avoidZones?: string[]
+        trainingContext?: 'maison' | 'salle' | 'mixte'
       }
       const recommendation = recommendProgram(allPrograms, {
         level: settings.level,
@@ -46,6 +49,9 @@ export default function ProgramsList() {
         equipment: settings.equipment,
         sessionsPerWeek: settings.sessionsPerWeek,
         sex: settings.sex,
+        focusZones: settings.focusZones,
+        avoidZones: settings.avoidZones,
+        trainingContext: settings.trainingContext,
       })
       const history = readLocalHistory() as unknown[]
       return {

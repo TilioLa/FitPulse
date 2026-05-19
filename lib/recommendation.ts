@@ -7,6 +7,9 @@ type RecommendationInput = {
   equipment?: string[]
   sessionsPerWeek?: number
   sex?: string
+  focusZones?: string[]
+  avoidZones?: string[]
+  trainingContext?: 'maison' | 'salle' | 'mixte'
 }
 
 type RecommendationResult = {
@@ -40,6 +43,9 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
   const goals = (input.goals || []).map(normalize).filter(Boolean)
   const equipment = (input.equipment || []).map(normalize).filter(Boolean)
   const sessions = Number(input.sessionsPerWeek || 0)
+  const focusZones = (input.focusZones || []).map(normalize).filter(Boolean)
+  const avoidZones = (input.avoidZones || []).map(normalize).filter(Boolean)
+  const trainingContext = input.trainingContext || 'mixte'
   const sex = normalizeSexPreference(input.sex)
   const sexBias = profileBiasForSex(sex)
 
@@ -66,6 +72,14 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
       score += 4
       reasons.push('matériel compatible')
     }
+    if (trainingContext === 'maison' && !programEquipment.includes('machines')) {
+      score += 2
+      reasons.push('adapté à la maison')
+    }
+    if (trainingContext === 'salle' && (programEquipment.includes('machines') || programEquipment.includes('barres'))) {
+      score += 2
+      reasons.push('adapté à la salle')
+    }
 
     if (sessions > 0) {
       const diff = Math.abs(program.sessionsPerWeek - sessions)
@@ -89,6 +103,18 @@ export function recommendProgram(programs: Program[], input: RecommendationInput
         score += 1
         reasons.push('profil sexe pris en compte (zones)')
       }
+    }
+
+    const focusHits = focusZones.filter((zone) => programBodyParts.some((part) => part.includes(zone))).length
+    if (focusHits > 0) {
+      score += focusHits * 2
+      reasons.push('zones ciblées prises en compte')
+    }
+
+    const avoidHits = avoidZones.filter((zone) => programBodyParts.some((part) => part.includes(zone))).length
+    if (avoidHits > 0) {
+      score -= avoidHits * 3
+      reasons.push('zones sensibles évitées')
     }
 
     return { program, score, reasons }

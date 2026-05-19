@@ -109,6 +109,11 @@ export default function Feed() {
     reason?: string
     weeks?: string[]
   }>({ active: false })
+  const [sevenDayPlan, setSevenDayPlan] = useState<{
+    active: boolean
+    reason?: string
+    steps?: string[]
+  }>({ active: false })
 
   useEffect(() => {
     const applyPlan = () => setEntitlement(getEntitlement())
@@ -216,6 +221,9 @@ export default function Feed() {
           sessionsPerWeek?: number
           monthlyGoalSessions?: number
           sex?: string
+          focusZones?: string[]
+          avoidZones?: string[]
+          trainingContext?: 'maison' | 'salle' | 'mixte'
         }
         const currentWorkoutRaw = localStorage.getItem('fitpulse_current_workout')
         const currentWorkout = currentWorkoutRaw ? JSON.parse(currentWorkoutRaw) : null
@@ -225,6 +233,9 @@ export default function Feed() {
           equipment: settings.equipment,
           sessionsPerWeek: settings.sessionsPerWeek,
           sex: settings.sex,
+          focusZones: settings.focusZones,
+          avoidZones: settings.avoidZones,
+          trainingContext: settings.trainingContext,
         })?.program
         const hasProfile =
           Boolean(settings.level) &&
@@ -236,6 +247,19 @@ export default function Feed() {
         const hasCompletedWorkout = stored.length > 0
         const stats = computeHistoryStats(stored)
         setBadgeSummary({ streak: stats.streak, total: stats.totalWorkouts })
+        if (stats.streak < 2) {
+          setSevenDayPlan({
+            active: true,
+            reason: 'Relance ta régularité avec un défi simple.',
+            steps: [
+              'Jour 1: séance courte (20-30 min)',
+              'Jour 3: deuxième séance, même format',
+              'Jour 5 ou 6: troisième séance pour valider la semaine',
+            ],
+          })
+        } else {
+          setSevenDayPlan({ active: false })
+        }
         setOnboardingSteps([
           {
             id: 'profile',
@@ -521,6 +545,7 @@ export default function Feed() {
         setBusinessNudge(null)
         setMonthlyGoal({ target: 12, progress: 0 })
         setRelaunchPlan({ active: false })
+        setSevenDayPlan({ active: true, reason: 'Objectif de reprise: 3 séances cette semaine', steps: ['Séance 1: aujourd’hui', 'Séance 2: dans 48h', 'Séance 3: en fin de semaine'] })
         setNextAction({
           title: 'Complète ton profil',
           body: 'Ajoute tes objectifs, ton niveau et ton matériel pour une recommandation plus précise.',
@@ -658,6 +683,20 @@ export default function Feed() {
               <div key={item}>• {item}</div>
             ))}
           </div>
+        </div>
+      )}
+      {sevenDayPlan.active && (
+        <div className="mb-8 rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-cyan-700">Défi 7 jours</div>
+          <div className="mt-1 text-sm text-cyan-900">{sevenDayPlan.reason}</div>
+          <div className="mt-2 space-y-1 text-sm text-cyan-800">
+            {(sevenDayPlan.steps || []).map((item) => (
+              <div key={item}>• {item}</div>
+            ))}
+          </div>
+          <Link href="/dashboard?view=session" className="mt-3 inline-flex btn-secondary">
+            Lancer la séance du jour
+          </Link>
         </div>
       )}
       {businessNudge && (

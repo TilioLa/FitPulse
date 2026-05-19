@@ -1,8 +1,15 @@
 import type { Metadata, Viewport } from 'next'
+import { Manrope } from 'next/font/google'
 import './globals.css'
 import Providers from '@/components/Providers'
 import PwaRegister from '@/components/PwaRegister'
 import BackToTop from '@/components/BackToTop'
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-manrope',
+})
 
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
@@ -31,7 +38,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body>
+      <body className={manrope.variable}>
         <a href="#main-content" className="skip-link">
           Aller au contenu
         </a>

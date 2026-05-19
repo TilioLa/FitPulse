@@ -43,6 +43,7 @@ export default function InscriptionPage() {
   const [sex, setSex] = useState<'femme' | 'homme' | 'non-binaire' | 'non-renseigne'>('non-renseigne')
   const [level, setLevel] = useState('debutant')
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
+  const [trainingContext, setTrainingContext] = useState<'maison' | 'salle' | 'mixte'>('mixte')
   const [equipment, setEquipment] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -57,8 +58,11 @@ export default function InscriptionPage() {
         equipment,
         sessionsPerWeek,
         sex,
+        focusZones,
+        avoidZones,
+        trainingContext,
       }),
-    [level, goals, equipment, sessionsPerWeek, sex]
+    [level, goals, equipment, sessionsPerWeek, sex, focusZones, avoidZones, trainingContext]
   )
   const normalizedEmail = email.trim().toLowerCase()
   const isEmailValid = normalizedEmail.length > 0 && emailPattern.test(normalizedEmail)
@@ -96,6 +100,7 @@ export default function InscriptionPage() {
         weight?: number
         height?: number
         sex?: string
+        trainingContext?: 'maison' | 'salle' | 'mixte'
       }
       if (Array.isArray(localSettings.goals) && localSettings.goals.length > 0) setGoals(localSettings.goals)
       if (Array.isArray(localSettings.equipment) && localSettings.equipment.length > 0) setEquipment(localSettings.equipment)
@@ -106,6 +111,7 @@ export default function InscriptionPage() {
       if (Number.isFinite(localSettings.weight)) setWeight(String(localSettings.weight))
       if (Number.isFinite(localSettings.height)) setHeight(String(localSettings.height))
       setSex(normalizeSexPreference(localSettings.sex))
+      if (localSettings.trainingContext) setTrainingContext(localSettings.trainingContext)
     } catch {
       // ignore
     }
@@ -172,6 +178,7 @@ export default function InscriptionPage() {
       restTime: 60,
       weightUnit: 'kg',
       sessionsPerWeek,
+      trainingContext,
       focusZones,
       avoidZones,
       weight: weight ? Number(weight) : undefined,
@@ -567,6 +574,20 @@ export default function InscriptionPage() {
                     className="w-full accent-primary-600"
                   />
                   <div className="text-sm text-gray-600 mt-2">{sessionsPerWeek} séance(s) / semaine</div>
+                </div>
+
+                <div className={step === 3 ? '' : 'opacity-70'}>
+                  <label htmlFor="inscription-training-context" className="block text-sm font-medium text-gray-700 mb-2">Tu t'entraînes surtout où ?</label>
+                  <select
+                    id="inscription-training-context"
+                    value={trainingContext}
+                    onChange={(e) => setTrainingContext(e.target.value as 'maison' | 'salle' | 'mixte')}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="mixte">Mixte (maison + salle)</option>
+                    <option value="maison">À la maison</option>
+                    <option value="salle">En salle</option>
+                  </select>
                 </div>
 
                 <div className={step === 3 ? '' : 'opacity-70'}>
