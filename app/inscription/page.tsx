@@ -577,7 +577,7 @@ export default function InscriptionPage() {
                 </div>
 
                 <div className={step === 3 ? '' : 'opacity-70'}>
-                  <label htmlFor="inscription-training-context" className="block text-sm font-medium text-gray-700 mb-2">Tu t'entraînes surtout où ?</label>
+                  <label htmlFor="inscription-training-context" className="block text-sm font-medium text-gray-700 mb-2">Tu t&apos;entraînes surtout où ?</label>
                   <select
                     id="inscription-training-context"
                     value={trainingContext}
