@@ -24,11 +24,14 @@ export default function CookieConsentManager() {
     } else {
       setConsent(current)
     }
-    setReady(true)
+    const timer = window.setTimeout(() => setReady(true), 1200)
 
     const sync = () => setConsent(getCookieConsent())
     window.addEventListener(COOKIE_CONSENT_EVENT, sync)
-    return () => window.removeEventListener(COOKIE_CONSENT_EVENT, sync)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener(COOKIE_CONSENT_EVENT, sync)
+    }
   }, [])
 
   const analyticsEnabled = consent === 'accepted'
@@ -73,4 +76,3 @@ export default function CookieConsentManager() {
     </>
   )
 }
-

@@ -18,7 +18,12 @@ export default function PwaRegister() {
       }
     }
 
-    void register()
+    const run = () => void register()
+    if ('requestIdleCallback' in window) {
+      ;(window as any).requestIdleCallback(run, { timeout: 2000 })
+    } else {
+      setTimeout(run, 1200)
+    }
   }, [])
 
   return null

@@ -1,8 +1,10 @@
 import type { Metadata, Viewport } from 'next'
+import dynamic from 'next/dynamic'
 import './globals.css'
 import Providers from '@/components/Providers'
-import PwaRegister from '@/components/PwaRegister'
-import CookieConsentManager from '@/components/CookieConsentManager'
+
+const PwaRegister = dynamic(() => import('@/components/PwaRegister'), { ssr: false })
+const CookieConsentManager = dynamic(() => import('@/components/CookieConsentManager'), { ssr: false })
 
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',

@@ -2,6 +2,13 @@
 const nextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  optimizePackageImports: ['lucide-react'],
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 60 * 60 * 24 * 30,
+  },
   async headers() {
     const scriptSrc =
       process.env.NODE_ENV === 'development'
