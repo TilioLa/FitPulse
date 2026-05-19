@@ -129,3 +129,12 @@
     transition: none;
   }
 }
+
+@media (max-width: 768px) {
+  .reveal,
+  .reveal-1,
+  .reveal-2,
+  .reveal-3 {
+    animation: none !important;
+  }
+}

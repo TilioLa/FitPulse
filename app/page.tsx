@@ -1,35 +1,7 @@
-import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/home/Hero'
 import Footer from '@/components/Footer'
-
-const Benefits = dynamic(() => import('@/components/home/Benefits'), {
-  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
-})
-
-const ProgramsPreview = dynamic(() => import('@/components/home/ProgramsPreview'), {
-  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
-})
-
-const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
-  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
-})
-
-const Onboarding = dynamic(() => import('@/components/home/Onboarding'), {
-  loading: () => <section className="py-14 sm:py-20 bg-gray-50" aria-hidden="true" />,
-})
-
-const JourneyStarter = dynamic(() => import('@/components/home/JourneyStarter'), {
-  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
-})
-
-const SuccessWall = dynamic(() => import('@/components/home/SuccessWall'), {
-  loading: () => <section className="py-16 bg-white" aria-hidden="true" />,
-})
-
-const FAQ = dynamic(() => import('@/components/home/FAQ'), {
-  loading: () => <section className="py-14 sm:py-20 bg-gray-50" aria-hidden="true" />,
-})
+import HomeDeferredSections from '@/components/home/HomeDeferredSections'
 
 export default function Home() {
   return (
@@ -37,27 +9,7 @@ export default function Home() {
       <Navbar />
       <main>
         <Hero />
-        <div className="defer-render">
-          <Benefits />
-        </div>
-        <div className="defer-render">
-          <ProgramsPreview />
-        </div>
-        <div className="defer-render">
-          <Onboarding />
-        </div>
-        <div className="defer-render">
-          <JourneyStarter />
-        </div>
-        <div className="defer-render">
-          <SuccessWall />
-        </div>
-        <div className="defer-render">
-          <Testimonials />
-        </div>
-        <div className="defer-render">
-          <FAQ />
-        </div>
+        <HomeDeferredSections />
       </main>
       <Footer />
     </div>
