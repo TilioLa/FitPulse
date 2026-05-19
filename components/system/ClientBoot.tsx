@@ -14,7 +14,7 @@ export default function ClientBoot() {
     if ('requestIdleCallback' in window) {
       ;(window as any).requestIdleCallback(enable, { timeout: 3000 })
     } else {
-      window.setTimeout(enable, 1500)
+      globalThis.setTimeout(enable, 1500)
     }
   }, [])
 

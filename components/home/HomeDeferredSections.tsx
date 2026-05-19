@@ -19,7 +19,7 @@ export default function HomeDeferredSections() {
     if ('requestIdleCallback' in window) {
       ;(window as any).requestIdleCallback(enable, { timeout: 2000 })
     } else {
-      window.setTimeout(enable, 1200)
+      globalThis.setTimeout(enable, 1200)
     }
   }, [])
 
@@ -51,4 +51,3 @@ export default function HomeDeferredSections() {
     </>
   )
 }
-
