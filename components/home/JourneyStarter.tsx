@@ -15,6 +15,10 @@ type LocalSettings = {
   goals?: string[]
   equipment?: string[]
   sessionsPerWeek?: number
+  sex?: string
+  focusZones?: string[]
+  avoidZones?: string[]
+  trainingContext?: 'maison' | 'salle' | 'mixte'
 }
 
 export default function JourneyStarter() {
@@ -29,6 +33,10 @@ export default function JourneyStarter() {
         goals: settings?.goals,
         equipment: settings?.equipment,
         sessionsPerWeek: settings?.sessionsPerWeek,
+        sex: settings?.sex,
+        focusZones: settings?.focusZones,
+        avoidZones: settings?.avoidZones,
+        trainingContext: settings?.trainingContext,
       })
       return recommendation?.program || programs[0]
     } catch {

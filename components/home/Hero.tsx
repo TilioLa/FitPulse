@@ -8,7 +8,7 @@ export default function Hero() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center">
           <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 leading-tight reveal">
-            Un coach clair, des séances efficaces
+            Ton coach visuel pour transformer ta régularité
           </h1>
           <p className="text-base sm:text-lg md:text-2xl mb-8 text-primary-100 max-w-3xl mx-auto reveal reveal-1">
             Des programmes structurés, adaptés à votre niveau.
@@ -17,7 +17,7 @@ export default function Hero() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12 reveal reveal-2">
             <Link href="/inscription" className="btn-primary w-full sm:w-auto bg-white text-primary-600 hover:bg-primary-50 text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 flex items-center justify-center space-x-2">
-              <span>Commencez gratuitement</span>
+              <span>Démarrer mon plan gratuit</span>
               <ArrowRight className="h-5 w-5" />
             </Link>
             <Link href="/programmes" className="btn-secondary w-full sm:w-auto border-white text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4 text-center">

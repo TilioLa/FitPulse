@@ -1,10 +1,19 @@
 import dynamic from 'next/dynamic'
 import Navbar from '@/components/Navbar'
 import Hero from '@/components/home/Hero'
-import Benefits from '@/components/home/Benefits'
-import ProgramsPreview from '@/components/home/ProgramsPreview'
-import Testimonials from '@/components/home/Testimonials'
 import Footer from '@/components/Footer'
+
+const Benefits = dynamic(() => import('@/components/home/Benefits'), {
+  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
+})
+
+const ProgramsPreview = dynamic(() => import('@/components/home/ProgramsPreview'), {
+  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
+})
+
+const Testimonials = dynamic(() => import('@/components/home/Testimonials'), {
+  loading: () => <section className="py-14 sm:py-20 bg-white" aria-hidden="true" />,
+})
 
 const Onboarding = dynamic(() => import('@/components/home/Onboarding'), {
   loading: () => <section className="py-14 sm:py-20 bg-gray-50" aria-hidden="true" />,

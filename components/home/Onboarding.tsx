@@ -40,6 +40,10 @@ export default function Onboarding() {
       goal?: string
       equipment?: string[]
       sessionsPerWeek?: number
+      sex?: string
+      focusZones?: string[]
+      avoidZones?: string[]
+      trainingContext?: 'maison' | 'salle' | 'mixte'
     }
     const goals = Array.isArray(settings.goals) && settings.goals.length > 0
       ? settings.goals
@@ -51,6 +55,10 @@ export default function Onboarding() {
       goals,
       equipment: settings.equipment,
       sessionsPerWeek: settings.sessionsPerWeek,
+      sex: settings.sex,
+      focusZones: settings.focusZones,
+      avoidZones: settings.avoidZones,
+      trainingContext: settings.trainingContext,
     })?.program || null
   }, [mounted])
 

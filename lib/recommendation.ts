@@ -7,6 +7,10 @@ type RecommendationInput = {
   sessionsPerWeek?: number
   historyProgramIds?: string[]
   recentProgramId?: string | null
+  sex?: 'femme' | 'homme' | 'non-binaire' | 'non-renseigne' | string
+  focusZones?: string[]
+  avoidZones?: string[]
+  trainingContext?: 'maison' | 'salle' | 'mixte' | string
 }
 
 type RecommendationResult = {
@@ -42,6 +46,10 @@ export function rankPrograms(programs: Program[], input: RecommendationInput): R
   const sessions = Number(input.sessionsPerWeek || 0)
   const historyProgramIds = (input.historyProgramIds || []).filter(Boolean)
   const recentProgramId = input.recentProgramId || null
+  const focusZones = (input.focusZones || []).map(normalize).filter(Boolean)
+  const avoidZones = (input.avoidZones || []).map(normalize).filter(Boolean)
+  const trainingContext = normalize(String(input.trainingContext || 'mixte'))
+  const sex = normalize(String(input.sex || 'non-renseigne'))
 
   const ranked = programs.map((program) => {
     let score = 0
@@ -49,6 +57,7 @@ export function rankPrograms(programs: Program[], input: RecommendationInput): R
     const programLevel = normalize(program.level)
     const programEquipment = normalize(program.equipment)
     const programGoals = program.goals.map(normalize)
+    const programBodyParts = (program.bodyParts || []).map(normalize)
 
     if (level && programLevel.includes(level)) {
       score += 3
@@ -64,6 +73,14 @@ export function rankPrograms(programs: Program[], input: RecommendationInput): R
     if (equipment.length > 0 && equipment.some((eq) => programEquipment.includes(eq))) {
       score += 4
       reasons.push('matériel compatible')
+    }
+    if (trainingContext === 'maison' && !programEquipment.includes('machines')) {
+      score += 2
+      reasons.push('adapté maison')
+    }
+    if (trainingContext === 'salle' && (programEquipment.includes('machines') || programEquipment.includes('barres'))) {
+      score += 2
+      reasons.push('adapté salle')
     }
 
     if (sessions > 0) {
@@ -82,6 +99,26 @@ export function rankPrograms(programs: Program[], input: RecommendationInput): R
     }
 
     if (program.recommended) score += 1
+
+    const focusHits = focusZones.filter((zone) => programBodyParts.some((part) => part.includes(zone))).length
+    if (focusHits > 0) {
+      score += focusHits * 2
+      reasons.push('zones ciblées prises en compte')
+    }
+    const avoidHits = avoidZones.filter((zone) => programBodyParts.some((part) => part.includes(zone))).length
+    if (avoidHits > 0) {
+      score -= avoidHits * 3
+      reasons.push('zones à éviter prises en compte')
+    }
+
+    if (sex === 'femme' && programBodyParts.some((part) => part.includes('jambes') || part.includes('fessiers') || part.includes('abdos'))) {
+      score += 1
+      reasons.push('profil adapté')
+    }
+    if (sex === 'homme' && programBodyParts.some((part) => part.includes('dos') || part.includes('bras') || part.includes('pectoraux'))) {
+      score += 1
+      reasons.push('profil adapté')
+    }
 
     return { program, score, reasons: Array.from(new Set(reasons)) }
   })

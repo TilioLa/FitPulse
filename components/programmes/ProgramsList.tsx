@@ -130,6 +130,10 @@ export default function ProgramsList() {
         goals?: string[]
         equipment?: string[]
         sessionsPerWeek?: number
+        sex?: string
+        focusZones?: string[]
+        avoidZones?: string[]
+        trainingContext?: 'maison' | 'salle' | 'mixte'
       }
       const history = readLocalHistory() as { programId?: string }[]
       const historyProgramIds = history.map((item) => item.programId).filter(Boolean) as string[]
@@ -138,6 +142,10 @@ export default function ProgramsList() {
         goals: settings.goals,
         equipment: settings.equipment,
         sessionsPerWeek: settings.sessionsPerWeek,
+        sex: settings.sex,
+        focusZones: settings.focusZones,
+        avoidZones: settings.avoidZones,
+        trainingContext: settings.trainingContext,
         historyProgramIds,
         recentProgramId: historyProgramIds[0] || null,
       })

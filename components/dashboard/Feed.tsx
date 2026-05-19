@@ -375,6 +375,10 @@ export default function Feed() {
           goals?: string[]
           equipment?: string[]
           sessionsPerWeek?: number
+          sex?: string
+          focusZones?: string[]
+          avoidZones?: string[]
+          trainingContext?: 'maison' | 'salle' | 'mixte'
         }
         const targetSessionsPerWeek = Math.max(1, Math.min(7, Number(settings.sessionsPerWeek) || 3))
         const sevenDaySeries = Array.from({ length: 7 }, (_, index) => {
@@ -442,6 +446,10 @@ export default function Feed() {
           goals: settings.goals,
           equipment: settings.equipment,
           sessionsPerWeek: settings.sessionsPerWeek,
+          sex: settings.sex,
+          focusZones: settings.focusZones,
+          avoidZones: settings.avoidZones,
+          trainingContext: settings.trainingContext,
           historyProgramIds,
           recentProgramId: historyProgramIds[0] || null,
         })?.program

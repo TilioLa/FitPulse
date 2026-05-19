@@ -43,7 +43,9 @@ function InscriptionPageContent() {
   const [goals, setGoals] = useState<string[]>(['Cardio'])
   const [focusZones, setFocusZones] = useState<string[]>([])
   const [avoidZones, setAvoidZones] = useState<string[]>([])
+  const [sex, setSex] = useState<'femme' | 'homme' | 'non-binaire' | 'non-renseigne'>('non-renseigne')
   const [level, setLevel] = useState('debutant')
+  const [trainingContext, setTrainingContext] = useState<'maison' | 'salle' | 'mixte'>('mixte')
   const [sessionsPerWeek, setSessionsPerWeek] = useState(3)
   const [equipment, setEquipment] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -57,8 +59,12 @@ function InscriptionPageContent() {
         goals,
         equipment,
         sessionsPerWeek,
+        sex,
+        focusZones,
+        avoidZones,
+        trainingContext,
       }),
-    [level, goals, equipment, sessionsPerWeek]
+    [level, goals, equipment, sessionsPerWeek, sex, focusZones, avoidZones, trainingContext]
   )
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -97,6 +103,8 @@ function InscriptionPageContent() {
       equipment,
       recommendedProgramId: recommended?.program.id,
       recommendedProgramSlug: recommended?.program.slug,
+      sex,
+      trainingContext,
       weeklyPlan,
       reminderEmailsEnabled: true,
       pushRemindersEnabled: true,
@@ -299,6 +307,34 @@ function InscriptionPageContent() {
 
               <div className="border-t pt-6 space-y-4">
                 <h2 className="text-lg font-semibold text-gray-900">Profil fitness</h2>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Sexe</label>
+                    <select
+                      value={sex}
+                      onChange={(e) => setSex(e.target.value as 'femme' | 'homme' | 'non-binaire' | 'non-renseigne')}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="non-renseigne">Je préfère ne pas préciser</option>
+                      <option value="femme">Femme</option>
+                      <option value="homme">Homme</option>
+                      <option value="non-binaire">Non-binaire</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Contexte principal</label>
+                    <select
+                      value={trainingContext}
+                      onChange={(e) => setTrainingContext(e.target.value as 'maison' | 'salle' | 'mixte')}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="mixte">Mixte (maison + salle)</option>
+                      <option value="maison">Maison</option>
+                      <option value="salle">Salle</option>
+                    </select>
+                  </div>
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
