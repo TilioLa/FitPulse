@@ -4,7 +4,6 @@ const nextConfig = {
   allowedDevOrigins: ['127.0.0.1', 'localhost'],
   poweredByHeader: false,
   productionBrowserSourceMaps: false,
-  optimizePackageImports: ['lucide-react'],
   images: {
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60 * 60 * 24 * 30,

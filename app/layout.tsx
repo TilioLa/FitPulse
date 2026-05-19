@@ -1,10 +1,7 @@
 import type { Metadata, Viewport } from 'next'
-import dynamic from 'next/dynamic'
 import './globals.css'
 import Providers from '@/components/Providers'
-
-const PwaRegister = dynamic(() => import('@/components/PwaRegister'), { ssr: false })
-const CookieConsentManager = dynamic(() => import('@/components/CookieConsentManager'), { ssr: false })
+import ClientBoot from '@/components/system/ClientBoot'
 
 export const metadata: Metadata = {
   title: 'FitPulse - Votre coach sportif personnel',
@@ -34,8 +31,7 @@ export default function RootLayout({
     <html lang="fr" suppressHydrationWarning>
       <body>
         <Providers>{children}</Providers>
-        <CookieConsentManager />
-        <PwaRegister />
+        <ClientBoot />
       </body>
     </html>
   )
