@@ -18,14 +18,11 @@
 # misc
 .DS_Store
 *.pem
-<<<<<<< HEAD
-=======
 .idea/
 android/.idea/
 ios/App/App.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/
 test-results/
 playwright-report/
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b
 
 # debug
 npm-debug.log*
@@ -41,7 +38,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-<<<<<<< HEAD
-
-=======
->>>>>>> b12b3e675baa57e1dec406f77473e0ccf593425b

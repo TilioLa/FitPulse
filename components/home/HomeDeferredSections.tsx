@@ -15,11 +15,14 @@ export default function HomeDeferredSections() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    const win = window as Window & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+    }
     const enable = () => setReady(true)
-    if ('requestIdleCallback' in window) {
-      ;(window as any).requestIdleCallback(enable, { timeout: 2000 })
+    if (typeof win.requestIdleCallback === 'function') {
+      win.requestIdleCallback(enable, { timeout: 2000 })
     } else {
-      globalThis.setTimeout(enable, 1200)
+      setTimeout(enable, 1200)
     }
   }, [])
 
