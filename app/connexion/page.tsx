@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { LogIn, Mail, Lock } from 'lucide-react'
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 
 export default function ConnexionPage() {
@@ -69,6 +68,7 @@ export default function ConnexionPage() {
     }
 
     try {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
       const supabase = getSupabaseBrowserClient()
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: normalizedEmail,

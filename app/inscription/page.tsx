@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Footer from '@/components/Footer'
 import { UserPlus, Mail, Lock, User, Check, Dumbbell, Building2, CircleDot } from 'lucide-react'
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
-import { persistSettingsForUser } from '@/lib/user-state-store'
 import { programs } from '@/data/programs'
 import { recommendProgram } from '@/lib/recommendation'
 import { generateWeeklyPlan } from '@/lib/weekly-plan'
@@ -118,6 +116,7 @@ function InscriptionPageContent() {
     }
 
     try {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
       const supabase = getSupabaseBrowserClient()
       const appUrl =
         process.env.NEXT_PUBLIC_APP_URL ||
@@ -153,8 +152,11 @@ function InscriptionPageContent() {
       localStorage.setItem('fitpulse_settings', JSON.stringify(initialSettings))
       setStoredPlan('free')
       ensureTrialStarted()
-      if (signUpData.user?.id) {
-        void persistSettingsForUser(signUpData.user.id, initialSettings)
+      const signUpUserId = signUpData.user?.id
+      if (signUpUserId) {
+        void import('@/lib/user-state-store').then(({ persistSettingsForUser }) =>
+          persistSettingsForUser(signUpUserId, initialSettings)
+        )
       }
 
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
@@ -169,8 +171,11 @@ function InscriptionPageContent() {
         }
         throw signInError
       }
-      if (signInData.user?.id) {
-        void persistSettingsForUser(signInData.user.id, initialSettings)
+      const signInUserId = signInData.user?.id
+      if (signInUserId) {
+        void import('@/lib/user-state-store').then(({ persistSettingsForUser }) =>
+          persistSettingsForUser(signInUserId, initialSettings)
+        )
       }
       if (typeof window !== 'undefined') {
         localStorage.setItem('fitpulse_login_just_signed_in_at', String(Date.now()))

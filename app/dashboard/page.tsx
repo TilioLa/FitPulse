@@ -8,7 +8,6 @@ import Sidebar from '@/components/dashboard/Sidebar'
 import Footer from '@/components/Footer'
 import { useAuth } from '@/components/SupabaseAuthProvider'
 import SectionSkeleton from '@/components/dashboard/SectionSkeleton'
-import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
 import { readLocalCurrentWorkout, readLocalSettings, writeLocalSettings } from '@/lib/user-state-store'
 import { readLocalHistory } from '@/lib/history-store'
 import { programsById } from '@/data/programs'
@@ -19,6 +18,10 @@ import {
 } from '@/lib/dashboard-navigation'
 import { generateAdaptiveWeeklyPlan } from '@/lib/weekly-plan'
 import { trackEvent } from '@/lib/analytics-client'
+
+function isSupabaseConfigured() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+}
 
 const Feed = dynamic(() => import('@/components/dashboard/Feed'), {
   loading: () => <SectionSkeleton />,
@@ -94,6 +97,7 @@ function DashboardPageContent() {
           await reload()
           if (isSupabaseConfigured()) {
             try {
+              const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
               const { data } = await getSupabaseBrowserClient().auth.getSession()
               if (data.session) {
                 localStorage.removeItem('fitpulse_login_just_signed_in_at')
@@ -108,6 +112,7 @@ function DashboardPageContent() {
       } else {
         try {
           if (isSupabaseConfigured()) {
+            const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
             const { data } = await getSupabaseBrowserClient().auth.getSession()
             if (data.session) return
           }

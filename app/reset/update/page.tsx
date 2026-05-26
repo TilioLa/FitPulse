@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Footer from '@/components/Footer'
 import WithSidebar from '@/components/layouts/WithSidebar'
 import { Lock } from 'lucide-react'
-import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 
 export default function ResetUpdatePage() {
   const router = useRouter()
@@ -32,6 +31,7 @@ export default function ResetUpdatePage() {
     }
 
     try {
+      const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
       const supabase = getSupabaseBrowserClient()
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error

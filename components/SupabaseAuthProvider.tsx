@@ -2,13 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { getSupabaseBrowserClient, isSupabaseConfigured } from '@/lib/supabase-browser'
-import { persistHistoryForUser, readLocalHistory, syncHistoryForUser } from '@/lib/history-store'
-import { persistProgressStateForUser, syncUserStateForUser } from '@/lib/user-state-store'
-import { logClientEvent } from '@/lib/client-telemetry'
-import { maybeSendLifecycleEmails } from '@/lib/lifecycle-client'
-import { maybeSendDailyWorkoutReminder } from '@/lib/reminder-client'
-import { maybeSendBrowserWorkoutReminder } from '@/lib/web-notification-reminder'
+import { usePathname } from 'next/navigation'
 
 type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated'
 
@@ -30,6 +24,25 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+function isSupabaseConfigured() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+}
+
+function shouldLoadAuthImmediately(pathname: string | null) {
+  if (!pathname) return false
+  return (
+    pathname.startsWith('/dashboard') ||
+    pathname.startsWith('/exercices') ||
+    pathname.startsWith('/profil') ||
+    pathname.startsWith('/programmes') ||
+    pathname.startsWith('/settings') ||
+    pathname.startsWith('/tickets') ||
+    pathname.startsWith('/connexion') ||
+    pathname.startsWith('/inscription') ||
+    pathname.startsWith('/reset')
+  )
+}
+
 function mapUser(user: User | null): AppUser | null {
   if (!user?.email) return null
   const meta = (user.user_metadata || {}) as { full_name?: string; phone?: string }
@@ -44,6 +57,7 @@ function mapUser(user: User | null): AppUser | null {
 }
 
 export function SupabaseAuthProvider({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname()
   const localBypass =
     typeof window !== 'undefined' && window.localStorage.getItem('fitpulse_e2e_bypass') === 'true'
   const e2eBypass =
@@ -82,6 +96,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setUser(null)
       return
     }
+    const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
     const supabase = getSupabaseBrowserClient()
     const { data, error } = await supabase.auth.getSession()
     if (error) {
@@ -99,7 +114,14 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
     const mapped = mapUser(sessionUser)
     if (mapped) {
       setStatus('loading')
-      await Promise.all([syncHistoryForUser(mapped.id), syncUserStateForUser(mapped.id)])
+      const [historyStore, userStateStore] = await Promise.all([
+        import('@/lib/history-store'),
+        import('@/lib/user-state-store'),
+      ])
+      await Promise.all([
+        historyStore.syncHistoryForUser(mapped.id),
+        userStateStore.syncUserStateForUser(mapped.id),
+      ])
       setUser(mapped)
       setStatus('authenticated')
       return
@@ -115,43 +137,91 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       setUser(null)
       return
     }
-    const supabase = getSupabaseBrowserClient()
-    void applySession()
+    let active = true
+    let unsubscribe: (() => void) | undefined
+    let idleId: number | undefined
+    let timeoutId: number | undefined
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      const mapped = mapUser(session?.user ?? null)
-      if (!mapped) {
-        setUser(null)
-        setStatus('unauthenticated')
-        return
-      }
-      setStatus('loading')
+    const bootAuth = () => {
       void (async () => {
-        await Promise.all([syncHistoryForUser(mapped.id), syncUserStateForUser(mapped.id)])
-        setUser(mapped)
-        setStatus('authenticated')
+        const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
+        if (!active) return
+        const supabase = getSupabaseBrowserClient()
+        void applySession()
+
+        const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+          const mapped = mapUser(session?.user ?? null)
+          if (!mapped) {
+            setUser(null)
+            setStatus('unauthenticated')
+            return
+          }
+          setStatus('loading')
+          void (async () => {
+            const [historyStore, userStateStore] = await Promise.all([
+              import('@/lib/history-store'),
+              import('@/lib/user-state-store'),
+            ])
+            await Promise.all([
+              historyStore.syncHistoryForUser(mapped.id),
+              userStateStore.syncUserStateForUser(mapped.id),
+            ])
+            setUser(mapped)
+            setStatus('authenticated')
+          })()
+        })
+        unsubscribe = () => data.subscription.unsubscribe()
       })()
-    })
-    return () => data.subscription.unsubscribe()
-  }, [e2eBypass, applySession])
+    }
+
+    if (shouldLoadAuthImmediately(pathname)) {
+      bootAuth()
+    } else {
+      const win = window as Window & {
+        requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number
+        cancelIdleCallback?: (id: number) => void
+      }
+      if (typeof win.requestIdleCallback === 'function') {
+        idleId = win.requestIdleCallback(bootAuth, { timeout: 2500 })
+      } else {
+        timeoutId = window.setTimeout(bootAuth, 1200)
+      }
+    }
+
+    return () => {
+      active = false
+      if (idleId && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId)
+      }
+      if (timeoutId) window.clearTimeout(timeoutId)
+      unsubscribe?.()
+    }
+  }, [e2eBypass, applySession, pathname])
 
   useEffect(() => {
     if (status !== 'authenticated' || !user) return
-    void maybeSendLifecycleEmails({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      createdAt: user.createdAt,
-    })
-    void maybeSendDailyWorkoutReminder({
-      id: user.id,
-      email: user.email,
-      name: user.name,
-    })
-    maybeSendBrowserWorkoutReminder({
-      userId: user.id,
-      userName: user.name,
-    })
+    void (async () => {
+      const [lifecycleClient, reminderClient, webNotificationReminder] = await Promise.all([
+        import('@/lib/lifecycle-client'),
+        import('@/lib/reminder-client'),
+        import('@/lib/web-notification-reminder'),
+      ])
+      void lifecycleClient.maybeSendLifecycleEmails({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        createdAt: user.createdAt,
+      })
+      void reminderClient.maybeSendDailyWorkoutReminder({
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      })
+      webNotificationReminder.maybeSendBrowserWorkoutReminder({
+        userId: user.id,
+        userName: user.name,
+      })
+    })()
   }, [status, user])
 
   useEffect(() => {
@@ -162,7 +232,9 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       const now = Date.now()
       if (now - lastProgressPersistRef.current < 20_000) return
       lastProgressPersistRef.current = now
-      void persistProgressStateForUser(user.id)
+      void import('@/lib/user-state-store').then(({ persistProgressStateForUser }) =>
+        persistProgressStateForUser(user.id)
+      )
     }
     const interval = window.setInterval(persistNow, 30_000)
     const onProgress = () => persistNow()
@@ -186,9 +258,11 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
       const now = Date.now()
       if (now - lastHistoryPersistRef.current < 20_000) return
       lastHistoryPersistRef.current = now
-      const localHistory = readLocalHistory()
-      if (localHistory.length === 0) return
-      void persistHistoryForUser(user.id, localHistory)
+      void import('@/lib/history-store').then(({ persistHistoryForUser, readLocalHistory }) => {
+        const localHistory = readLocalHistory()
+        if (localHistory.length === 0) return
+        void persistHistoryForUser(user.id, localHistory)
+      })
     }
     const interval = window.setInterval(persistHistoryNow, 45_000)
     const onHistory = () => persistHistoryNow()
@@ -206,27 +280,31 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
-      void logClientEvent({
-        level: 'error',
-        message: event.message || 'Client runtime error',
-        meta: {
-          filename: event.filename,
-          lineno: event.lineno,
-          colno: event.colno,
-        },
-      })
+      void import('@/lib/client-telemetry').then(({ logClientEvent }) =>
+        logClientEvent({
+          level: 'error',
+          message: event.message || 'Client runtime error',
+          meta: {
+            filename: event.filename,
+            lineno: event.lineno,
+            colno: event.colno,
+          },
+        })
+      )
     }
     const onUnhandledRejection = (event: PromiseRejectionEvent) => {
-      void logClientEvent({
-        level: 'error',
-        message: 'Unhandled promise rejection',
-        meta: {
-          reason:
-            typeof event.reason === 'string'
-              ? event.reason
-              : (event.reason as { message?: string })?.message || 'unknown',
-        },
-      })
+      void import('@/lib/client-telemetry').then(({ logClientEvent }) =>
+        logClientEvent({
+          level: 'error',
+          message: 'Unhandled promise rejection',
+          meta: {
+            reason:
+              typeof event.reason === 'string'
+                ? event.reason
+                : (event.reason as { message?: string })?.message || 'unknown',
+          },
+        })
+      )
     }
     window.addEventListener('error', onError)
     window.addEventListener('unhandledrejection', onUnhandledRejection)
@@ -251,6 +329,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
           setStatus('unauthenticated')
           return
         }
+        const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
         const supabase = getSupabaseBrowserClient()
         await supabase.auth.signOut()
         setUser(null)
@@ -260,6 +339,7 @@ export function SupabaseAuthProvider({ children }: { children: React.ReactNode }
         if (!isSupabaseConfigured()) {
           throw new Error('Missing Supabase environment variables')
         }
+        const { getSupabaseBrowserClient } = await import('@/lib/supabase-browser')
         const supabase = getSupabaseBrowserClient()
         const { error } = await supabase.auth.updateUser({
           data: {

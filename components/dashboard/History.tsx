@@ -12,8 +12,10 @@ import { applyHistoryLimit, getEntitlement } from '@/lib/subscription'
 import { readLocalSettings } from '@/lib/user-state-store'
 import { readLocalCurrentWorkout } from '@/lib/user-state-store'
 import { useAuth } from '@/components/SupabaseAuthProvider'
-import { isSupabaseConfigured } from '@/lib/supabase-browser'
-import { persistHistoryForUserWithResult } from '@/lib/history-store'
+
+function isSupabaseConfigured() {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+}
 
 interface WorkoutHistory {
   id: string
@@ -291,6 +293,7 @@ export default function History() {
     }
     setSyncState('syncing')
     setSyncError(null)
+    const { persistHistoryForUserWithResult } = await import('@/lib/history-store')
     const { ok, error } = await persistHistoryForUserWithResult(
       user.id,
       (history as unknown as WorkoutHistoryItem[]) || []
