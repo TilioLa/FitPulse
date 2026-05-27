@@ -47,6 +47,7 @@ const EQUIPMENT_LABELS: Record<string, string> = {
   Suspension: 'Suspension',
   'Trap Bar': 'Barre trap',
   Kettlebell: 'Kettlebell',
+  Accessory: 'Accessoire',
 }
 
 const MUSCLE_LABELS: Record<string, string> = {
@@ -77,13 +78,23 @@ function toFrenchMuscle(value: string) {
   return MUSCLE_LABELS[value] || value
 }
 
+function toFrenchSourceLevel(value?: ExerciseCatalogItem['sourceLevel']) {
+  if (value === 'base') return 'Base'
+  if (value === 'advanced') return 'Avancé'
+  if (value === 'finishing') return 'Finition'
+  return null
+}
+
 function inferPrimaryMuscle(item: ExerciseCatalogItem) {
   const first = item.tags[0] || 'Full Body'
   return toFrenchMuscle(first)
 }
 
 function buildExerciseInstructions(item: ExerciseCatalogItem) {
-  const key = item.name.toLowerCase()
+  const key = item.name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 
   if (key.includes('curl')) {
     return [
@@ -101,7 +112,7 @@ function buildExerciseInstructions(item: ExerciseCatalogItem) {
       'Remonte en gardant le buste stable et la respiration active.',
     ]
   }
-  if (key.includes('row') || key.includes('deadlift')) {
+  if (key.includes('row') || key.includes('rowing') || key.includes('deadlift') || key.includes('souleve de terre')) {
     return [
       'Place-toi en position stable avec dos neutre et nuque alignée.',
       'Engage les omoplates avant de tirer ou de soulever.',
@@ -109,7 +120,7 @@ function buildExerciseInstructions(item: ExerciseCatalogItem) {
       'Reviens en contrôle sans arrondir le bas du dos.',
     ]
   }
-  if (key.includes('press') || key.includes('push') || key.includes('dip')) {
+  if (key.includes('press') || key.includes('push') || key.includes('dip') || key.includes('developpe')) {
     return [
       'Installe une base stable et gaine les abdos.',
       'Démarre le mouvement avec trajectoire propre et épaules placées.',
@@ -117,7 +128,7 @@ function buildExerciseInstructions(item: ExerciseCatalogItem) {
       'Redescends lentement et garde la tension musculaire.',
     ]
   }
-  if (key.includes('plank') || key.includes('ab') || key.includes('crunch')) {
+  if (key.includes('plank') || key.includes('ab') || key.includes('crunch') || key.includes('gainage')) {
     return [
       'Place le bassin neutre et serre les fessiers.',
       'Active les abdos avant de démarrer la série.',
@@ -497,6 +508,12 @@ function ExercicesPageContent() {
                             <span className="rounded-full bg-primary-50 text-primary-700 text-xs px-2.5 py-1 font-semibold">
                               Niveau {selectedInsights.level === 'beginner' ? 'débutant' : selectedInsights.level === 'advanced' ? 'avancé' : 'intermédiaire'}
                             </span>
+                            {selected.source && (
+                              <span className="rounded-full bg-gray-900 text-white text-xs px-2.5 py-1 font-semibold">
+                                {selected.source}
+                                {toFrenchSourceLevel(selected.sourceLevel) ? ` · ${toFrenchSourceLevel(selected.sourceLevel)}` : ''}
+                              </span>
+                            )}
                             {selectedInsights.goals.map((itemGoal) => (
                               <span key={itemGoal} className="rounded-full bg-gray-100 text-gray-700 text-xs px-2.5 py-1 font-medium">
                                 {itemGoal === 'strength'

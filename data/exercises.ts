@@ -1,8 +1,13 @@
+import { superphysiqueExerciseCatalog } from './superphysique-exercises'
+
 export type ExerciseCatalogItem = {
   id: string
   name: string
   equipment: string[]
   tags: string[]
+  source?: string
+  sourceUrl?: string
+  sourceLevel?: 'base' | 'advanced' | 'finishing'
 }
 
 const exerciseCatalogRaw: ExerciseCatalogItem[] = [
@@ -4306,6 +4311,45 @@ const exerciseCatalogRaw: ExerciseCatalogItem[] = [
   }
 ]
 
-export const exerciseCatalog: ExerciseCatalogItem[] = exerciseCatalogRaw.filter(
-  (exercise) => !exercise.equipment.includes('Band')
-)
+function normalizeExerciseKey(name: string) {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+}
+
+function mergeExerciseCatalog(items: ExerciseCatalogItem[]) {
+  const byName = new Map<string, ExerciseCatalogItem>()
+
+  items.forEach((item) => {
+    const key = normalizeExerciseKey(item.name)
+    const existing = byName.get(key)
+
+    if (!existing) {
+      byName.set(key, {
+        ...item,
+        equipment: Array.from(new Set(item.equipment)),
+        tags: Array.from(new Set(item.tags)),
+      })
+      return
+    }
+
+    byName.set(key, {
+      ...existing,
+      equipment: Array.from(new Set([...existing.equipment, ...item.equipment])),
+      tags: Array.from(new Set([...existing.tags, ...item.tags])),
+      source: existing.source || item.source,
+      sourceUrl: existing.sourceUrl || item.sourceUrl,
+      sourceLevel: existing.sourceLevel || item.sourceLevel,
+    })
+  })
+
+  return Array.from(byName.values()).sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+}
+
+export const exerciseCatalog: ExerciseCatalogItem[] = mergeExerciseCatalog([
+  ...exerciseCatalogRaw.filter((exercise) => !exercise.equipment.includes('Band')),
+  ...superphysiqueExerciseCatalog,
+])

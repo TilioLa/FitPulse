@@ -14,6 +14,56 @@ import {
 import { readLocalSettings } from '@/lib/user-state-store'
 import { localizeExerciseNameFr } from '@/lib/exercise-name-fr'
 
+const EQUIPMENT_LABELS: Record<string, string> = {
+  Bodyweight: 'Poids du corps',
+  Machine: 'Machine',
+  Dumbbell: 'Haltère',
+  Assisted: 'Assisté',
+  Weighted: 'Lesté',
+  Barbell: 'Barre',
+  Cable: 'Poulie',
+  'Smith Machine': 'Machine Smith',
+  Suspension: 'Suspension',
+  'Trap Bar': 'Barre trap',
+  Kettlebell: 'Kettlebell',
+  Accessory: 'Accessoire',
+}
+
+const MUSCLE_LABELS: Record<string, string> = {
+  Abdominals: 'Abdominaux',
+  Biceps: 'Biceps',
+  Cardio: 'Cardio',
+  Shoulders: 'Épaules',
+  Chest: 'Pectoraux',
+  Quadriceps: 'Quadriceps',
+  'Lower Back': 'Bas du dos',
+  'Full Body': 'Corps complet',
+  Forearms: 'Avant-bras',
+  Triceps: 'Triceps',
+  Hamstrings: 'Ischio-jambiers',
+  Glutes: 'Fessiers',
+  Back: 'Dos',
+  Lats: 'Dorsaux',
+  Traps: 'Trapèzes',
+  Calves: 'Mollets',
+  Neck: 'Cou',
+}
+
+function toFrenchEquipment(value: string) {
+  return EQUIPMENT_LABELS[value] || value
+}
+
+function toFrenchMuscle(value: string) {
+  return MUSCLE_LABELS[value] || value
+}
+
+function toFrenchSourceLevel(value?: ExerciseCatalogItem['sourceLevel']) {
+  if (value === 'base') return 'Base'
+  if (value === 'advanced') return 'Avancé'
+  if (value === 'finishing') return 'Finition'
+  return null
+}
+
 export default function ExerciseCatalog({
   onSelect,
 }: {
@@ -210,8 +260,14 @@ export default function ExerciseCatalog({
                     </div>
                     <div className="text-sm font-semibold text-gray-900">{localizeExerciseNameFr(item.name)}</div>
                   </div>
-                  <div className="text-xs text-gray-500 mt-1">{item.tags.join(', ')}</div>
-                  <div className="text-[11px] text-gray-400 mt-1">{item.equipment.join(', ')}</div>
+                  <div className="text-xs text-gray-500 mt-1">{item.tags.map(toFrenchMuscle).join(', ')}</div>
+                  <div className="text-[11px] text-gray-400 mt-1">{item.equipment.map(toFrenchEquipment).join(', ')}</div>
+                  {item.source && (
+                    <div className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-semibold text-gray-600">
+                      {item.source}
+                      {toFrenchSourceLevel(item.sourceLevel) ? ` · ${toFrenchSourceLevel(item.sourceLevel)}` : ''}
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => toggleFavorite(item.id)}
